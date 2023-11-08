@@ -78,7 +78,7 @@ class scienv():
             observation, reward, self.goalreached, info = self.env.step(actiontext)
             self.observation.append( "{ Action taken: "+actiontext+" ; Observation : "+ observation.replace("\n", "; ")+"}")
             if actiontext == "reset task":
-                self.reward = [-1]
+                self.reward = -1
                 self.totalreward = 0
             else:
                 self.reward +=reward

@@ -19,8 +19,16 @@ class neo():
         self.stmsize = STMsize
         self.stmstoragefile = stmstoragefile
         if stmloadfile != None:
-            self.stm,self.env = pickle.load(stmloadfile)
+            with open(stmloadfile, 'rb') as f:
+                self.stm,actiontrace,observation,reward,totalreward = pickle.load(f)
             self.env.state = self.stm.get("currentenv")["env"]["state"]
+            ############# execute action trace
+            for action in actiontrace:
+                self.env.problemenv.traceact(action)
+            self.env.problemenv.observation = observation
+            self.env.problemenv.reward = reward
+            self.env.problemenv.totalreward = totalreward
+            
         else:
             self.stm = STM()
             self.env = environment
@@ -428,7 +436,8 @@ class neo():
             self.stm.set(str(self.env.perception), "EnvTrace")
             self.stm.set(self.env.state, "state")
             
-            pickle.dump((self.stm,self.env),self.stmstoragefile)
+            with open(self.stmstoragefile, 'wb') as f:
+                pickle.dump((self.stm,self.env.problemenv.actiontrace,self.env.problemenv.observation,self.env.problemenv.observation,self.env.problemenv.reward,self.env.problemenv.totalreward),f)
             if output["cumulative reward"] >= CUMULATIVEREWARDTHRESHOLD:
                 action["actiontype"] = "dynamic"
                 self.storeactionasskill(action)
