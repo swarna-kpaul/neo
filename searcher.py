@@ -13,7 +13,7 @@ EPISODELEN = 3
 MAXPLANCRITUQUETRIAL = 10
 
 class neo():
-    def __init__ (self,environment,STMsize = 10 , stmloadfile, stmstoragefile):
+    def __init__ (self,environment, stmloadfile, stmstoragefile, STMsize = 10):
     
         self.ltm = LTM() 
         self.stmsize = STMsize
