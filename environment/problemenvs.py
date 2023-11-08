@@ -30,6 +30,7 @@ class scienv():
         an agent situated in textual task environment. Action can be taken by calling the function module named 'takeenvaction'. 
         The takeenvaction takes a text value as an argument, that denotes the type of action that will be taken.
         Here are the possible set of parameter values  that can be passed as argument to 'takeenvaction', where OBJ should be replaced by any object that you can find in your current state.  You can take only one action. The environment is fully not observable. New objects and states can be observed after taking different actions. The action plan should be realistically and scientifically valid. 
+        you may reset the environment if you feel stuck and need to start over.
         focus is a extremely critical action that can be only used the number of times 'focus' is mentioned in the task description. Using it more than that or inappropiately (such as on a wrong object) will terminate the session and the task will be rendered as incomplete. focus can be used on the object which is available in current state.
         Do not make up new actions or objects. If you dont find appropriate objects for actions to meet the objective then generate plan to explore the environment to find required objects.
         Set of parameter values:
