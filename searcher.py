@@ -9,7 +9,7 @@ import pickle
 
 gamma = 0.8
 CUMULATIVEREWARDTHRESHOLD = 5
-EPISODELEN = 3
+EPISODELEN = 0
 MAXPLANCRITUQUETRIAL = 10
 
 class neo():
@@ -18,10 +18,11 @@ class neo():
         self.ltm = LTM() 
         self.stmsize = STMsize
         self.stmstoragefile = stmstoragefile
+        self.env = environment
         if stmloadfile != None:
             with open(stmloadfile, 'rb') as f:
-                self.stm,actiontrace,observation,reward,totalreward = pickle.load(f)
-            self.env.state = self.stm.get("currentenv")["env"]["state"]
+                self.stm,actiontrace,observation,observation,reward,totalreward = pickle.load(f)
+            self.env.state = self.stm.get("currentenv")["env"]["current state"]
             ############# execute action trace
             for action in actiontrace:
                 self.env.problemenv.traceact(action)
@@ -31,7 +32,6 @@ class neo():
             
         else:
             self.stm = STM()
-            self.env = environment
             id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
             self.stm.set({'id': id, 'env': environment.bootstrapbeliefenvironment},"currentenv")
         self.SEARCHERPROMPT = PromptTemplate(input_variables=SEARCHERPROMPTINPUTVARIABLES, template=searchertemplate)
@@ -46,7 +46,7 @@ class neo():
         EnvTrace = self.stm.get("EnvTrace")
         #critique = self.stm.get("critique")
         currentenvironment = self.stm.get("currentenv")["env"]
-        currentbelief = {"belief axioms": currentenvironment["belief axioms"]}
+        #currentbelief = {"belief axioms": currentenvironment["belief axioms"]}
         #ACPtrace_text = "\n".join([ "    Action plan: "+ i["actionplan"]["actionplan"]+"\n    Environment response: "+ i["perception"] for i in ACPtrace])
         EnvTrace_text = "\n".join([str(i) for i in EnvTrace])
         relatedenvironments = self.ltm.get(str(currentenvironment), namespace = "environments")
@@ -56,7 +56,7 @@ class neo():
         else:
             relatedenvironments = ""
         messages = self.SEARCHERPROMPT.format(relatedenvironments = str(relatedenvironments),
-                        beliefenvironment = currentbelief,
+                        beliefenvironment = currentenvironment,
                         EnvTrace = EnvTrace_text)
             #print(messages)
         print("SEARCHERPROMPT:",messages)
@@ -66,7 +66,7 @@ class neo():
         self.stm.set({'id': currentenvironment['id'], 'env':output},"currentenv")
         output['type'] = "environments"
         ltmdata = [{'id': currentenvironment['id'], 'values': output['description'], 'metadata': output }]
-        self.ltm.set(data = ltmdata, namespace = "environments")
+        #self.ltm.set(data = ltmdata, namespace = "environments")
         return output
     
     def actplancritique(self, actionplan):
@@ -448,11 +448,11 @@ class neo():
                 print("Running searcher....")
                 env = None
                 while env is None:
-                    try:
-                        env = self.searcher()
-                    except Exception as e:
-                        pass
-                        print ("Error", str(e))
+                    #try:
+                    env = self.searcher()
+                    #except Exception as e:
+                       #pass
+                        #print ("Error", str(e))
                     k = input("Press any button to continue ...")
                 counter = 0
             lifetime -= 1

@@ -195,23 +195,23 @@ ACTORPROMPTINPUTVARIABLES = ["beliefenvironment","actionplan","actions", "error"
  
 searchertemplate = """System: You are a part of an AI agent called neo. You need to derive a model of the percieved problem environment from action perception trace.
 You can use the list of related similar environments to derive the new one.
-Update on top of the current estimated belief axioms of the environment based on the updated action perception trace and critique.
+Update on top of the current estimated belief axioms of the environment based on the updated action perception trace and critique. Do not add the same information that are available in prior axioms and current state. Try to generalize the belief statements.
 The output should always be strictly generated in the following json structure. Add escape charachters wherever required to make the following a valid json definately.
 {{  
  "beliefaxioms": <axioms of the environment as derived from the action perception trace in free text form. It states the rules or causal relations of how the environment works and what is needed to acheive the objective. It should not state the rules of the actionplan. It should state how the environment responds on different actions and what actions brings most reward and what actions brings least. The axioms should be complete in itself. It should not refer to undefined environment response or any other objects.>
  }}
 
+Here is the current estimated environment. It has a description, objective, prior axioms (that are fixed), belief axioms and current state. You should update and output the belief axioms based on the action perception trace provided by the user.
+Current estimated environment:
+    {beliefenvironment}
+
 Following are some related environments. You may use some of the axioms in the related environment if there are some obvious similarities. 
 Related environments:
     {relatedenvironments}
 
-Here is the action perception trace. The action is taken by the agent Neo and reponse provided by the environment against corresponding action.
+User: Here is the action perception trace. The action is taken by the agent Neo and reponse provided by the environment against corresponding action. Provide the belied axioms for this.
 Action Perception trace:
     {EnvTrace}
-      
-Here is the current estimated environment axioms. If it is available, You should update this belief axioms based on the historical action perception trace.
-Current estimated environment:
-    {beliefenvironment}
     
        
 AI:
@@ -222,7 +222,7 @@ AI:
 #       {critique}
 
 
-SEARCHERPROMPTINPUTVARIABLES = ["relatedenvironments","EnvTrace","beliefenvironment"] #, "critique"
+SEARCHERPROMPTINPUTVARIABLES = ["beliefenvironment","relatedenvironments","EnvTrace"] #, "critique"
 
 
 # DEFAULTCRITIQUEOBJECTIVE = """You are a critique of actions taken by an AI agent.

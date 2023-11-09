@@ -22,6 +22,7 @@ class scienv():
         self.env = ScienceWorldEnv(task)
         obs1, info1 = self.env.reset()
         self.observation = []
+        self.actiontrace = []
         self.reward = -1
         self.totalreward = 0
         self.goalreached = False
@@ -71,9 +72,15 @@ class scienv():
         #else:
         #    reward = max(self.reward)
         return "Observation: "+'\n'.join([i.replace("\n", "; ") for i in self.observation])+" External feedback: "+ str(self.success_map('reward',self.reward)), self.getstate()
-        
+    
+    def traceact(self,actiontext):
+        try:
+            observation, reward, self.goalreached, info = self.env.step(actiontext)
+        except:
+            pass
+    
     def act(self,actiontext):
-   
+        self.actiontrace.append(actiontext)
         try:
             observation, reward, self.goalreached, info = self.env.step(actiontext)
             self.observation.append( "{ Action taken: "+actiontext+" ; Observation : "+ observation.replace("\n", "; ")+"}")
