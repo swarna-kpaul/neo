@@ -195,10 +195,10 @@ ACTORPROMPTINPUTVARIABLES = ["beliefenvironment","actionplan","actions", "error"
  
 searchertemplate = """System: You are a part of an AI agent called neo. You need to derive a model of the percieved problem environment from action perception trace.
 You can use the list of related similar environments to derive the new one.
-Update on top of the current estimated belief axioms of the environment based on the updated action perception trace and critique. Do not add the same information that are available in prior axioms and current state. Try to generalize the belief statements.
+Update on top of the current estimated belief axioms of the environment based on the updated action perception trace. Do not add the same information that are available in prior axioms and current state. Do not change any of the already available belief axioms unless current beliefs contradicts any of those. You can add your new beliefs to the belief axioms.
 The output should always be strictly generated in the following json structure. Add escape charachters wherever required to make the following a valid json definately.
 {{  
- "beliefaxioms": <axioms of the environment as derived from the action perception trace in free text form. It states the rules or causal relations of how the environment works and what is needed to acheive the objective. It should not state the rules of the actionplan. It should state how the environment responds on different actions and what actions brings most reward and what actions brings least. The axioms should be complete in itself. It should not refer to undefined environment response or any other objects.>
+ "beliefaxioms": <causal relations of how the environment works as derived from the action perception trace and current estimated environment in free text form. Based on current state and action perception trace state what actions are needed to move closer towards the objective. It should state how the environment responds on different actions and what actions brings most reward and what actions brings least. It should not state the rules of the actionplan or what is availble in prior axioms or current state. The axioms should be complete in itself. It should not refer to undefined environment response or any other objects. Do not add too general or vague statements. Do not write redundant statements.>
  }}
 
 Here is the current estimated environment. It has a description, objective, prior axioms (that are fixed), belief axioms and current state. You should update and output the belief axioms based on the action perception trace provided by the user.
@@ -268,7 +268,7 @@ If the above response contains any feedback or reward signal then update your cr
 The output should be in the following json format. In no case the output should deviate from the following prescribed format.
 {{
   "feedback": <positive or negative reinforcement. It can be a real number between -1 and 1. If there are reward or feedback present in environment response. Then this should always match with that value>,
-  "reason": <a detailed reason for the feedback based on action plan, environment response, beliefaxioms (if available) and objective> 
+  "reason": <a detailed reason for the feedback based on action plan, environment response (should be given most importance), beliefaxioms (if available) and objective> 
 }}
 
     

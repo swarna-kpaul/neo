@@ -9,7 +9,7 @@ import pickle
 
 gamma = 0.8
 CUMULATIVEREWARDTHRESHOLD = 5
-EPISODELEN = 0
+EPISODELEN = 3
 MAXPLANCRITUQUETRIAL = 10
 
 class neo():
@@ -30,6 +30,9 @@ class neo():
             self.env.problemenv.reward = reward
             self.env.problemenv.totalreward = totalreward
             
+            print (self.env.problemenv.traceact("look around"))
+            input("Press a key to continue ....")
+            
         else:
             self.stm = STM()
             id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
@@ -45,27 +48,28 @@ class neo():
     def searcher (self):
         EnvTrace = self.stm.get("EnvTrace")
         #critique = self.stm.get("critique")
-        currentenvironment = self.stm.get("currentenv")["env"]
+        currentenvironment = self.stm.get("currentenv")
         #currentbelief = {"belief axioms": currentenvironment["belief axioms"]}
         #ACPtrace_text = "\n".join([ "    Action plan: "+ i["actionplan"]["actionplan"]+"\n    Environment response: "+ i["perception"] for i in ACPtrace])
         EnvTrace_text = "\n".join([str(i) for i in EnvTrace])
-        relatedenvironments = self.ltm.get(str(currentenvironment), namespace = "environments")
+        relatedenvironments = self.ltm.get(str(currentenvironment['env']), namespace = "environments")
         if relatedenvironments:
             relatedenvironments = [ "    Environment "+str(i)+":\n"+str(env["metadata"]) for i,env in enumerate(relatedenvironments) if env["id"] != currentenvironment['id'] ] 
             relatedenvironments = ["\n".join(relatedenvironments)]
         else:
             relatedenvironments = ""
         messages = self.SEARCHERPROMPT.format(relatedenvironments = str(relatedenvironments),
-                        beliefenvironment = currentenvironment,
+                        beliefenvironment = str(currentenvironment['env']),
                         EnvTrace = EnvTrace_text)
             #print(messages)
         print("SEARCHERPROMPT:",messages)
         output = llm_model.predict(messages)
         print("SEARCHERPROMPT output:",output)
-        output = ast.literal_eval(output)
-        self.stm.set({'id': currentenvironment['id'], 'env':output},"currentenv")
-        output['type'] = "environments"
-        ltmdata = [{'id': currentenvironment['id'], 'values': output['description'], 'metadata': output }]
+        beliefaxioms = ast.literal_eval(output)
+        currentenvironment["env"]["belief axioms"] = beliefaxioms
+        self.stm.set({'id': currentenvironment['id'], 'env':currentenvironment["env"]},"currentenv")
+        currentenvironment["env"]['type'] = "environments"
+        ltmdata = [{'id': currentenvironment['id'], 'values': currentenvironment["env"]['description'], 'metadata': currentenvironment["env"] }]
         #self.ltm.set(data = ltmdata, namespace = "environments")
         return output
     
@@ -385,16 +389,16 @@ class neo():
                 k = input("Press any button to continue ...")
             
             ########## get planid
-            print("Getting planid...")
-            flag = True
-            while flag:
-                try:
-                    output = self.checkplanequivalence(output)
-                    flag = False
-                except Exception as e:
+            #print("Getting planid...")
+            #flag = True
+            #while flag:
+            #    try:
+            #        output = self.checkplanequivalence(output)
+            #        flag = False
+            #    except Exception as e:
                 #    pass
-                    print ("Error",  traceback.format_exc())
-                k = input("Press any button to continue ...")
+            #        print ("Error",  traceback.format_exc())
+            #    k = input("Press any button to continue ...")
             
             ######### actionplan to action ###########
             action,historicalactionplans = self.actionplantoaction(output)
@@ -448,11 +452,13 @@ class neo():
                 print("Running searcher....")
                 env = None
                 while env is None:
-                    #try:
-                    env = self.searcher()
-                    #except Exception as e:
+                    try:
+                        env = self.searcher()
+                        self.stm.delete( "EnvTrace")
+                        self.stm.delete( "ACPtrace")
+                    except Exception as e:
                        #pass
-                        #print ("Error", str(e))
+                        print ("Error", str(e))
                     k = input("Press any button to continue ...")
                 counter = 0
             lifetime -= 1

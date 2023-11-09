@@ -80,6 +80,14 @@ class STM():  ### Short term memory -- {"conversation": , "timestamp": }
             stmobj = data
         self.stm[key] = stmobj
     
+    def delete(self,key):
+        if key in ["ACPtrace","EnvTrace"]:
+            self.stm[key] = []
+        elif key in ["currentenv","actionplans"]:
+            self.stm[key] = {}
+        else:
+            self.stm[key] = ""
+    
     def get(self, key):
         if key == "ACPtrace": 
             chatdata = [ i['chat'] for i in self.stm[key]]
