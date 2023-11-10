@@ -148,7 +148,7 @@ You can use the related function modules as reusable functions or combine and/or
 Related function modules:
    {actions}
 
-The output should only be in the following json format parsable in python3. No other text should be there. It should be a single json record only. Add escape charachters wherever required to make the following a valid json definately.
+The output should ONLY be in the following SINGLE JSON format PARSABLE in python3. No other text should be there and no json tags. It should be a single json record only. Add escape charachters wherever required to make the following a valid json definately.
 {{
   "name": <a meaningful name of the action not exceeding 7 tokens>,
   "input parameter" : <required input parameters of the function in the following code. If no parameters are required then keep it blank enclosed with double quotes>, 
@@ -200,7 +200,7 @@ You can use the beliefaxioms from a list of related similar problem environments
 Generate a summary of beliefaxioms, that will help the agent to successfully accomplish the SAME task AGAIN, in the SAME environment.
     
 Update on top of the current estimated belief axioms of the current environment based on the updated action observation trace. Do not add the same information that are available in prior axioms and current state. Do not change any of the already available belief axioms unless latest beliefs contradicts any of those. In that case keep the latest beiefs. You can add your new beliefs to the belief axioms.
-The output should always be strictly generated in the following json structure. do not add json tags. Add escape charachters wherever required to make the following a valid json definately.
+The output should always be STRICTLY generated in the following json structure. do not add json tags. Add escape charachters wherever required to make the following a valid json definately.
 {{  
  "beliefaxioms": <this should be a concise single plain text format. state causal relations on how environment responds to actions. state what is need to meet the objective, what actions causes progress towards objective and what actions causes failure or negative feedback. do not write redundant or contradicting statements>
  }}

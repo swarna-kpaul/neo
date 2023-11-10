@@ -39,7 +39,7 @@ class scienv():
           
         if objective == None:
             objective = self.env.getTaskDescription()
-        self.environment = {"description": predescription + self.env.getTaskDescription(), "objective": objective, "prior axioms": prioraxioms, "belief axioms": "", "current state": self.getstate()}
+        self.environment = {"description": predescription + objective, "objective": objective, "prior axioms": prioraxioms, "belief axioms": "", "current state": self.getstate()}
         
         self.examples = """
         Example 1:

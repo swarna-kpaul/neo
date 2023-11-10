@@ -50,7 +50,7 @@ class neo():
         EnvTrace = self.stm.get("EnvTrace")
         #critique = self.stm.get("critique")
         currentenvironment = self.stm.get("currentenv")
-        currentbelief = "  objective:"+ currentenvironment['env']['objective']+"\n  belief axioms:"+ currentenvironment['env']["belief axioms"]
+        currentbelief = "  objective:"+ currentenvironment['env']['objective']+"\n  belief axioms:"+ str(currentenvironment['env']["belief axioms"])
         #ACPtrace_text = "\n".join([ "    Action plan: "+ i["actionplan"]["actionplan"]+"\n    Environment response: "+ i["perception"] for i in ACPtrace])
         EnvTrace_text = "\n".join([str(i) for i in EnvTrace])
         relatedenvironments = self.ltm.get(str(currentenvironment['env']), namespace = "environments")
@@ -66,7 +66,7 @@ class neo():
         print("SEARCHERPROMPT:",messages)
         output = llm_model.predict(messages)
         print("SEARCHERPROMPT output:",output)
-        beliefaxioms = ast.literal_eval(output)
+        beliefaxioms = ast.literal_eval(output)["beliefaxioms"]
         currentenvironment["env"]["belief axioms"] = beliefaxioms
         self.stm.set({'id': currentenvironment['id'], 'env':currentenvironment["env"]},"currentenv")
         currentenvironment["env"]['type'] = "environments"
