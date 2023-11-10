@@ -53,7 +53,7 @@ Following is the list of callable function modules.
 stored function modules:
     {relatedactions}
 
-The output should be in following json format. In no case the output should deviate from the following json format.
+The output should be in following format. Do not add the json tags so that it can be directly read by python. In NO CASE the output should deviate from the following format.
 {{"planid" : <8 digit alphanumeric id>,
 "actionplan": <algorithm of actionplan in plaintext. It should contain enough details to convert it into code. If a function module is called that takes input parameters, then properly supply the value of the input parameters in the actionplan. Do not call no-existent functions in allowed actions. Do not create infinite loops. Do not make up new actions or functions. Do not generate plans in separate lines.>,
 "requiredactions" : [<distinct subset of moduleid from stored function modules needed to carry out the action plan. All modules should be strictly from stored function modules and do not make up any moduleids.>],
@@ -193,33 +193,28 @@ ACTORPROMPTINPUTVARIABLES = ["beliefenvironment","actionplan","actions", "error"
 # """
 
  
-searchertemplate = """System: You are an expert assitant. You are given ACTION OBSERVATION TRACE, a sequence of actions that an agent made in a ENVIRONMENT to accomplish a task and the perceptions it got.
+searchertemplate = """System: You are an expert assitant. You are given ACTION OBSERVATION TRACE, a sequence of actions that an agent made in a environ,ent to accomplish a task and the perceptions it got.
 The ACTION OBSERVATION TRACE is accompanied by an CRITIQUE indicating the success of the attempt to the task.
 You need to derive the LEARNINGS as BELIEFAXIOMS.
 You can use the beliefaxioms from a list of related similar problem environments to derive the new one. 
-Generate a summary of beliefaxioms, as a list, that will help the agent to successfully accomplish the SAME task AGAIN, in the SAME environment.
-Each summary can ONLY be of the form:
-    "X MAY BE NECCESSARY to Y.
-    "X SHOULD BE NECCESSARY to Y.
-    "X MAY BE CONTRIBUTE to Y.
-    "X DOES NOT CONTRIBUTE to Y.
+Generate a summary of beliefaxioms, that will help the agent to successfully accomplish the SAME task AGAIN, in the SAME environment.
     
-Update on top of the current estimated belief axioms of the current environment based on the updated action perception trace. Do not add the same information that are available in prior axioms and current state. Do not change any of the already available belief axioms unless latest beliefs contradicts any of those. In that case keep the latest beiefs. You can add your new beliefs to the belief axioms.
-The output should always be strictly generated in the following json structure. Add escape charachters wherever required to make the following a valid json definately.
+Update on top of the current estimated belief axioms of the current environment based on the updated action observation trace. Do not add the same information that are available in prior axioms and current state. Do not change any of the already available belief axioms unless latest beliefs contradicts any of those. In that case keep the latest beiefs. You can add your new beliefs to the belief axioms.
+The output should always be strictly generated in the following json structure. do not add json tags. Add escape charachters wherever required to make the following a valid json definately.
 {{  
- "beliefaxioms": <updated learnings>
+ "beliefaxioms": <this should be a concise single plain text format. state causal relations on how environment responds to actions. state what is need to meet the objective, what actions causes progress towards objective and what actions causes failure or negative feedback. do not write redundant or contradicting statements>
  }}
 
-Here is the current estimated environment. It has a description, objective, prior axioms (that are fixed), belief axioms and current state. You should update and output the belief axioms based on the action perception trace provided by the user.
-Current estimated environment:
+Here is the environment objective and current belief axioms. You should update and output the belief axioms based on the action observation trace provided by the user.
+Environment:
     {beliefenvironment}
 
 Following are some related environments. You may use some of the axioms in the related environment if there are some obvious similarities. 
 Related environments:
     {relatedenvironments}
 
-User: Here is the action perception trace. Provide the belied axioms for this.
-Action Perception trace:
+User: Here is the action observation trace. Provide the belied axioms for this.
+Action observation trace:
     {EnvTrace}
     
        

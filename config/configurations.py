@@ -17,7 +17,7 @@ llm_0_4_model = ChatOpenAI(temperature=0.4, request_timeout=30, model="gpt-3.5-t
 llm_gpt4 = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4-1106-preview",openai_api_key=OPENAIAPIKEY, verbose=True)
 
 
-MAXRELATEDACTIONSET =10
+
 
 pinecone.init(
     api_key=PINECONE_API_KEY,

@@ -11,6 +11,7 @@ gamma = 0.8
 CUMULATIVEREWARDTHRESHOLD = 5
 EPISODELEN = 2
 MAXPLANCRITUQUETRIAL = 10
+MAXRELATEDACTIONSET =2
 
 class neo():
     def __init__ (self,environment, stmloadfile, stmstoragefile, STMsize = 10):
@@ -49,17 +50,17 @@ class neo():
         EnvTrace = self.stm.get("EnvTrace")
         #critique = self.stm.get("critique")
         currentenvironment = self.stm.get("currentenv")
-        #currentbelief = {"belief axioms": currentenvironment["belief axioms"]}
+        currentbelief = "  objective:"+ currentenvironment['env']['objective']+"\n  belief axioms:"+ currentenvironment['env']["belief axioms"]
         #ACPtrace_text = "\n".join([ "    Action plan: "+ i["actionplan"]["actionplan"]+"\n    Environment response: "+ i["perception"] for i in ACPtrace])
         EnvTrace_text = "\n".join([str(i) for i in EnvTrace])
         relatedenvironments = self.ltm.get(str(currentenvironment['env']), namespace = "environments")
         if relatedenvironments:
-            relatedenvironments = [ "    Environment "+str(i)+":\n"+str(env["metadata"]) for i,env in enumerate(relatedenvironments) if env["id"] != currentenvironment['id'] ] 
+            relatedenvironments = [ "    Environment "+str(i)+":\n    objective: "+str(env["metadata"]["objective"])+"\n   belief axioms:"+ str(env["metadata"]["belief axioms"]) for i,env in enumerate(relatedenvironments) if env["id"] != currentenvironment['id'] ] 
             relatedenvironments = ["\n".join(relatedenvironments)]
         else:
             relatedenvironments = ""
         messages = self.SEARCHERPROMPT.format(relatedenvironments = str(relatedenvironments),
-                        beliefenvironment = str(currentenvironment['env']),
+                        beliefenvironment = str(currentbelief),
                         EnvTrace = EnvTrace_text)
             #print(messages)
         print("SEARCHERPROMPT:",messages)
@@ -129,14 +130,15 @@ class neo():
             print("ACTPLANPROMPT:",messages)
             output = llm_gpt4.predict(messages)
             
-            
+            print("ACTPLANPROMPT output:",output)
             try:
                 output = ast.literal_eval(output)
             except Exception  as e:
                 #errorfeedback = "Here is the last actionplan generated. "+ output+ "\n But this action plan has the following error. Modify the plan to remove the error.\n"+str(e)
+                print(e)
                 input("Press any key to continue...")
                 continue
-            print("ACTPLANPROMPT output:",output)
+            
             input("Press any key to continue...")
             ########## check if related actions contain valid module ids 
             moduleids = [action["id"] for action in relatedactionset]
