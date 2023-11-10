@@ -9,7 +9,7 @@ import pickle
 
 gamma = 0.8
 CUMULATIVEREWARDTHRESHOLD = 5
-EPISODELEN = 3
+EPISODELEN = 2
 MAXPLANCRITUQUETRIAL = 10
 
 class neo():
@@ -100,7 +100,7 @@ class neo():
         ACPtrace = self.stm.get("ACPtrace")
         #critique = self.stm.get("critique")
         #currentperception = self.env.perception
-        ACPtrace_text = "\n".join([ "    AI: "+ str(i["actionplan"])+"\n    Environment: "+ i["perception"] for i in ACPtrace])
+        ACPtrace_text = "\n".join([ "    actionplan: "+ str(i["actionplan"])+"\n    perception: "+ i["perception"]+"\n    feedback: "+ i["feedback"] for i in ACPtrace])
         #objective = self.env.actplanobjective
         
         relatedactionset = self.ltm.get(currentenvironment["description"]+currentenvironment["objective"]+currentenvironment["prior axioms"], namespace = "actions",k = MAXRELATEDACTIONSET)
@@ -204,7 +204,7 @@ class neo():
                         actionplan = actionplantext, \
                         error = codeerror)
         print("ACTORPROMPT:",messages)
-        output = llm_gpt4.predict(messages)
+        output = llm_model.predict(messages)
         print("ACTORPROMPT output:",output)
         output = ast.literal_eval(output)
         output["requirements"] = '\n\n'.join([relatedaction["requirements"]+"\n\n"+relatedaction["code"] for id,relatedaction in relatedactionsets.items()]) 
@@ -434,10 +434,11 @@ class neo():
             # else:
                 # critiquefeedback["feedback"] = "neutral"
                 
-            newACPT = {"actionplan": output,"perception": str(critiquefeedback)}
+            newACPT = {"actionplan": output,"perception": str(self.env.perception), "feedback": str(critiquefeedback)}
             self.stm.set(newACPT,"ACPtrace")
             
-            self.stm.set(str(self.env.perception), "EnvTrace")
+            newEnvTrace = {"action observation trace": str(self.env.perception)+"\n", "critique" : critiquefeedback["reason"] }
+            self.stm.set(newEnvTrace, "EnvTrace")
             self.stm.set(self.env.state, "state")
             
             with open(self.stmstoragefile, 'wb') as f:
@@ -455,7 +456,7 @@ class neo():
                     try:
                         env = self.searcher()
                         self.stm.delete( "EnvTrace")
-                        self.stm.delete( "ACPtrace")
+                        #self.stm.delete( "ACPtrace")
                     except Exception as e:
                        #pass
                         print ("Error", str(e))

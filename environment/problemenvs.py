@@ -18,7 +18,7 @@ chatenvobj = chatenv()
 
 
 class scienv():
-    def __init__(self,task = "1-1"):
+    def __init__(self,task = "1-1", objective = None):
         self.env = ScienceWorldEnv(task)
         obs1, info1 = self.env.reset()
         self.observation = []
@@ -37,8 +37,9 @@ class scienv():
         Set of parameter values:
           """+str(self.env.getPossibleActions())
           
-      
-        self.environment = {"description": predescription + self.env.getTaskDescription(), "objective": self.env.getTaskDescription(), "prior axioms": prioraxioms, "belief axioms": "", "current state": self.getstate()}
+        if objective == None:
+            objective = self.env.getTaskDescription()
+        self.environment = {"description": predescription + self.env.getTaskDescription(), "objective": objective, "prior axioms": prioraxioms, "belief axioms": "", "current state": self.getstate()}
         
         self.examples = """
         Example 1:

@@ -47,7 +47,7 @@ Following are the historical action plans provided by you and the corresponding 
 Action plan history:
    {ACPtrace}
 
-The action plan should get positive feedback from the critique in long term and meet the objective in the environment. From the action plan history if there is no progress observed in meeting the objective, the plan needs to be changed.
+The action plan should get positive feedback from the critique in long term and meet the objective in the environment. From the action plan history if there is no progress observed in meeting the objective or gets negative feedback, the plan needs to be changed.
 
 Following is the list of callable function modules.    
 stored function modules:
@@ -193,12 +193,21 @@ ACTORPROMPTINPUTVARIABLES = ["beliefenvironment","actionplan","actions", "error"
 # """
 
  
-searchertemplate = """System: You are a part of an AI agent called neo. You need to derive a model of the percieved problem environment from action perception trace.
-You can use the list of related similar environments to derive the new one.
-Update on top of the current estimated belief axioms of the environment based on the updated action perception trace. Do not add the same information that are available in prior axioms and current state. Do not change any of the already available belief axioms unless current beliefs contradicts any of those. You can add your new beliefs to the belief axioms.
+searchertemplate = """System: You are an expert assitant. You are given ACTION OBSERVATION TRACE, a sequence of actions that an agent made in a ENVIRONMENT to accomplish a task and the perceptions it got.
+The ACTION OBSERVATION TRACE is accompanied by an CRITIQUE indicating the success of the attempt to the task.
+You need to derive the LEARNINGS as BELIEFAXIOMS.
+You can use the beliefaxioms from a list of related similar problem environments to derive the new one. 
+Generate a summary of beliefaxioms, as a list, that will help the agent to successfully accomplish the SAME task AGAIN, in the SAME environment.
+Each summary can ONLY be of the form:
+    "X MAY BE NECCESSARY to Y.
+    "X SHOULD BE NECCESSARY to Y.
+    "X MAY BE CONTRIBUTE to Y.
+    "X DOES NOT CONTRIBUTE to Y.
+    
+Update on top of the current estimated belief axioms of the current environment based on the updated action perception trace. Do not add the same information that are available in prior axioms and current state. Do not change any of the already available belief axioms unless latest beliefs contradicts any of those. In that case keep the latest beiefs. You can add your new beliefs to the belief axioms.
 The output should always be strictly generated in the following json structure. Add escape charachters wherever required to make the following a valid json definately.
 {{  
- "beliefaxioms": <causal relations of how the environment works as derived from the action perception trace and current estimated environment in free text form. Based on current state and action perception trace state what actions are needed to move closer towards the objective. It should state how the environment responds on different actions and what actions brings most reward and what actions brings least. It should not state the rules of the actionplan or what is availble in prior axioms or current state. The axioms should be complete in itself. It should not refer to undefined environment response or any other objects. Do not add too general or vague statements. Do not write redundant statements.>
+ "beliefaxioms": <updated learnings>
  }}
 
 Here is the current estimated environment. It has a description, objective, prior axioms (that are fixed), belief axioms and current state. You should update and output the belief axioms based on the action perception trace provided by the user.
@@ -209,7 +218,7 @@ Following are some related environments. You may use some of the axioms in the r
 Related environments:
     {relatedenvironments}
 
-User: Here is the action perception trace. The action is taken by the agent Neo and reponse provided by the environment against corresponding action. Provide the belied axioms for this.
+User: Here is the action perception trace. Provide the belied axioms for this.
 Action Perception trace:
     {EnvTrace}
     

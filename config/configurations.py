@@ -14,7 +14,7 @@ embeddings_model = OpenAIEmbeddings(openai_api_key=OPENAIAPIKEY)
 llm_model = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-3.5-turbo-1106",openai_api_key=OPENAIAPIKEY, verbose=True)
 llm_defn_model = ChatOpenAI(temperature=0, request_timeout=50, model="gpt-3.5-turbo-1106",openai_api_key=OPENAIAPIKEY, verbose=True)
 llm_0_4_model = ChatOpenAI(temperature=0.4, request_timeout=30, model="gpt-3.5-turbo",openai_api_key=OPENAIAPIKEY, verbose=True)
-llm_gpt4 = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4-0613",openai_api_key=OPENAIAPIKEY, verbose=True)
+llm_gpt4 = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4-1106-preview",openai_api_key=OPENAIAPIKEY, verbose=True)
 
 
 MAXRELATEDACTIONSET =10
@@ -71,7 +71,7 @@ class STM():  ### Short term memory -- {"conversation": , "timestamp": }
             data["actionplan"]
             stmobj.append({"chat": data , "time" : datetime.now()})
             ## update cumulative rewards
-            stmobj = [{"chat": {"actionplan": {"planid": ACP["chat"]["actionplan"]["planid"], "actionplan": ACP["chat"]["actionplan"]["actionplan"], "requiredactions":  ACP["chat"]["actionplan"]["requiredactions"], "cumulative reward": data["actionplan"]["cumulative reward"] if ACP["chat"]["actionplan"]["planid"] == data["actionplan"]["planid"] else ACP["chat"]["actionplan"]["cumulative reward"]} , "perception":ACP["chat"]["perception"]}, "time": ACP["time"]} for ACP in stmobj ]
+            stmobj = [{"chat": {"actionplan": {"planid": ACP["chat"]["actionplan"]["planid"], "actionplan": ACP["chat"]["actionplan"]["actionplan"], "requiredactions":  ACP["chat"]["actionplan"]["requiredactions"], "cumulative reward": data["actionplan"]["cumulative reward"] if ACP["chat"]["actionplan"]["planid"] == data["actionplan"]["planid"] else ACP["chat"]["actionplan"]["cumulative reward"]} , "perception":ACP["chat"]["perception"], "feedback": ACP["chat"]["feedback"]}, "time": ACP["time"]} for ACP in stmobj ]
         elif key == "EnvTrace":
             if len(stmobj) >= self.memorysize:
                 del stmobj[0]
