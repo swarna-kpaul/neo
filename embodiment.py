@@ -12,5 +12,5 @@ def neosolvercreator(bootstrapenv = None, problemenv = None, stmloadfile = None,
         neoenvobj = neoenv(bootstrapenv, problemenv)       
 
     
-    neosolver = neo(neoenvobj,stmloadfile, stmstoragefile, STMsize = 10 )
+    neosolver = neo(neoenvobj,stmloadfile, stmstoragefile, STMsize = 4 )
     return neosolver

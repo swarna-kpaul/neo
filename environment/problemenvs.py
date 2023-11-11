@@ -33,7 +33,8 @@ class scienv():
         Here are the possible set of parameter values  that can be passed as argument to 'takeenvaction', where OBJ should be replaced by any object that you can find in your current state.  You can take only one action. The environment is fully not observable. New objects and states can be observed after taking different actions. The action plan should be realistically and scientifically valid. 
         you may reset the environment if you feel stuck and need to start over.
         focus is a extremely critical action that can be only used the number of times 'focus' is mentioned in the task description. Using it more than that or inappropiately (such as on a wrong object) will terminate the session and the task will be rendered as incomplete. focus can be used on the object which is available in current state.
-        Do not make up new actions or objects. If you dont find appropriate objects for actions to meet the objective then generate plan to explore the environment to find required objects. If some events need some time to occur after some action is taken then take the action wait to observe the effect after some time.
+        Do not make up new actions or objects. If you dont find appropriate objects for actions to meet the objective then generate plan to explore the environment to find required objects. If some events need some time to occur after some action is taken then take the action wait to observe the effect after some time. Take only one valid action. do not add any other logic in the plan.
+        
         Set of parameter values:
           """+str(self.env.getPossibleActions())
           
@@ -85,13 +86,16 @@ class scienv():
         self.actiontrace.append(actiontext)
         try:
             observation, reward, self.goalreached, info = self.env.step(actiontext)
-            self.observation.append( "{ Action taken: "+actiontext+" ; Observation : "+ observation.replace("\n", "; ")+"}")
+            
             if actiontext == "reset task":
                 self.reward = -1
                 self.totalreward = 0
             else:
                 self.reward +=reward
                 self.totalreward += reward
+            if actiontext.startswith("focus") and reward < 0:
+                observation += " You focused on the wrong object and that resulted in a critical mistake the environment was reset"
+            self.observation.append( "{ Action taken: "+actiontext+" ; Observation : "+ observation.replace("\n", "; ")+"}")    
         except Exception as e:
             self.observation = "{ Action taken: "+actiontext+" ; Observation : Error - "+ str(e).replace('\n'," ")+"}"
             self.reward -=1
@@ -108,7 +112,7 @@ class scienv():
     def success_map(self, metric, score):
         feedback = ''
         if metric == 'reward':
-            if score == -100:
+            if score < -50:
                 feedback += "The agent made critical mistakes and the task was terminated and reset."
             if score < 0:
                 feedback += "The agent performed very poorly and could not make any critical progress."

@@ -9,9 +9,9 @@ import pickle
 
 gamma = 0.8
 CUMULATIVEREWARDTHRESHOLD = 5
-EPISODELEN = 0
+EPISODELEN = 3
 MAXPLANCRITUQUETRIAL = 10
-MAXRELATEDACTIONSET =2
+MAXRELATEDACTIONSET =1
 
 class neo():
     def __init__ (self,environment, stmloadfile, stmstoragefile, STMsize = 10):
@@ -64,7 +64,7 @@ class neo():
                         EnvTrace = EnvTrace_text)
             #print(messages)
         print("SEARCHERPROMPT:",messages)
-        output = llm_model.predict(messages)
+        output = llm_gpt4.predict(messages)
         print("SEARCHERPROMPT output:",output)
         beliefaxioms = ast.literal_eval(output)["beliefaxioms"]
         currentenvironment["env"]["belief axioms"] = beliefaxioms
@@ -123,7 +123,7 @@ class neo():
             else:
                 errorfeedbacktext = ""
             messages = self.ACTPLANPROMPT.format(beliefenvironment = currentenvironment, \
-                        ACPtrace = ACPtrace_text, \
+                        #ACPtrace = ACPtrace_text, \
                         relatedactions = '\n'.join(relatedactionlist), \
                         actionplanexamples = self.env.problemenv.examples,\
                         errorfeedback = errorfeedback)
@@ -375,7 +375,8 @@ class neo():
     def run (self, lifetime = float("Inf")):   
         counter = 0
         while True:
-            if lifetime <= 0 or self.env.goalreached:
+            print("GOAL REACHED",self.env.goalreached)
+            if lifetime <= 0:
                 break
             ###### Run actor
             print("Running actionplan....")
