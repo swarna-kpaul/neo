@@ -14,7 +14,7 @@ MAXPLANCRITUQUETRIAL = 10
 MAXRELATEDACTIONSET =1
 
 class neo():
-    def __init__ (self,environment, stmloadfile, stmstoragefile, STMsize = 10):
+    def __init__ (self,environment, stmloadfile, stmstoragefile, STMsize = 4):
     
         self.ltm = LTM() 
         self.stmsize = STMsize
@@ -35,7 +35,7 @@ class neo():
             input("Press a key to continue ....")
             
         else:
-            self.stm = STM()
+            self.stm = STM(STMsize)
             id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
             self.stm.set({'id': id, 'env': environment.bootstrapbeliefenvironment},"currentenv")
         self.SEARCHERPROMPT = PromptTemplate(input_variables=SEARCHERPROMPTINPUTVARIABLES, template=searchertemplate)
