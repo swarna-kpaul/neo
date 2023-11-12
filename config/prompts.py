@@ -207,11 +207,11 @@ Generate beliefaxioms, that will help the agent to successfully accomplish the S
 Each line can ONLY be of the following forms :
                             X Y Z 
 
-where X and Z are entities, subject, object, events, actions from action perception trace and Y is relation between X and Z. DO NOT add "_" in X, Y or Z.
+where X and Z are entities, subject, object, events, actions from action perception trace and Y is relation between X and Z. DO NOT add "_" in X, Y or Z. Rogorously capture everything in the action observation trace as memory.
 
     
-Update on top of the current estimated belief axioms of the current environment based on the updated action observation trace. 
-Modify or remove the existing beliefs ONLY IF the latest beliefs based on the TRACE contradicts any of those. Else just add your new beliefs to the belief axioms.
+Update on top of the current estimated belief axioms of the current environment based on the action observation trace. 
+Modify or remove the existing beliefs only if it contradicts with  ACTION OBSERVATION TRACE. You can add your new beliefs to the belief axioms.
 
 The output should always be STRICTLY generated in the following json structure. DO NOT ADD JSON TAGS. Add escape charachters wherever required to make the following a valid json definately.
 {{  
