@@ -1,5 +1,12 @@
 from scienceworld import ScienceWorldEnv
 
+
+class world_exception(Exception):
+    def __init__(self, message={}):            
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
+        self.error = message
+
 class chatenv():
     def __init__(self):
         self.environment = {"description": "Allow user to ask questions and provide optimal answers","objective": "Allow user to ask questions and provide optimal answers", "beliefaxioms":""}
@@ -96,13 +103,20 @@ class scienv():
             else:
                 self.reward +=reward
                 self.totalreward += reward
-            if actiontext.startswith("focus") and reward < 0:
-                observation += " You focused on the wrong object and that resulted in a critical mistake the environment was reset"
-            self.observation.append( "{ Action taken: "+actiontext+" ; Observation : "+ observation.replace("\n", "; ")+"}")    
+                
         except Exception as e:
             self.observation = "{ Action taken: "+actiontext+" ; Observation : Error - "+ str(e).replace('\n'," ")+"}"
             self.reward -=1
-        
+            raise world_exception("invalid action")
+        if observation == "No known action matches that input.":
+            self.observation.append( "{ Action taken: "+actiontext+" ; Observation : "+ observation.replace("\n", "; ")+"}")
+            raise world_exception("invalid action")
+        if actiontext.startswith("focus") and reward < 0:
+            observation += " You focused on the wrong object and that resulted in a critical mistake the environment was reset"
+            self.goalreached = False
+            self.observation.append( "{ Action taken: "+actiontext+" ; Observation : "+ observation.replace("\n", "; ")+"}")
+            raise world_exception("invalid action")
+        self.observation.append( "{ Action taken: "+actiontext+" ; Observation : "+ observation.replace("\n", "; ")+"}")        
         return self.observation
     
     def checkgoal(self):

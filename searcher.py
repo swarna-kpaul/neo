@@ -376,7 +376,7 @@ class neo():
         counter = 0
         while True:
             print("GOAL REACHED",self.env.goalreached)
-            if lifetime <= 0:
+            if lifetime <= 0 or self.env.goalreached:
                 break
             ###### Run actor
             print("Running actionplan....")
@@ -499,6 +499,8 @@ class neoenv():
             #print("Executing Code: ", code)
             exec(code,exec_namespace)
             output = exec_namespace.get("result", None)    
+            return_status = 0
+        except world_exception as e:
             return_status = 0
         except Exception as e:
             output = traceback.format_exc()

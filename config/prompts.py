@@ -200,9 +200,9 @@ You need to derive the LEARNINGS as BELIEFAXIOMS.
 You can use the beliefaxioms from a list of related similar problem environments to derive the new one. 
 Generate beliefaxioms, that will help the agent to successfully accomplish the SAME objective AGAIN, in the SAME environment.
 Each line can ONLY be of the following forms :
-                            X <relation> Y 
+                            X relation Y 
 
-where X and Y are entities from action perception trace.
+where X and Y are entities from action perception trace and relation is relation between X and Y.
 
     
 Update on top of the current estimated belief axioms of the current environment based on the updated action observation trace. Update already available belief axioms with latest beliefs if latest beliefs based on the TRACE contradicts any of those. You can add your new beliefs to the belief axioms.
