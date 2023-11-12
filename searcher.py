@@ -101,7 +101,8 @@ class neo():
         ACPtrace = self.stm.get("ACPtrace")
         #critique = self.stm.get("critique")
         #currentperception = self.env.perception
-        ACPtrace_text = "\n".join([ "    actionplan: "+ str(i["actionplan"])+"\n    perception: "+ i["perception"]+"\n    feedback: "+ i["feedback"] for i in ACPtrace])
+        #ACPtrace_text = "\n".join([ "    actionplan: "+ str(i["actionplan"])+"\n    perception: "+ i["perception"]+"\n    feedback: "+ i["feedback"] for i in ACPtrace])
+        ACPtrace_text = "\n".join([ "    actionplan: "+ str(i["actionplan"])+"\n    critique: "+ i["feedback"] for i in ACPtrace])
         #objective = self.env.actplanobjective
         
         relatedactionset = self.ltm.get(currentenvironment["description"]+currentenvironment["objective"]+currentenvironment["prior axioms"], namespace = "actions",k = MAXRELATEDACTIONSET)
@@ -123,7 +124,7 @@ class neo():
             else:
                 errorfeedbacktext = ""
             messages = self.ACTPLANPROMPT.format(beliefenvironment = currentenvironment, \
-                        #ACPtrace = ACPtrace_text, \
+                        ACPtrace = ACPtrace_text, \
                         relatedactions = '\n'.join(relatedactionlist), \
                         actionplanexamples = self.env.problemenv.examples,\
                         errorfeedback = errorfeedback)
@@ -376,7 +377,7 @@ class neo():
         counter = 0
         while True:
             print("GOAL REACHED",self.env.goalreached)
-            if lifetime <= 0 or self.env.goalreached:
+            if lifetime <= 0: # or self.env.goalreached:
                 break
             ###### Run actor
             print("Running actionplan....")

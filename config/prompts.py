@@ -49,6 +49,11 @@ Prior axioms should be given more preference than belief axioms.
 The action plan should be directed to meet the objective of the environment. If meeting the objetive needs for a subproblem to be solved then create the plan to solve the subproblem.
 The action plan should not have contradicting logic.
 
+Here is a actionplan history and the corresponding critique.
+Actionplan history:
+   {ACPtrace}
+
+if some action plan is not working or getting negative critique, you need to change the plan and try other actions.
 
 Following is the list of callable function modules.    
 stored function modules:
@@ -76,7 +81,7 @@ AI:
 
 """
     
-ACTPLANPROMPTINPUTVARIABLES = ["beliefenvironment", "relatedactions","errorfeedback","actionplanexamples"]
+ACTPLANPROMPTINPUTVARIABLES = ["beliefenvironment", "ACPtrace","relatedactions","errorfeedback","actionplanexamples"]
 
 
 actionplancritiquetemplate = """System: You are a critique of generated action plan by an AI agent situated in an environment. 
@@ -149,7 +154,7 @@ You can use the related function modules as reusable functions or combine and/or
 Related function modules:
    {actions}
 
-The output should ONLY be in the following SINGLE JSON format PARSABLE in python3. No other text should be there and no json tags. It should be a single json record only. Add escape charachters wherever required to make the following a valid json definately.
+The output should ONLY be in the following SINGLE JSON format PARSABLE in python3. No other text should be there. DO NOT ADD JSON TAGS. It should be a single json record only. Add escape charachters wherever required to make the following a valid json definately.
 {{
   "name": <a meaningful name of the action not exceeding 7 tokens>,
   "input parameter" : <required input parameters of the function in the following code. If no parameters are required then keep it blank enclosed with double quotes>, 
@@ -194,20 +199,21 @@ ACTORPROMPTINPUTVARIABLES = ["beliefenvironment","actionplan","actions", "error"
 # """
 
  
-searchertemplate = """System: You are an expert assitant. You are given ACTION OBSERVATION TRACE, a sequence of actions that an agent made in a environ,ent to accomplish a task and the perceptions it got.
+searchertemplate = """System: You are an expert assitant. You are given ACTION OBSERVATION TRACE, a sequence of actions that an agent made in a environment to accomplish a task and the perceptions it got.
 The ACTION OBSERVATION TRACE is accompanied by an CRITIQUE indicating the success of the attempt to the task.
 You need to derive the LEARNINGS as BELIEFAXIOMS.
 You can use the beliefaxioms from a list of related similar problem environments to derive the new one. 
 Generate beliefaxioms, that will help the agent to successfully accomplish the SAME objective AGAIN, in the SAME environment.
 Each line can ONLY be of the following forms :
-                            X relation Y 
+                            X Y Z 
 
-where X and Y are entities from action perception trace and relation is relation between X and Y.
+where X and Z are entities, subject, object, events, actions from action perception trace and Y is relation between X and Z. DO NOT add "_" in X, Y or Z.
 
     
-Update on top of the current estimated belief axioms of the current environment based on the updated action observation trace. Update already available belief axioms with latest beliefs if latest beliefs based on the TRACE contradicts any of those. You can add your new beliefs to the belief axioms.
+Update on top of the current estimated belief axioms of the current environment based on the updated action observation trace. 
+Modify or remove the existing beliefs ONLY IF the latest beliefs based on the TRACE contradicts any of those. Else just add your new beliefs to the belief axioms.
 
-The output should always be STRICTLY generated in the following json structure. do not add json tags. Add escape charachters wherever required to make the following a valid json definately.
+The output should always be STRICTLY generated in the following json structure. DO NOT ADD JSON TAGS. Add escape charachters wherever required to make the following a valid json definately.
 {{  
  "beliefaxioms": <list of learnings. do not write redundant or contradicting statements>
  }}
