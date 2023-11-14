@@ -42,18 +42,11 @@
 
 #The action plan should get positive feedback from the critique in long term and meet the objective in the environment. From the action plan history if there is no progress observed in meeting the objective or gets negative feedback, the plan needs to be changed. If some actions are invalid in the plan then change the actions.
 
-actionplantemplate = """System: You are an AI action planner for an autonomous agent. You are situated in a task environment, as provide by the user, where the objective states your long-term goals, prior axioms are the fixed rules and constraints of the environment, the belief axioms are your beliefs on how the environment works or responds. You need to generate an action plan in exact json format as mentioned below. Do not generate any aditional explanations.
+actionplantemplate = """System: You are an AI action planner for an autonomous agent. You are situated in a task environment, as provide by the user, prior axioms are the fixed rules and constraints of the environment, the belief axioms are your beliefs about the environment. You need to generate an action plan in exact json format as mentioned below. Do not generate any aditional explanations.
  
 Use the prior axioms, belief axioms, current state to plan out and deduce valid set to actions that can be taken in the environment.
 Prior axioms should be given more preference than belief axioms.
-The action plan should be directed to meet the objective of the environment. If meeting the objetive needs for a subproblem to be solved then create the plan to solve the subproblem.
 The action plan should not have contradicting logic.
-
-Here is a actionplan history and the corresponding critique.
-Actionplan history:
-   {ACPtrace}
-
-if some action plan is not working or getting negative critique, you need to change the plan and try other actions.
 
 Following is the list of callable function modules.    
 stored function modules:
@@ -70,7 +63,7 @@ Here are some example output.
   {actionplanexamples}
 
 
-User: Generate the action plan for the following environment
+User: {userpromptprefix}
 Environment:
         {beliefenvironment}  
         
@@ -80,8 +73,12 @@ Environment:
 AI: 
 
 """
+
+useractionplanmeetobjective = "Generate the action plan for the following environment. Give more importance on the belief axioms to generate a correct action plan. The action plan should be directed to meet the objective of the environment. If meeting the objetive needs for a subproblem to be solved then create the plan to solve the subproblem."
+
+useractionplanexplore = "Generate a long random action plan to know more about the environment. Take actions that will add more new information in belief axioms. Give more importance on the belief axioms to generate a correct action plan."
     
-ACTPLANPROMPTINPUTVARIABLES = ["beliefenvironment", "ACPtrace","relatedactions","errorfeedback","actionplanexamples"]
+ACTPLANPROMPTINPUTVARIABLES = ["beliefenvironment", "relatedactions","errorfeedback","userpromptprefix","actionplanexamples"]
 
 
 actionplancritiquetemplate = """System: You are a critique of generated action plan by an AI agent situated in an environment. 
@@ -204,13 +201,13 @@ ACTORPROMPTINPUTVARIABLES = ["beliefenvironment","actionplan","actions", "error"
  
 searchertemplate = """System: You are an expert assitant. You are given ACTION OBSERVATION TRACE, a sequence of actions that an agent made in a environment to accomplish a task and the perceptions it got.
 The ACTION OBSERVATION TRACE is accompanied by an CRITIQUE indicating the success of the attempt to the task.
-You need to derive the LEARNINGS as BELIEFAXIOMS.
+You need to derive a comprehensive LEARNINGS as BELIEFAXIOMS. Capture all the details in the ACTION OBSERVATION TRACE.
 You can use the beliefaxioms from a list of related similar problem environments to derive the new one. 
 Generate beliefaxioms, that will help the agent to successfully accomplish the SAME objective AGAIN, in the SAME environment.
 Each line can ONLY be of the following forms :
                             X Y Z 
 
-where X and Z are entities, subject, object, events, actions from action perception trace and Y is relation between X and Z. DO NOT add "_" in X, Y or Z. Rogorously capture everything in the action observation trace as memory.
+where X and Z are entities, subject, object, events from action perception trace and Y is relation between X and Z. DO NOT add "_" in X, Y or Z. Rogorously capture everything in the action observation trace as memory.
 
     
 Update on top of the current estimated belief axioms of the current environment based on the action observation trace. 

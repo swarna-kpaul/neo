@@ -20,6 +20,7 @@ class neo():
         self.stmsize = STMsize
         self.stmstoragefile = stmstoragefile
         self.env = environment
+        self.explore = True
         if stmloadfile != None:
             with open(stmloadfile, 'rb') as f:
                 self.stm,actiontrace,observation,observation,reward,totalreward = pickle.load(f)
@@ -64,7 +65,7 @@ class neo():
                         EnvTrace = EnvTrace_text)
             #print(messages)
         print("SEARCHERPROMPT:",messages)
-        output = llm_gpt4.predict(messages)
+        output = llm_gpt4_turbo.predict(messages)
         print("SEARCHERPROMPT output:",output)
         beliefaxioms = ast.literal_eval(output)["beliefaxioms"]
         currentenvironment["env"]["belief axioms"] = beliefaxioms
@@ -99,12 +100,23 @@ class neo():
     def actplan(self):
         currentenvironment = self.stm.get("currentenv")['env']
         ACPtrace = self.stm.get("ACPtrace")
-        #critique = self.stm.get("critique")
+        critique = self.stm.get("critique")
+        beliefaxioms = "\n".join(currentenvironment["belief axioms"])
+        if self.explore:
+            ########### random exploration
+            currentenvironmenttext = "\n\n"+" prior axioms: \n"+currentenvironment["prior axioms"]+"\n\n"+ "     belief axioms:\n"+beliefaxioms+"\n\n"+"    current state:\n"+ currentenvironment["current state"]
+            userpromptprefix = useractionplanexplore
+            self.explore = False
+        else:
+            currentenvironmenttext = "    objective: \n" + currentenvironment["objective"] +"\n\n"+" prior axioms: \n"+currentenvironment["prior axioms"]+"\n\n"+ "     belief axioms:\n"+beliefaxioms+"\n\n"+"    current state:\n"+ currentenvironment["current state"]
+            userpromptprefix = useractionplanmeetobjective
+            self.explore = True
         #currentperception = self.env.perception
         #ACPtrace_text = "\n".join([ "    actionplan: "+ str(i["actionplan"])+"\n    perception: "+ i["perception"]+"\n    feedback: "+ i["feedback"] for i in ACPtrace])
         ACPtrace_text = "\n".join([ "    actionplan: "+ str(i["actionplan"])+"\n    critique: "+ i["feedback"] for i in ACPtrace])
         #objective = self.env.actplanobjective
         
+       
         relatedactionset = self.ltm.get(currentenvironment["description"]+currentenvironment["objective"]+currentenvironment["prior axioms"], namespace = "actions",k = MAXRELATEDACTIONSET)
         relatedactionlist = []
         for action in relatedactionset:
@@ -123,10 +135,11 @@ class neo():
                 errorfeedbacktext = "Here are some action plans with feedback. Make sure to generate a valid new action plan. \n "+errorfeedback
             else:
                 errorfeedbacktext = ""
-            messages = self.ACTPLANPROMPT.format(beliefenvironment = currentenvironment, \
-                        ACPtrace = ACPtrace_text, \
+            messages = self.ACTPLANPROMPT.format(beliefenvironment = currentenvironmenttext, \
+                        #ACPtrace = ACPtrace_text, \
                         relatedactions = '\n'.join(relatedactionlist), \
                         actionplanexamples = self.env.problemenv.examples,\
+                        userpromptprefix = userpromptprefix, \
                         errorfeedback = errorfeedback)
             print("ACTPLANPROMPT:",messages)
             output = llm_gpt4_turbo.predict(messages)
@@ -136,7 +149,7 @@ class neo():
                 output = ast.literal_eval(output)
             except Exception  as e:
                 #errorfeedback = "Here is the last actionplan generated. "+ output+ "\n But this action plan has the following error. Modify the plan to remove the error.\n"+str(e)
-                print(e)
+                print(traceback.format_exc())
                 input("Press any key to continue...")
                 continue
             
@@ -389,7 +402,7 @@ class neo():
                         raise NameError("No action plan generated")
                 except Exception as e:
                     pass
-                    print ("Error", str(e))
+                    print ("Error", traceback.format_exc())
                 k = input("Press any button to continue ...")
             
             ########## get planid
