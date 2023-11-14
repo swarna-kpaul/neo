@@ -41,7 +41,7 @@ class scienv():
         Take only one action at a time and do not use any other logic in the plan.
         you may reset the environment if you feel stuck and need to start over.
         FOCUS is a extremely critical action that can be only used the number of times 'focus' is mentioned in the task description and in the exact same sequence. Using it more than that or inappropiately (such as on a wrong object) will terminate the session and the task will be rendered as incomplete. focus can be used on the object which is available in current state.
-        Do not make up new actions or objects. If you dont find appropriate objects for actions to meet the objective then generate plan to explore the environment to find required objects. If some events need some time to occur after some action is taken then take the action wait to observe the effect after some time. Take only one valid action. do not add any other logic in the plan.
+        Do not make up new actions or objects. If you dont find appropriate objects for actions to meet the objective then generate plan to explore the environment to find required objects. If some events need some time to occur after some action is taken then take the action wait to observe the effect after some time. THE ACTION PLAN SHOULD CONTAIN ONLY ONE ACTION CALL. do not add any other logic in the plan.
         
         DO NOT TAKE ANY ACTION ON ANY OBJECT that is NOT IN ACCESSIBLE OBJECTS in CURRENT STATE
         
@@ -83,6 +83,7 @@ class scienv():
         #    reward = -0.5
         #else:
         #    reward = max(self.reward)
+        obs1, info1 = self.env.reset()
         return "Observation: "+'\n'.join([i.replace("\n", "; ") for i in self.observation])+" External feedback: "+ str(self.success_map('reward',self.reward)), self.getstate()
     
     def traceact(self,actiontext):
@@ -124,6 +125,7 @@ class scienv():
         self.observation = []
         self.reward = -1
         print ("total reward", self.totalreward)
+        
         return self.goalreached
     
     def success_map(self, metric, score):

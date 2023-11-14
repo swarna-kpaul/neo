@@ -16,8 +16,8 @@ llm_model = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-3.5-turbo
 llm_inst_model = OpenAI(temperature=0.7, request_timeout=50, model="gpt-3.5-turbo-instruct",openai_api_key=OPENAIAPIKEY)
 llm_defn_model = OpenAI(temperature=0, request_timeout=50, model="gpt-3.5-turbo-instruct",openai_api_key=OPENAIAPIKEY)
 llm_0_4_model = ChatOpenAI(temperature=0.4, request_timeout=30, model="gpt-3.5-turbo",openai_api_key=OPENAIAPIKEY, verbose=True)
-llm_gpt4 = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4-1106-preview",openai_api_key=OPENAIAPIKEY)
-
+llm_gpt4 = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4-0613",openai_api_key=OPENAIAPIKEY)
+llm_gpt4_turbo = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4-1106-preview",openai_api_key=OPENAIAPIKEY)
 
 
 

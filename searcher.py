@@ -75,9 +75,9 @@ class neo():
         return output
     
     def actplancritique(self, actionplan):
-        currentenvironmentaxioms = self.stm.get("currentenv")['env']["prior axioms"]+"\n"+self.stm.get("currentenv")['env']["belief axioms"]+"\n"+self.stm.get("currentenv")['env']["current state"]
+        currentenvironmentaxioms = self.stm.get("currentenv")['env']["prior axioms"]+"\n"+"\n".join(self.stm.get("currentenv")['env']["belief axioms"])+"\n"+self.stm.get("currentenv")['env']["current state"]
         objective = self.stm.get("currentenv")['env']['objective']
-        messages = self.ACTPLANCRITIQUEPROMPT.format(axioms = currentenvironmentaxioms, actplan = actionplan)
+        messages = self.ACTPLANCRITIQUEPROMPT.format(axioms = currentenvironmentaxioms, actplan = actionplan, objective = objective)
         print("ACTPLAN CRITIQUE:", messages)
         while True:
             output = llm_model.predict(messages)
@@ -129,7 +129,7 @@ class neo():
                         actionplanexamples = self.env.problemenv.examples,\
                         errorfeedback = errorfeedback)
             print("ACTPLANPROMPT:",messages)
-            output = llm_model.predict(messages)
+            output = llm_gpt4_turbo.predict(messages)
             
             print("ACTPLANPROMPT output:",output)
             try:
@@ -148,11 +148,11 @@ class neo():
                 errorfeedback += "\nAction plan: "+ str(output)+ "\n Feedback: the requirements have invalid moduleids. Modify the actionplan to put correct moduleids from stored function modules"
                 continue      
             ############ check if actionplan satisfies all constraints
-            isvalid,reason = self.actplancritique(str(output))            
-            if not isvalid and trial < MAXPLANCRITUQUETRIAL:
-                errorfeedback += "\nAction plan: "+ str(output)+ "\n Feedback: But it might be invalid due to "+reason
-                trial += 1
-                continue
+            #isvalid,reason = self.actplancritique(str(output))            
+            #if not isvalid and trial < MAXPLANCRITUQUETRIAL:
+            #    errorfeedback += "\nAction plan: "+ str(output)+ "\n Feedback: But it might be invalid due to "+reason
+            #    trial += 1
+            #    continue
             break
         #self.stm.set(errorfeedback,"errorfeedback")
         return output

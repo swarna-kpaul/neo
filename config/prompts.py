@@ -93,7 +93,10 @@ Here is the action plan:
 Action plan:
      {actplan}
      
- 
+and here is the objective of the plan
+Objective:
+    {objective}
+
 The output should always be in the following json format. In no case it should deviate from the following format.
 {{
  "feedback": <valid if the action plan satisfies all the constraints and invalid if it doesnt>,
@@ -103,7 +106,7 @@ The output should always be in the following json format. In no case it should d
 AI: 
 """
 
-ACTPLANCRITIQUEINPUTVARIABLES = ["axioms", "actplan"]
+ACTPLANCRITIQUEINPUTVARIABLES = ["axioms", "actplan", "objective"]
 
 # DEFAULTACTOROBJECTIVE = """ You are part of an AI agent that converts action plan to concrete executable action in form of python code. 
 # The action is executed in an external environment.
