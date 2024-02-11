@@ -224,13 +224,13 @@ def ltmlearner(STM,LTM):
         relatedenvironments = ["\n".join(relatedenvironments)]
     else:
         relatedenvironments = ""
-    messages = utilities.SEARCHERPROMPT.format(relatedenvironments = str(relatedenvironments),
+    messages = utilities.LEARNERPROMPT.format(relatedenvironments = str(relatedenvironments),
                     beliefenvironment = str(currentbelief),
                     EnvTrace = EnvTrace_text)
         #print(messages)
-    print("SEARCHERPROMPT:",messages)
+    print("LEARNERPROMPT:",messages)
     output = utilities.llm_gpt4_turbo.predict(messages)
-    print("SEARCHERPROMPT output:",output)
+    print("LEARNERPROMPT output:",output)
     beliefaxioms = ast.literal_eval(output)["beliefaxioms"]
     currentenvironment["env"]["belief axioms"] = beliefaxioms
     STM.set({'id': currentenvironment['id'], 'env':currentenvironment["env"]},"currentenv")
