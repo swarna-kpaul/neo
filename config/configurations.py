@@ -18,6 +18,7 @@ llm_defn_model = OpenAI(temperature=0, request_timeout=50, model="gpt-3.5-turbo-
 llm_0_4_model = ChatOpenAI(temperature=0.4, request_timeout=30, model="gpt-3.5-turbo",openai_api_key=OPENAIAPIKEY, verbose=True)
 llm_gpt4 = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4-0613",openai_api_key=OPENAIAPIKEY)
 llm_gpt4_turbo = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4-1106-preview",openai_api_key=OPENAIAPIKEY)
+llm_gpt4_turbo_hightemp = ChatOpenAI(temperature=0.8, request_timeout=50, model="gpt-4-1106-preview",openai_api_key=OPENAIAPIKEY)
 
 
 
@@ -62,42 +63,48 @@ class LTM():  ######### longterm memory
 
 class STM():  ### Short term memory -- {"conversation": , "timestamp": }
     def __init__ (self,memorysize = DEFAULT_STM_SIZE):
-        self.stm = {"ACPtrace": [], "critique":{"feedback":-1,"reason":""}, "currentenv" : {}, "actionplans":{}, "EnvTrace":[], "state": ""}
+        self.stm = {"ACPtrace": [], "critique":{"feedback":-1,"reason":""}, "currentenv" : {}, "actionplans":{}, "envtrace":[], "state": ""}
         self.memorysize = memorysize
         
-    def set(self,data,key):
-        stmobj = self.stm[key]
-        if key == "ACPtrace": 
-            if len(stmobj) >= self.memorysize:
-                del stmobj[0]
-            data["actionplan"]
-            stmobj.append({"chat": data , "time" : datetime.now()})
+    def set(self,key,data):
+        #if key == "ACPtrace": 
+        #    if len(stmobj) >= self.memorysize:
+        #        del stmobj[0]
+        #    data["actionplan"]
+        #    stmobj.append({"chat": data , "time" : datetime.now()})
             ## update cumulative rewards
-            stmobj = [{"chat": {"actionplan": {"planid": ACP["chat"]["actionplan"]["planid"], "actionplan": ACP["chat"]["actionplan"]["actionplan"], "requiredactions":  ACP["chat"]["actionplan"]["requiredactions"], "cumulative reward": data["actionplan"]["cumulative reward"] if ACP["chat"]["actionplan"]["planid"] == data["actionplan"]["planid"] else ACP["chat"]["actionplan"]["cumulative reward"]} , "perception":ACP["chat"]["perception"], "feedback": ACP["chat"]["feedback"]}, "time": ACP["time"]} for ACP in stmobj ]
-        elif key == "EnvTrace":
-            if len(stmobj) >= self.memorysize:
-                del stmobj[0]
-            stmobj.append({"chat": data , "time" : datetime.now()})                
+            #stmobj = [{"chat": {"actionplan": {"planid": ACP["chat"]["actionplan"]["planid"], "actionplan": ACP["chat"]["actionplan"]["actionplan"], "requiredactions":  ACP["chat"]["actionplan"]["requiredactions"], "cumulative reward": data["actionplan"]["cumulative reward"] if ACP["chat"]["actionplan"]["planid"] == data["actionplan"]["planid"] else ACP["chat"]["actionplan"]["cumulative reward"]} , "perception":ACP["chat"]["perception"], "feedback": ACP["chat"]["feedback"]}, "time": ACP["time"]} for ACP in stmobj ]
+        #elif key == "EnvTrace":
+        #    if len(stmobj) >= self.memorysize:
+        #        del stmobj[0]
+        #    stmobj.append({"chat": data , "time" : datetime.now()})                
+        #else:
+        #    stmobj = data
+        self.stm[key] = data
+        
+    def append(self,key,data):
+        if key in self.stm:
+            self.stm[key].append(data)
         else:
-            stmobj = data
-        self.stm[key] = stmobj
+            self.stm[key] = [data]
     
     def delete(self,key):
-        if key in ["ACPtrace","EnvTrace"]:
+        if isinstance(self.stm[key]) == list:
             self.stm[key] = []
-        elif key in ["currentenv","actionplans"]:
+        elif isinstance(self.stm[key]) == dict:
             self.stm[key] = {}
         else:
             self.stm[key] = ""
     
+    
     def get(self, key):
-        if key == "ACPtrace": 
-            chatdata = [ i['chat'] for i in self.stm[key]]
-        elif key == "currentenv" and not self.stm[key]:
-            id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-            return {'id': id, 'env': {}}
-        else:
-            chatdata = self.stm[key]
-        return chatdata
+        #if key == "ACPtrace": 
+        #    chatdata = [ i['chat'] for i in self.stm[key]]
+        #elif key == "currentenv" and not self.stm[key]:
+        #    id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        #    return {'id': id, 'env': {}}
+        #else:
+        data = self.stm[key]
+        return data
     
 stm = STM()    

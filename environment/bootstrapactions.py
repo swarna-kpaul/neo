@@ -47,8 +47,11 @@ def bingsearch(text):
 """
 
 takeenvaction = """
-def takeenvaction(actionvalue):
-    return envobject.problemenv.act(actionvalue)
+def takeenvaction(actionvalue,STM):
+    perception,reward = env.act(action)
+    STM.set("envtrace",{"action":action, "percept":perception, "state":env.getstate(), "reward": reward})
+    STM.set("currentstate",env.getstate())
+    return perception
 """
 
 
@@ -122,7 +125,7 @@ This is an autonomous AI agent that runs for a fixed lifetime. """,
                      "actiontype": "fixed",
                      "type":"actions",
                      "name":"takeenvaction",
-                     "input parameter": "a action value that will be taken in the task environment",
+                     "input parameter": "a pair of action value and short term memory(STM) object. the action value will be taken in the task environment. The STM will be store the action and state returned by the environment",
                      "output": "observation returned by the environment in text format"}
                      ]
                      

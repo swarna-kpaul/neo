@@ -11,12 +11,14 @@ class chatenv():
     def __init__(self):
         self.environment = {"description": "Allow user to ask questions and provide optimal answers","objective": "Allow user to ask questions and provide optimal answers", "beliefaxioms":""}
         return
-        
+    def reset(self):
+        pass
+    
     def getfeedback(self):
         return input("write your feedback.. ")  
     
     def act(self):
-        return input("Ask a question.. ")
+        return input("Ask a question.. "),1
     
     def checkgoal(self):
         return False
@@ -24,51 +26,75 @@ class chatenv():
 chatenvobj = chatenv()
 
 
+from scienceworld import ScienceWorldEnv
+from models.buildenvmodel import *
+
+class world_exception(Exception):
+    def __init__(self, message={}):            
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
+        self.error = message
+
+
 class scienv():
     def __init__(self,task = "1-1", objective = None):
+        self.task = task
         self.env = ScienceWorldEnv(task)
+        self.totalexplore = 9
+        self.MINREWARD = -100
+        self.MAXREWARD = 100
         obs1, info1 = self.env.reset()
-        self.observation = []
+        self.trace = []
         self.actiontrace = []
         self.reward = -1
         self.totalreward = 0
         self.goalreached = False
+        self.toberesetflag = False
+        self.additionalstateinfo = ""
         predescription = "An AI agent helping execute a science experiment in a simulated environment with limited number of objects and actions available at each step. "
         prioraxioms = """
-        an agent situated in textual task environment. Action can be taken by calling the function module named 'takeenvaction'. 
-        The takeenvaction takes a text value as an argument, that denotes the type of action that will be taken.
-        Here are the possible set of parameter values  that can be passed as argument to 'takeenvaction', where OBJ should be replaced by any object that you can find in your current state.  You can take only one action. The environment is fully not observable. New objects and states can be observed after taking different actions. The action plan should be realistically and scientifically valid. 
-        Take only one action at a time and do not use any other logic in the plan.
-        you may reset the environment if you feel stuck and need to start over.
-        FOCUS is a extremely critical action that can be only used the number of times 'focus' is mentioned in the task description and in the exact same sequence. Using it more than that or inappropiately (such as on a wrong object) will terminate the session and the task will be rendered as incomplete. focus can be used on the object which is available in current state.
-        Do not make up new actions or objects. If you dont find appropriate objects for actions to meet the objective then generate plan to explore the environment to find required objects. If some events need some time to occur after some action is taken then take the action wait to observe the effect after some time.
+        an agent situated in textual task environment. Generate a sequence of actions to meet the objective.
+        FOCUS is a extremely critical action that can be only used the number of times 'focus' is mentioned in the task description and in the exact same sequence. Using it more than that or inappropiately (such as on a wrong object) will terminate the session and the task will be rendered as incomplete. focus can be used on the object which is available in current state. Do not add too many consecutive wait.
+        Do not make up new actions or objects.
         
         DO NOT TAKE ANY ACTION ON ANY OBJECT that is NOT IN ACCESSIBLE OBJECTS in CURRENT STATE
         
-        Set of parameter values:
-          """+str(self.env.getPossibleActions())
+        Here are the following set of allowed actions. where OBJ should be replaced by any object that you can find in your current state.
+          """+str(self.env.getPossibleActions())+"""
+         
+        ALL ACTIONS SHOULD BE STRICTLY SELECTED FROM THE ABOVE LIST.         
+         """
           
+         
         if objective == None:
             objective = self.env.getTaskDescription()
+        else:
+            objective = self.env.getTaskDescription() +". "+ objective
         self.environment = {"description": predescription + objective, "objective": objective, "prior axioms": prioraxioms, "belief axioms": "", "current state": self.getstate()}
         
         self.examples = """
         Example 1:
-           {"planid" : "jkuhy85r",
-            "actionplan": "call module takeenvaction with the parameter 'look around'", "requiredactions" :["12735468"],
-            "cumulative reward" : 0}
+           ["look around", "open door to greenhouse"]
         Example 2:
-            {"planid" : "jkuhy85r",
-            "actionplan": "call module takeenvaction with the parameter 'open door to greenhouse'", "requiredactions" :["12735468"],
-            "cumulative reward" : 0}
+           ["go door to hallway", "open door to kitchen"]
         """
         return
+     
+    def reset(self):
+        obs1, info1 = self.env.reset()
+        #self.env.load(self.task, random.choices(range(10))[0])
+        self.additionalstateinfo = ""
+        self.environment["current state"] = self.getstate()
+        self.model.rootstate = True
+        self.totalreward = 0
+        self.toberesetflag = False
         
+     
     def getstate(self):
         obs, _,_,_ = self.env.step("look around")
         state = """
         Currently you see the following things:
-          """+ obs+"""
+          """+ obs+self.additionalstateinfo+"""
                
         Currently you can access the following objects::
           """+str(self.env.getPossibleObjects())+"""
@@ -79,54 +105,64 @@ class scienv():
         return state
         
     def getfeedback(self):
-        #if max(self.reward) == 0:
-        #    reward = -0.5
-        #else:
-        #    reward = max(self.reward)
-        obs1, info1 = self.env.reset()
-        return "Observation: "+'\n'.join([i.replace("\n", "; ") for i in self.observation])+" External feedback: "+ str(self.success_map('reward',self.reward)), self.getstate()
+        feedback = self.success_map('reward',self.totalreward)
+        print ("total reward", self.totalreward)
+        if self.toberesetflag:
+            self.reset()
+        return  feedback
     
-    def traceact(self,actiontext):
-        try:
+    def traceact(self):
+        for actiontext in self.actiontrace:
             observation, reward, self.goalreached, info = self.env.step(actiontext)
-        except:
-            pass
         return observation
     
     def act(self,actiontext):
         self.actiontrace.append(actiontext)
-        try:
-            observation, reward, self.goalreached, info = self.env.step(actiontext)
-            
-            if actiontext == "reset task":
-                self.reward = -1
-                self.totalreward = 0
-            else:
-                self.reward +=reward
-                self.totalreward += reward
-                
-        except Exception as e:
-            self.observation = "{ Action taken: "+actiontext+" ; Observation : Error - "+ str(e).replace('\n'," ")+"}"
-            self.reward -=1
-            raise world_exception("invalid action")
+        
+        prevstate = self.getstate()
+        
+        startstatetotalpossibleactions = len(self.env.getValidActionObjectCombinationsWithTemplates())
+        
+        observation, reward, self.goalreached, info = self.env.step(actiontext)
+        
+        poststate = self.getstate()
+        self.totalreward += reward
+
         if observation == "No known action matches that input.":
-            self.observation.append( "{ Action taken: "+actiontext+" ; Observation : "+ observation.replace("\n", "; ")+"}")
-            raise world_exception("invalid action")
-        if actiontext.startswith("focus") and reward < 0:
+            self.trace.append({"action":actiontext, "observation" : observation.replace("\n", "; "), "state": self.getstate(), "reward":float('-Inf'),"totactions": 1, "starttotactions": startstatetotalpossibleactions,"isvalidactionformemorizing": False })
+        elif observation in ["The door is not open.", "The door is already open.","It's not clear how to get there from here."] or observation.startswith("Its not clear how to") or observation.startswith("I'm not sure"):
+            self.trace.append({"action":actiontext, "observation" : observation.replace("\n", "; "), "state": self.getstate(), "reward":float('-Inf'),"totactions": 1, "starttotactions": startstatetotalpossibleactions,"isvalidactionformemorizing": True })
+            #raise world_exception("invalid action")
+        elif actiontext.startswith("focus") and reward < 0:
             observation += " You focused on the wrong object and that resulted in a critical mistake the environment was reset"
             self.goalreached = False
-            self.observation.append( "{ Action taken: "+actiontext+" ; Observation : "+ observation.replace("\n", "; ")+"}")
+            self.trace.append({"action":actiontext, "observation" : observation.replace("\n", "; "), "state": self.getstate(), "reward":float('-Inf'),"totactions":1,"starttotactions": startstatetotalpossibleactions, "isvalidactionformemorizing": True})  #( "{ Action taken: "+actiontext+" ; Observation : "+ observation.replace("\n", "; ")+"}")
+            #return self.observation#
+            print("Punishment:", -100)
+            self.toberesetflag = True
+            
             raise world_exception("invalid action")
-        self.observation.append( "{ Action taken: "+actiontext+" ; Observation : "+ observation.replace("\n", "; ")+"}")        
-        return self.observation
+        else:
+            if poststate == prevstate and actiontext not in [ "look around", "reset task", "reset", "inventory"] and not actiontext.startswith("look"):
+                self.additionalstateinfo += "\n "+observation
+            if reward > 0:
+                normalizedreward = math.log(reward)
+            elif reward < 0: 
+                normalizedreward = -math.log(-reward)
+            else:
+                normalizedreward = reward 
+            totalpossibleactions = len(self.env.getValidActionObjectCombinationsWithTemplates())
+            self.trace.append({"action":actiontext, "observation" : observation.replace("\n", "; "), "state": self.getstate(), "reward": normalizedreward, "totactions": totalpossibleactions,"starttotactions": startstatetotalpossibleactions, "isvalidactionformemorizing": True})        
+        return observation,reward
     
+    
+      
     def checkgoal(self):
-        #obs1, info1 = self.env.reset()
-        self.observation = []
-        self.reward = -1
-        print ("total reward", self.totalreward)
-        
-        return self.goalreached
+        if self.totalreward == 100:
+            return True
+        else:
+            return False
+                
     
     def success_map(self, metric, score):
         feedback = ''

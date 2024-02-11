@@ -48,6 +48,8 @@ Use the prior axioms, belief axioms, current state to plan out and deduce valid 
 Prior axioms should be given more preference than belief axioms.
 The action plan should not have contradicting logic.
 
+{ACPtrace}
+
 Following is the list of callable function modules.    
 stored function modules:
     {relatedactions}
@@ -76,9 +78,9 @@ AI:
 
 useractionplanmeetobjective = "Generate the action plan for the following environment. Give more importance on the belief axioms to generate a correct action plan. The action plan should be directed to meet the objective of the environment. If meeting the objetive needs for a subproblem to be solved then create the plan to solve the subproblem."
 
-useractionplanexplore = "Generate a long random action plan to know more about the environment. Take actions that will add more new information in belief axioms. Give more importance on the belief axioms to generate a correct action plan."
+useractionplanexplore = "Generate a long random action plan to know more about the environment. Folow the belief axioms to generate correct action plan. Take actions to EXPLORE NEW AREAS and gain new information that is not available in belief axioms. "
     
-ACTPLANPROMPTINPUTVARIABLES = ["beliefenvironment", "relatedactions","errorfeedback","userpromptprefix","actionplanexamples"]
+ACTPLANPROMPTINPUTVARIABLES = ["beliefenvironment","ACPtrace", "relatedactions","errorfeedback","userpromptprefix","actionplanexamples"]
 
 
 actionplancritiquetemplate = """System: You are a critique of generated action plan by an AI agent situated in an environment. 
@@ -207,13 +209,13 @@ Generate beliefaxioms, that will help the agent to successfully accomplish the S
 Each line can ONLY be of the following forms :
                             X Y Z 
 
-where X and Z are entities, subject, object, events from action perception trace and Y is relation between X and Z. DO NOT add "_" in X, Y or Z. Rogorously capture everything in the action observation trace as memory.
+where X and Z are entities, subject, object, events from action perception trace and Y is relation between X and Z. DO NOT add "_" in X, Y or Z. Rogorously capture everything in the action observation trace as memory. COMBINE MULTIPLE LINES into one if either X and Y are same or Y and Z are same.
 
     
 Update on top of the current estimated belief axioms of the current environment based on the action observation trace. 
 Modify or remove the existing beliefs only if it contradicts with  ACTION OBSERVATION TRACE. You can add your new beliefs to the belief axioms.
 
-The output should always be STRICTLY generated in the following json structure. DO NOT ADD JSON TAGS. Add escape charachters wherever required to make the following a valid json definately.
+The output should always be STRICTLY generated in the following json structure. DO NOT enclose output with JSON TAGS. Add escape charachters wherever required to make the following a valid json definately.
 {{  
  "beliefaxioms": <list of learnings. do not write redundant or contradicting statements>
  }}
@@ -329,3 +331,17 @@ AI:
 """
 
 PLANEQVVARIABLES = ["historicalactionplan","generatedactionplan"]
+
+EXTRACTLEARNINGS = """System: You are an expert agent that extracts relevant learnings.
+
+User: Extract top 10 learnings from the following list of learnings that are essential to meet the following objective.
+
+Objective:
+   {objective}
+   
+Learnings:
+   {learnings}
+
+"""
+
+EXTRACTLEARNVARIABLES = ["objective","learnings"]
