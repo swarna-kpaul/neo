@@ -27,7 +27,7 @@ chatenvobj = chatenv()
 
 
 from scienceworld import ScienceWorldEnv
-from models.buildenvmodel import *
+from models.buildstatespacemodel import *
 
 class world_exception(Exception):
     def __init__(self, message={}):            

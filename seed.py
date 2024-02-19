@@ -1,7 +1,7 @@
 from config.configurations import *
 from solverfunctions import *
-from model.buildstatespacemodel import *
-import utilities
+from models.buildstatespacemodel import *
+import config.utilities as utilities
 from environment.problemenvs import *
 import random
 import string
