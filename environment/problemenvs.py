@@ -72,14 +72,14 @@ class scienv():
             objective = self.env.getTaskDescription()
         else:
             objective = self.env.getTaskDescription() +". "+ objective
-        self.environment = {"description": predescription + objective, "objective": objective, "prior axioms": prioraxioms, "belief axioms": "", "current state": self.getstate()}
-        
+                
         self.examples = """
         Example 1:
            ["look around", "open door to greenhouse"]
         Example 2:
            ["go door to hallway", "open door to kitchen"]
         """
+        self.environment = {"description": predescription + objective, "objective": objective, "prior axioms": prioraxioms, "belief axioms": "", "current state": self.getstate(), "examples": self.examples}
         return
      
     def reset(self):

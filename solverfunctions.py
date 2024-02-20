@@ -37,13 +37,13 @@ def execcode(code,env,stm):
 
 def updatestatespace(stm):
     spmodel = stm.get("SPmodel")
-    spmodel.parseacpt_trace(STM.get("envtrace"),STM.get("currentstate"))
+    spmodel.parseacpt_trace(stm.get("envtrace"),stm.get("currentstate"))
     spmodel.updatevalue()
     
 
 def getinstructionfromSP(stm):
     spmodel = stm.get("SPmodel")
-    return spmodel.getplandetails(STM.get("currentstate"))
+    return spmodel.getplandetails(stm.get("currentstate"))[0]
 
 
 def generateplan(STM, LTM, explore = False ):
@@ -53,13 +53,13 @@ def generateplan(STM, LTM, explore = False ):
     additionalinstructions = getinstructionfromSP(STM)#STM.get("additionalinstructions")
     beliefaxioms = "\n".join(currentenvironment["belief axioms"])
     actionplanexamples = currentenvironment["examples"]
-    if  item == "explore":
-        currentenvironment["objective"] = currentenvironment["exploreobjective"]
+    #if  item == "explore":
+    #    currentenvironment["objective"] = currentenvironment["exploreobjective"]
         #self.env.totalexplore += 1
     if envtrace:
-       envtrace = "\n".join(["action: "+i["action"]+"; observation: "+i["observation"] for i in envtrace])
+       envtrace_text = "\n".join(["action: "+i["action"]+"; observation: "+i["observation"] for i in envtrace])
     else:
-       envtrace = ""
+       envtrace_text = ""
     if additionalinstructions :
         currentenvironmenttext = "    objective: \n" + currentenvironment["objective"] +"\n\n"+" prior axioms: \n"+currentenvironment["prior axioms"]+"\n\n"+ "     belief axioms:\n"+beliefaxioms+"\n\n"+"    current state:\n"+ currentenvironment["current state"]+"\n\n"+additionalinstructions
     else:
@@ -87,7 +87,7 @@ def generateplan(STM, LTM, explore = False ):
                     envtrace = envtrace_text, \
                     relatedactions = '\n'.join(relatedactionlist), \
                     actionplanexamples = actionplanexamples,\
-                   # userpromptprefix = userpromptprefix, \
+                    userpromptprefix = useractionplanmeetobjective, \
                     errorfeedback = errorfeedback)
         print("ACTPLANPROMPT:",messages)
         output = utilities.llm_gpt4_turbo.predict(messages)
