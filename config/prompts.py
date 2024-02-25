@@ -42,6 +42,15 @@
 
 #The action plan should get positive feedback from the critique in long term and meet the objective in the environment. From the action plan history if there is no progress observed in meeting the objective or gets negative feedback, the plan needs to be changed. If some actions are invalid in the plan then change the actions.
 
+coderrortemplate = """Here is the error recieved after running the following code.
+ {code}
+
+error:
+ {error}
+"""
+
+CODEERRORVARIABLES = ["code","error"]
+
 actionplantemplate = """System: You are an AI action planner for an autonomous agent. You are situated in a task environment, as provide by the user, prior axioms are the fixed rules and constraints of the environment, the belief axioms are your beliefs about the environment. You need to generate an action plan in exact json format as mentioned below. Do not generate any aditional explanations.
  
 Use the prior axioms, belief axioms, current state to plan out and deduce valid set to actions that can be taken in the environment.

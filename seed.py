@@ -19,10 +19,10 @@ def solver(env):
     while True:
         for i in range(K):
             actionplan = generateplan(stm, ltm )
-            code = generatecode(actionplan,stm, ltm)
+            code = generatecode(actionplan,'',stm, ltm)
             output,stm,return_status = execcode(code,env,stm)
             while return_status != 0:
-                code = generatecode(actionplan+utilities.CODEERRORPROMPT.format(str(code), output),stm, ltm)
+                code = generatecode(actionplan, utilities.CODEERRORPROMPT.format(str(code), output),stm, ltm)
                 output,stm,return_status = execcode(code,env,stm)
             extfeedback = env.getfeedback()    
             feedback = critique(stm,actionplan,extfeedback)

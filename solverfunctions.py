@@ -120,7 +120,7 @@ def generateplan(STM, LTM, explore = False ):
     
 
 
-def generatecode(plan,STM, LTM):
+def generatecode(actionplan, codeerror STM, LTM):
     relatedactionsets = {}
     actionids = list(set(actionplan["requiredactions"]))
     actionset = LTM.fetch(actionids, namespace = "actions")
@@ -145,8 +145,8 @@ def generatecode(plan,STM, LTM):
     #relatedactiontext = "\n   ".join(relatedactionsets)
     #objective = self.env.actorobjective
     beliefenvironment = STM.get("currentenv")['env'] #["objective"]
-    ACPtrace = STM.get("ACPtrace")
-    prevactionplan = ACPtrace[-1]["actionplan"]["actionplan"] if ACPtrace else ""
+    #ACPtrace = STM.get("ACPtrace")
+    #prevactionplan = ACPtrace[-1]["actionplan"]["actionplan"] if ACPtrace else ""
     messages = utilities.ACTORPROMPT.format(beliefenvironment = beliefenvironment, \
                     actions = relatedactiontext, \
                     actionplan = actionplantext, \
