@@ -48,7 +48,7 @@ Use the prior axioms, belief axioms, current state to plan out and deduce valid 
 Prior axioms should be given more preference than belief axioms.
 The action plan should not have contradicting logic.
 
-{ACPtrace}
+{envtrace}
 
 Following is the list of callable function modules.    
 stored function modules:
@@ -80,7 +80,7 @@ useractionplanmeetobjective = "Generate the action plan for the following enviro
 
 useractionplanexplore = "Generate a long random action plan to know more about the environment. Folow the belief axioms to generate correct action plan. Take actions to EXPLORE NEW AREAS and gain new information that is not available in belief axioms. "
     
-ACTPLANPROMPTINPUTVARIABLES = ["beliefenvironment","ACPtrace", "relatedactions","errorfeedback","userpromptprefix","actionplanexamples"]
+ACTPLANPROMPTINPUTVARIABLES = ["beliefenvironment","envtrace", "relatedactions","errorfeedback","userpromptprefix","actionplanexamples"]
 
 
 actionplancritiquetemplate = """System: You are a critique of generated action plan by an AI agent situated in an environment. 
