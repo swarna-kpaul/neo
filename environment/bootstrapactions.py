@@ -48,8 +48,8 @@ def bingsearch(text):
 
 takeenvaction = """
 def takeenvaction(actionvalue):
-    perception,reward = env.act(action)
-    stm.set("envtrace",{"action":action, "percept":perception, "state":env.getstate(), "reward": reward})
+    perception,reward = env.act(actionvalue)
+    stm.set("envtrace",{"action":actionvalue, "percept":perception, "state":env.getstate(), "reward": reward})
     stm.set("currentstate",env.getstate())
     return perception
 """

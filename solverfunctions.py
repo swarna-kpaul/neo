@@ -153,14 +153,21 @@ def generatecode(actionplan, codeerror, STM, LTM):
                     actionplan = actionplantext, \
                     error = codeerror)
     print("ACTORPROMPT:",messages)
-    output = utilities.llm_model.predict(messages)
+    while True:
+        output = utilities.llm_model.predict(messages)
+        try:
+            output = ast.literal_eval(output)
+            break
+        except:
+            print("Error ACTORPROMPT output:",output)
+            pass
+        
     print("ACTORPROMPT output:",output)
-    output = ast.literal_eval(output)
     output["requirements"] = '\n\n'.join([relatedaction["requirements"]+"\n\n"+relatedaction["code"] for id,relatedaction in relatedactionsets.items()]) 
-    if action['functioncall'] != "":
-        output["fullactioncode"] = action['requirements']+"\n\n"+action['code'] + "\n\nresult="+action['functioncall']
+    if output['functioncall'] != "":
+        output["fullactioncode"] = output['requirements']+"\n\n"+output['code'] + "\n\nresult="+output['functioncall']
     else:
-        output["fullactioncode"] = action['requirements']+"\n\n"+action['code']
+        output["fullactioncode"] = output['requirements']+"\n\n"+output['code']
     print("ACTOR Code:",output["fullactioncode"])
     return output
     

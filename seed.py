@@ -22,7 +22,7 @@ def solver(env):
             action = generatecode(actionplan,'',stm, ltm)
             output,stm,return_status = execcode(action["fullactioncode"],env,stm)
             while return_status != 0:
-                action = generatecode(actionplan, utilities.CODEERRORPROMPT.format(str(action["fullactioncode"]), output),stm, ltm)
+                action = generatecode(actionplan, utilities.CODEERRORPROMPT.format(code = str(action["fullactioncode"]), error = output),stm, ltm)
                 output,stm,return_status = execcode(action["fullactioncode"],env,stm)
             extfeedback = env.getfeedback()    
             feedback = critique(stm,actionplan,extfeedback)
