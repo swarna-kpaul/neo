@@ -18,13 +18,14 @@ def execcode(code,env,stm):
     output = None
     return_status = None
     error = None
+    print("exec code", code)
     try:
 # Create an empty namespace (dictionary) for the exec function
         exec_namespace = {"env": env,"stm":stm}
         #print("Executing Code: ", code)
-        exec(code,exec_namespace)
+        exec(str(code),exec_namespace)
         output = exec_namespace.get("result", None)
-        STM = exec_namespace.get("stm", None)        
+        stm = exec_namespace.get("stm", None)        
         return_status = 0
     except world_exception as e:
         return_status = 0
@@ -32,7 +33,7 @@ def execcode(code,env,stm):
         output = traceback.format_exc()
         return_status = 1
     print ("ACTION EXECUTION OUTPUT", output,return_status)    
-    return (output,STM,return_status)
+    return (output,stm,return_status)
 
 
 def updatestatespace(stm):
@@ -156,8 +157,11 @@ def generatecode(actionplan, codeerror, STM, LTM):
     print("ACTORPROMPT output:",output)
     output = ast.literal_eval(output)
     output["requirements"] = '\n\n'.join([relatedaction["requirements"]+"\n\n"+relatedaction["code"] for id,relatedaction in relatedactionsets.items()]) 
-    
-    print("ACTOR Code:",output["code"])
+    if action['functioncall'] != "":
+        output["fullactioncode"] = action['requirements']+"\n\n"+action['code'] + "\n\nresult="+action['functioncall']
+    else:
+        output["fullactioncode"] = action['requirements']+"\n\n"+action['code']
+    print("ACTOR Code:",output["fullactioncode"])
     return output
     
 def critique (STM,currentactionplan,currentperception):
