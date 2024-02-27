@@ -120,7 +120,7 @@ def generateplan(STM, LTM, explore = False ):
     
 
 
-def generatecode(actionplan, codeerror STM, LTM):
+def generatecode(actionplan, codeerror, STM, LTM):
     relatedactionsets = {}
     actionids = list(set(actionplan["requiredactions"]))
     actionset = LTM.fetch(actionids, namespace = "actions")
