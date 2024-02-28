@@ -5,7 +5,7 @@ import config.utilities as utilities
 from environment.problemenvs import *
 import random
 import string
-K=3
+K=1
 
 env = scienv()
 
@@ -26,7 +26,7 @@ def solver(env):
                 output,stm,return_status = execcode(action["fullactioncode"],env,stm)
             extfeedback = env.getfeedback()    
             feedback = critique(stm,actionplan,extfeedback)
-            updatestatespace(stm)
+            updatestatespace(stm, env.rootstate)
         stm,ltm = ltmlearner(stm,ltm)
         
         

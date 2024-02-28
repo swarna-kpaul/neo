@@ -50,6 +50,7 @@ class scienv():
         self.totalreward = 0
         self.goalreached = False
         self.toberesetflag = False
+        self.rootstate = True
         self.additionalstateinfo = ""
         predescription = "An AI agent helping execute a science experiment in a simulated environment with limited number of objects and actions available at each step. "
         prioraxioms = """
@@ -87,7 +88,7 @@ class scienv():
         #self.env.load(self.task, random.choices(range(10))[0])
         self.additionalstateinfo = ""
         self.environment["current state"] = self.getstate()
-        self.model.rootstate = True
+        self.rootstate = True
         self.totalreward = 0
         self.toberesetflag = False
         
@@ -129,7 +130,8 @@ class scienv():
         
         poststate = self.getstate()
         self.totalreward += reward
-
+        self.rootstate = False
+        
         if observation == "No known action matches that input.":
             self.trace.append({"action":actiontext, "observation" : observation.replace("\n", "; "), "state": self.getstate(), "reward":float('-Inf'),"totactions": 1, "starttotactions": startstatetotalpossibleactions,"isvalidactionformemorizing": False })
         elif observation in ["The door is not open.", "The door is already open.","It's not clear how to get there from here."] or observation.startswith("Its not clear how to") or observation.startswith("I'm not sure"):
@@ -170,18 +172,18 @@ class scienv():
         feedback = ''
         if metric == 'reward':
             if score < -50:
-                feedback += "The agent made critical mistakes and the task was terminated and reset."
+                feedback += "Total reward is: "+str(score)+". The agent made critical mistakes and the task was terminated and reset."
             if score < 0:
-                feedback += "The agent performed very poorly and could not make any critical progress."
+                feedback += "Total reward is: "+str(score)+". The agent performed very poorly and could not make any critical progress."
             if score >= 0 and score < 20:
-                feedback += "The agent performed poorly and made some progress but not enough to solve the task."
+                feedback += "Total reward is: "+str(score)+". The agent performed poorly and made some progress but not enough to solve the task."
             if score >= 20 and score < 50:
-                feedback += "The agent performed moderately and made some critical progress but not enough to solve the task."
+                feedback += "Total reward is: "+str(score)+". The agent performed moderately and made some critical progress but not enough to solve the task."
             if score >= 50 and score < 90:
-                feedback += "The agent performed very well and made significant critical progress but not enough to solve the task."
+                feedback += "Total reward is: "+str(score)+". The agent performed very well and made significant critical progress but not enough to solve the task."
             if score >= 90 and score < 100:
-                feedback += "The agent performed exceptionally well and made significant critical progress, was just slight away from solving the task."
+                feedback += "Total reward is: "+str(score)+". The agent performed exceptionally well and made significant critical progress, was just slight away from solving the task."
             if score == 100:
-                feedback += "The agent performed exceptionally well and successfully solved the task."
+                feedback += "Total reward is: "+str(score)+". The agent performed exceptionally well and successfully solved the task."
         
         return feedback

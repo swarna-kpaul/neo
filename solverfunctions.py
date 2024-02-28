@@ -36,8 +36,9 @@ def execcode(code,env,stm):
     return (output,stm,return_status)
 
 
-def updatestatespace(stm):
+def updatestatespace(stm,isrootstate):
     spmodel = stm.get("SPmodel")
+    spmodel.rootstate = isrootstate
     spmodel.parseacpt_trace(stm.get("envtrace"),stm.get("currentstate"))
     spmodel.updatevalue()
     
@@ -187,7 +188,7 @@ def critique (STM,currentactionplan,currentperception):
     print("CRITIQUEPROMPT output:",output)
     output = ast.literal_eval(output)
     
-    STM.set(output,"critique")
+    STM.set("critique", output)
     return output,STM
 
 
