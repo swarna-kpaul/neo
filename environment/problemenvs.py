@@ -159,7 +159,8 @@ class scienv():
             self.trace.append({"action":actiontext, "observation" : observation.replace("\n", "; "), "state": self.getstate(), "reward": normalizedreward, "totactions": totalpossibleactions,"starttotactions": startstatetotalpossibleactions, "isvalidactionformemorizing": True})        
         return observation,reward
     
-    
+    def getpossibleactions(self):
+        return  len(self.env.getValidActionObjectCombinationsWithTemplates())
       
     def checkgoal(self):
         if self.totalreward == 100:

@@ -42,7 +42,7 @@
 
 #The action plan should get positive feedback from the critique in long term and meet the objective in the environment. From the action plan history if there is no progress observed in meeting the objective or gets negative feedback, the plan needs to be changed. If some actions are invalid in the plan then change the actions.
 
-coderrortemplate = """Here is the error recieved after running the following code.
+coderrortemplate = """Here is the error recieved after running the following code. Correct the following code to remove all errors.
  {code}
 
 error:

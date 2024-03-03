@@ -39,8 +39,10 @@ def execcode(code,env,stm):
 def updatestatespace(stm,isrootstate):
     spmodel = stm.get("SPmodel")
     spmodel.rootstate = isrootstate
+    print("envtrace",stm.get("envtrace"))
     spmodel.parseacpt_trace(stm.get("envtrace"),stm.get("currentstate"))
     spmodel.updatevalue()
+    stm.set("envtrace",[])
     
 
 def getinstructionfromSP(stm):
