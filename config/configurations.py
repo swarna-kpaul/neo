@@ -63,7 +63,7 @@ class LTM():  ######### longterm memory
 
 class STM():  ### Short term memory -- {"conversation": , "timestamp": }
     def __init__ (self,memorysize = DEFAULT_STM_SIZE):
-        self.stm = {"critique":{"feedback":-1,"reason":""}, "currentenv" : {}, "actionplans":{}, "envtrace":[], "state": ""}
+        self.stm = {"critique":{"feedback":-1,"reason":""}, "currentenv" : {}, "actionplans":{}, "envtrace":[], "state": "", "ltmenvtrace":[]}
         self.memorysize = memorysize
         
     def set(self,key,data):

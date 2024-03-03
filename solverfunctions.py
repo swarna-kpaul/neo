@@ -36,6 +36,12 @@ def execcode(code,env,stm):
     return (output,stm,return_status)
 
 
+def updateltmtrace(stm):
+    envtrace = stm.get("envtrace")
+    ltmenvtrace = stm.get("ltmenvtrace")
+    ltmenvtrace += envtrace
+    stm.set("ltmenvtrace", ltmenvtrace)
+
 def updatestatespace(stm,isrootstate):
     spmodel = stm.get("SPmodel")
     spmodel.rootstate = isrootstate
@@ -226,7 +232,7 @@ def storeactionasskill(self,action,overwrite=False):
         self.ltm.set(data = ltmdata, namespace = "actions")
         
 def ltmlearner(STM,LTM):
-    EnvTrace = STM.get("EnvTrace")
+    EnvTrace = STM.get("ltmenvtrace")
     #critique = self.stm.get("critique")
     currentenvironment = STM.get("currentenv")
     currentbelief = "  objective:"+ currentenvironment['env']['objective']+"\n  belief axioms:"+ str(currentenvironment['env']["belief axioms"])
@@ -247,8 +253,9 @@ def ltmlearner(STM,LTM):
     print("LEARNERPROMPT output:",output)
     beliefaxioms = ast.literal_eval(output)["beliefaxioms"]
     currentenvironment["env"]["belief axioms"] = beliefaxioms
-    STM.set({'id': currentenvironment['id'], 'env':currentenvironment["env"]},"currentenv")
+    STM.set("currentenv",{'id': currentenvironment['id'], 'env':currentenvironment["env"]})
     currentenvironment["env"]['type'] = "environments"
     ltmdata = [{'id': currentenvironment['id'], 'values': currentenvironment["env"]['description'], 'metadata': currentenvironment["env"] }]
     #self.ltm.set(data = ltmdata, namespace = "environments")
+    STM.set("ltmenvtrace",[])
     return output,STM,LTM

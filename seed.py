@@ -26,8 +26,9 @@ def solver(env):
                 output,stm,return_status = execcode(action["fullactioncode"],env,stm)
             extfeedback = env.getfeedback()    
             feedback = critique(stm,actionplan,extfeedback)
+            updateltmtrace(stm)
             updatestatespace(stm, env.rootstate)
-        stm,ltm = ltmlearner(stm,ltm)
-        
+        output,stm,ltm = ltmlearner(stm,ltm)
+        env.reset()
         
 #solver(env)
