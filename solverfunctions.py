@@ -53,14 +53,15 @@ def updatestatespace(stm,isrootstate):
 
 def getinstructionfromSP(stm):
     spmodel = stm.get("SPmodel")
-    return spmodel.getplandetails(stm.get("currentstate"))[0]
+    prompt,actionpath,avoidactions,explore,ucbfactor = spmodel.getplandetails(stm.get("currentstate"))
+    return (prompt,actionpath)
 
 
 def generateplan(STM, LTM, explore = False ):
     currentenvironment = STM.get("currentenv")['env']
     envtrace = STM.get("envtrace")
     critique = STM.get("critique")
-    additionalinstructions = getinstructionfromSP(STM)#STM.get("additionalinstructions")
+    additionalinstructions,preactionppath = getinstructionfromSP(STM)#STM.get("additionalinstructions")
     beliefaxioms = "\n".join(currentenvironment["belief axioms"])
     actionplanexamples = currentenvironment["examples"]
     #if  item == "explore":
@@ -125,6 +126,8 @@ def generateplan(STM, LTM, explore = False ):
         #    trial += 1
         #    continue
         break
+    if preactionppath:;
+        output["actionplan"] = preactionppath + ".\n"+output["actionplan"]
     #self.stm.set(errorfeedback,"errorfeedback")
     return output
     

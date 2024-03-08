@@ -36,6 +36,23 @@ def askgpt(question):
     return output
 """
 
+getanswer ="""
+from config.keys import *
+import ast
+from langchain.chat_models import ChatOpenAI
+llm_model = ChatOpenAI(temperature=0.7, request_timeout = 30,model="gpt-3.5-turbo",openai_api_key=OPENAIAPIKEY)
+def getanswer(question,text,outputdatatype):
+    prompt = "System: Answer the user question from the following text. Give to the point exact answer. THE OUTPUT SHOULD BE STRICTLY A "+outputdatatype.upper()+". Incase the output is not a "+outputdatatype+" return NAN \n  text : "+text+"\n\nuser:"+question
+    output = llm_model.predict(question)
+    if output == "NAN":
+        return None
+    elif outputdatatype in ["number","boolean","list","dictionary"]:
+        return ast.literal_eval(output)
+    else:
+        return output
+"""
+
+
 bingsearch = """
 from langchain.utilities import BingSearchAPIWrapper
 import os
@@ -128,7 +145,15 @@ This is an autonomous AI agent that runs for a fixed lifetime. """,
                      "type":"actions",
                      "name":"takeenvaction",
                      "input parameter": "an action value. the action value will be taken in the task environment. The stm will be store the action and state returned by the environment",
-                     "output": "observation returned by the environment in text format"}
+                     "output": "observation returned by the environment in text format"},
+                     {"description": """A function (named getanswer) to get precise answer to a question based on a given text. The answer is given in the expected datatype. The expected datatype should be provided as an input parameter. The output datatype can be number, boolean, list, dictionary and text""",
+                     "code": getanswer,
+                     "requirements": "",
+                     "actiontype": "fixed",
+                     "type":"actions",
+                     "name":"getanswer",
+                     "input parameter": "a question, a text from where the question needs to be answered and an expected output data type",
+                     "output": "the answer in the expected output datatype"}
                      ]
                      
                     

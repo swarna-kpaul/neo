@@ -165,14 +165,15 @@ class envmodel():
             explore = True
         else:
             explore = False
-        if actionpath:
-            prompt = "You need to take the following actions in sequence \n"+ "\n".join(actionpath)+"\n\n You you arrive at the following state after taking the above actions\n"+currentstate+"\n\n"
-        else:
-            prompt = "You are at the state: \n"+currentstate +"\n\n" 
+        #if actionpath:
+        #    prompt = "YOU NEED TO TAKE THE FOLLOWING ACTIONS IN SEQUENCE \n"+ "\n".join(actionpath)+"\n\n You arrive at the following state after taking the above actions\n"+currentstate+"\n\n"
+        #else:
+        prompt = "You are at the state: \n"+currentstate +"\n\n" 
         if avoidactions:
             prompt += "find rest of the action plan. You should STRICTLY AVOID the following IMMEDIATE ACTIONS from the current state. \n" + "\n".join(avoidactions)
         else:
             prompt += "find rest of the action plan."
+        actionpath = ".\n Call the takeenvaction module with parameter ".join(actionpath)
         return prompt,actionpath,avoidactions,explore,ucbfactor
         
   
