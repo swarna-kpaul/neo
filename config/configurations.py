@@ -44,7 +44,7 @@ class LTM():  ######### longterm memory
         else:
             self.index.upsert(upsertdata, namespace = namespace)
     
-    def get(self,query,namespace="environments", cutoffscore = 0.4 ,k=3):
+    def get(self,query,namespace="environments", cutoffscore = 0.6 ,k=3):
         embedding = embeddings_model.embed_query(query)
         if self.dbtype == "free":
             xc = self.index.query(vector = embedding, filter={"type": namespace}, top_k=k, include_metadata=True)

@@ -12,7 +12,7 @@ gamma = 0.8
 CUMULATIVEREWARDTHRESHOLD = 5
 EPISODELEN = 0
 MAXPLANCRITUQUETRIAL = 5
-MAXRELATEDACTIONSET =1
+MAXRELATEDACTIONSET =3
 
 def execcode(code,env,stm):
     output = None
@@ -126,7 +126,7 @@ def generateplan(STM, LTM, explore = False ):
         #    trial += 1
         #    continue
         break
-    if preactionppath:;
+    if preactionppath:
         output["actionplan"] = preactionppath + ".\n"+output["actionplan"]
     #self.stm.set(errorfeedback,"errorfeedback")
     return output

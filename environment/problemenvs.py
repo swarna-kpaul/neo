@@ -57,7 +57,7 @@ class scienv():
         an agent situated in textual task environment. Generate a sequence of actions to meet the objective.
         FOCUS is a extremely critical action that can be only used the number of times 'focus' is mentioned in the task description and in the exact same sequence. Using it more than that or inappropiately (such as on a wrong object) will terminate the session and the task will be rendered as incomplete. focus can be used on the object which is available in current state. Do not add too many consecutive wait.
         Do not make up new actions or objects.
-        
+             
         An action can be taken in the environment by calling the function takeenvaction with the action name as parameter.
         
         DO NOT TAKE ANY ACTION ON ANY OBJECT that is NOT IN ACCESSIBLE OBJECTS in CURRENT STATE
@@ -65,7 +65,9 @@ class scienv():
         Here are the following set of allowed actions. where OBJ should be replaced by any object that you can find in your current state.
           """+str(self.env.getPossibleActions())+"""
          
-        ALL ACTIONS SHOULD BE STRICTLY SELECTED FROM THE ABOVE LIST.         
+        ALL ACTIONS SHOULD BE STRICTLY SELECTED FROM THE ABOVE LIST.        
+
+        On taking an action the environment returns observation in text form. The function getanswer can be called to extract relevant information from the observation to aid further decision making.        
          """
           
          
