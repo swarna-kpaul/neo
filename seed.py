@@ -9,26 +9,70 @@ K=1
 
 env = scienv()
 
-def solver(env):
-    stm = STM()
-    ltm = LTM()
-    statespacemodel = envmodel()
-    stm.set("currentenv", {"id": ''.join(random.choices(string.ascii_uppercase + string.digits, k=8)),"env": env.environment})
-    stm.set("SPmodel", statespacemodel)
-    stm.set("currentstate",env.getstate())
-    while True:
-        for i in range(K):
-            actionplan = generateplan(stm, ltm )
-            action = generatecode(actionplan,'',stm, ltm)
-            output,stm,return_status = execcode(action["fullactioncode"],env,stm)
-            while return_status != 0:
-                action = generatecode(actionplan, utilities.CODEERRORPROMPT.format(code = str(action["fullactioncode"]), error = output),stm, ltm)
-                output,stm,return_status = execcode(action["fullactioncode"],env,stm)
-            extfeedback = env.getfeedback()    
-            feedback,stm = critique(stm,actionplan,extfeedback)
-            updateltmtrace(stm)
-            updatestatespace(stm, env.rootstate)
-        output,stm,ltm = ltmlearner(stm,ltm)
-        env.reset()
+class bootstrapenv():
+    def __init__(self,):
+         self.predescription = ""
+         self.objective = ""
+         self.examples = ""
+         self.prioraxioms = """
+         """
+         self.environment = {"description": predescription + objective, "objective": objective, "prior axioms": prioraxioms, "belief axioms": "", "current state": self.getstate(), "examples": self.examples}
+        return
+    
+     def reset(self):
+        self.rootstate = True
+        self.totalreward = 0
+        self.toberesetflag = False
         
+    def getstate(self):
+        ############### derive current state from stm and ltm delta
+        
+        
+        
+        return
+        
+    def getfeedback(self):
+        
+        return
+        
+    def act(self,actiontext):
+        try:
+            exec_namespace = {}
+            exec(actiontext,exec_namespace)
+            result = exec_namespace.get("result", None)
+        except Exception as e:
+            raise world_exception("invalid action")
+        return result
+        
+        
+    def getpossibleactions(self):
+        return
+        
+        
+    def checkgoal(self):
+        return
 #solver(env)
+
+
+###############################################
+actions = [{"name": "Generate plan",
+"description": "generates plan for solving a problem environment and takes the short term memory (STM) and long term memory(LTM) objects as arguments. Returns the plan in plain text",
+"function": "generateplan(STM, LTM)"
+},
+{"name": "Generate code",
+"description": "generates python code for an action plan for solving a problem environment. takes action plan, code error (if any for the previous generated code), the short term memory (STM) and long term memory(LTM) objects as arguments. Returns the executable python code in plain text",
+"function": "generatecode(actionplan, codeerror, STM, LTM)"
+},
+{"name": "Belief learner",
+"description": "Updates belief about the environment based on the outputs of the action taken. takes the short term memory (STM) and long term memory(LTM) objects as arguments. Returns learnt beliefs in plain text",
+"function": "belieflearner(STM,LTM)"
+},
+# {"name": "Store action skill",
+# "description": "Stores learnt action code that solves or nearly solves a problem environment, in long term memory. takes the short term memory (STM) and long term memory(LTM) objects as arguments. Returns learnt beliefs in plain text",
+# "function": "belieflearner(STM,LTM)"
+# }
+{"name": "Belief learner",
+"description": "Updates belief about the environment based on the outputs of the action taken. takes the short term memory (STM) and long term memory(LTM) objects as arguments. Returns learnt beliefs in plain text",
+"function": "belieflearner(STM,LTM)"
+}
+]

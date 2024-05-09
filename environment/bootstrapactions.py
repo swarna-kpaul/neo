@@ -42,7 +42,7 @@ import ast
 from langchain.chat_models import ChatOpenAI
 llm_model = ChatOpenAI(temperature=0.7, request_timeout = 30,model="gpt-3.5-turbo",openai_api_key=OPENAIAPIKEY)
 def getanswer(question,text,outputdatatype):
-    prompt = "System: You are an intelligent agent that can answer user questions based on the given context. Give to the point exact answer. THE OUTPUT SHOULD BE STRICTLY A PYTHON "+outputdatatype.upper()+" FORMAT. Incase the output is not a "+outputdatatype.upper()+" return NAN \n\n context:\n"+text+"\nAnswer the following question from the above context without considering any other prior information.\nuser: \n"+question
+    prompt = \"\"\"System: You are an intelligent agent that can answer user questions based on the given context. Give to the point exact answer. THE OUTPUT SHOULD BE STRICTLY A PYTHON \"\"\"+outputdatatype.upper()+\"\"\" FORMAT. Incase the output is not a \"\"\"+outputdatatype.upper()+\"\"\" return NAN \n\n context:\n\"\"\"+text+\"\"\"\nAnswer the following question from the above context without considering any other prior information.\nuser: \n\"\"\"+question
     output = llm_model.predict(prompt)
     if output == "NAN":
         return None

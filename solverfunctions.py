@@ -4,6 +4,11 @@ from langchain.prompts.prompt import PromptTemplate
 from config import utilities
 import traceback
 from environment.problemenvs import *
+from models.buildstatespacemodel import *
+import random
+import string
+K=1
+
 CONTEXTCODE = "import environment.context as context"
 import ast
 import pickle
@@ -13,6 +18,29 @@ CUMULATIVEREWARDTHRESHOLD = 5
 EPISODELEN = 0
 MAXPLANCRITUQUETRIAL = 5
 MAXRELATEDACTIONSET =3
+
+
+def solver(env):
+    stm = STM()
+    ltm = LTM()
+    statespacemodel = envmodel()
+    stm.set("currentenv", {"id": ''.join(random.choices(string.ascii_uppercase + string.digits, k=8)),"env": env.environment})
+    stm.set("SPmodel", statespacemodel)
+    stm.set("currentstate",env.getstate())
+    while True:
+        for i in range(K):
+            actionplan = generateplan(stm, ltm )
+            action = generatecode(actionplan,'',stm, ltm)
+            output,stm,return_status = execcode(action["fullactioncode"],env,stm)
+            while return_status != 0:
+                action = generatecode(actionplan, utilities.CODEERRORPROMPT.format(code = str(action["fullactioncode"]), error = output),stm, ltm)
+                output,stm,return_status = execcode(action["fullactioncode"],env,stm)
+            extfeedback = env.getfeedback()    
+            feedback,stm = critique(stm,actionplan,extfeedback)
+            updateltmtrace(stm)
+            updatestatespace(stm, env.rootstate)
+        output,stm,ltm = belieflearner(stm,ltm)
+        env.reset()
 
 def execcode(code,env,stm):
     output = None
@@ -133,7 +161,7 @@ def generateplan(STM, LTM, explore = False ):
     
 
 
-def generatecode(actionplan, codeerror, STM, LTM):
+def generatecode(actionplan, codeerror="", STM, LTM):
     relatedactionsets = {}
     actionids = list(set(actionplan["requiredactions"]))
     actionset = LTM.fetch(actionids, namespace = "actions")
@@ -234,7 +262,7 @@ def storeactionasskill(self,action,overwrite=False):
     if overwrite or newflag:
         self.ltm.set(data = ltmdata, namespace = "actions")
         
-def ltmlearner(STM,LTM):
+def belieflearner(STM,LTM):
     EnvTrace = STM.get("ltmenvtrace")
     #critique = self.stm.get("critique")
     currentenvironment = STM.get("currentenv")
