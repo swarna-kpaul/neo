@@ -65,7 +65,7 @@ def generateplan(env, explore = False ):
                     userpromptprefix = useractionplanmeetobjective, \
                     errorfeedback = errorfeedback)
         print("ACTPLANPROMPT:",messages)
-        output = utilities.llm_gpt4_turbo.predict(messages)
+        output = utilities.llm_gpt4o.predict(messages)
         
         print("ACTPLANPROMPT output:",output)
         try:
@@ -102,7 +102,7 @@ def generatecode(actionplan,relevantnodeid,programdesc,env, codeerror=""):
                     error = codeerror)
     print("ACTORPROMPT:",messages)
     while True:
-        output = utilities.llm_model.predict(messages)
+        output = utilities.llm_gpt4o.predict(messages)
         try:
             output = ast.literal_eval(output)
             break
@@ -148,7 +148,7 @@ def critique (env,currentactionplan,currentperception):
                     actionplan = currentactionplan, \
                     perception = currentperception)
     print("CRITIQUEPROMPT:",messages)
-    output = utilities.llm_model.predict(messages)
+    output = utilities.llm_gpt4o.predict(messages)
     print("CRITIQUEPROMPT output:",output)
     output = ast.literal_eval(output)
     
@@ -174,7 +174,7 @@ def belieflearner(env):
                     EnvTrace = EnvTrace_text)
         #print(messages)
     print("LEARNERPROMPT:",messages)
-    output = utilities.llm_gpt4_turbo.predict(messages)
+    output = utilities.llm_gpt4o.predict(messages)
     print("LEARNERPROMPT output:",output)
     beliefaxioms = ast.literal_eval(output)["beliefaxioms"]
     currentenvironment["env"]["belief axioms"] = beliefaxioms
