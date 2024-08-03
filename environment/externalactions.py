@@ -15,7 +15,7 @@ def textdataread(display_message = ""):
     return text
 
 ################## Show text output to user ##################
-def showmessage(message):
+def textshow(message):
     print(message)
     return ""
 
@@ -50,7 +50,7 @@ extfunctionset = {"textdataread": {"description": """A function to read and coll
                      "function": textshow,
                      "input": "It takes one input text message that should be displayed to the user. ",
                      "output": "Returns blank text.",
-                     "args", 1},
+                     "args": 1},
                    "askgpt":  {"description": """A function (named askgpt) to provide answer to general questions using GPT3.5 LLM. It can also provide output in code or structured format like, json yaml etc. if properly prompted to do so. """,
                      "function": askgpt,
                      "input": "It takes one input question or prompt in plaintext. ",

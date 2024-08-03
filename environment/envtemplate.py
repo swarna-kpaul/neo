@@ -19,9 +19,9 @@ class bootstrapenv():
          self.skillgraph = creategraph('bootenv') 
          self.initnode = createnode(self.skillgraph,'iW',init_world)
          self.environment = {"description": shortdescription + objective, "objective": objective, "prior axioms": prioraxioms, "belief axioms": "", "current state": self.getstate(), "examples": self.examples, "actionset": list(ALLACTIONS.keys())}
-        return
+         return
     
-     def reset(self):
+    def reset(self):
         self.rootstate = True
         self.totalreward = 0
         self.toberesetflag = False

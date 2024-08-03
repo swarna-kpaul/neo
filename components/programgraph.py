@@ -65,9 +65,9 @@ def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
          args = []
          for port,parent_label in parents.items():
              args.append(str(graph["nodes"][parent_label]["dat"]))
-         envtrace.append("action": graph["nodes"][terminalnode]["nm"]+"("+",".join(args)+")", "observation":graph["nodes"][terminalnode]["data"])
+         envtrace.append({"action": graph["nodes"][terminalnode]["nm"]+"("+",".join(args)+")", "observation":graph["nodes"][terminalnode]["data"]})
          nodestraversed.append(terminalnode)
-     return envtrace,nodestraversed
+    return envtrace,nodestraversed
  
 ############# Update node values #####################
 
@@ -82,7 +82,7 @@ def updatevalue(env,terminalnode):
             N += graph["nodes"][parent_label]["N"]
             updatevalue(graph, parent_label)
         graph["nodes"][terminalnode]["EXPF"] = math.sqrt(math.log(N)/graph["nodes"][terminalnode]["N"])
-     return
+    #return 
 
 
 ############### Reset data ###################
@@ -94,7 +94,7 @@ def resetdata(graph,terminalnode):
             resetdata(graph,parent_label)
         graph["nodes"][terminalnode]["dat"]
         if graph['nodes'][terminalnode]['es'] != 4:
-			graph['nodes'][terminalnode]['es'] = 0
+            graph['nodes'][terminalnode]['es'] = 0
         
 def setfailurenode(graph, terminalnode):
     if terminalnode in graph['edges']:
@@ -111,7 +111,7 @@ def setfailurenode(graph, terminalnode):
             graph["nodes"][terminalnode]["es"] == 4        
 
 ############ execute program #################
- def execprogram(env,prevterminalnode, code):
+def execprogram(env,prevterminalnode, code):
      ########### check syntax of program
      output = None
      graph = returnSubgraph(env.graph, prevterminalnode)

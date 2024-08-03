@@ -1,7 +1,6 @@
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 import os
-import pinecone
 from config.keys import *
 from datetime import datetime
 import string
@@ -27,7 +26,7 @@ class LTM():  ######### longterm memory - 3 types of memory semantic, episodic a
     def get(self,query, memorytype = "semantic", cutoffscore = 0.5 ,top_k=-1):
         queryembedding = embeddings_model.embed_query(query)
         
-        sim = [[cosine_similarity([queryembedding], [mem["embedding"]])[0][0],{"data":mem["data"],"id",id}]  for id,mem in self.memory[memorytype].items()]
+        sim = [[cosine_similarity([queryembedding], [mem["embedding"]])[0][0],{"data":mem["data"],"id":id}]  for id,mem in self.memory[memorytype].items()]
         top_results = [i for i in top_results if i[0] > cutoffscore]
         if top_k > 0:
             top_results  = sorted(sim, key=lambda item: item[0], reverse=True)[:top_k]
