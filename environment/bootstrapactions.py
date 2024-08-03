@@ -23,5 +23,5 @@ primitives = {"iW" : """Initial node; No input parameters; Ex: createnode(graph,
               
 ############# Primitives to be used in prompt ########
 ALLACTIONS = pickle.loads(pickle.dumps(primitives,-1))
-_extactions = {k: v["description"]+ v["input"]+v["output"] for k,v in initworldbootfunctions.items()}
+_extactions = {k: v["description"]+" "+ v["input"]+" "+v["output"] for k,v in initworldbootfunctions.items()}
 ALLACTIONS.update(_extactions)

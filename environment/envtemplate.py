@@ -1,15 +1,24 @@
 from combinatorlite import creategraph, createnode, addlink, worldclass, runp, node_attributes_object
 from neo.environment.bootstrapactions import ALLACTIONS, initworldbootfunctions
+from neo.config.memory import *
+import neo.components.programgraph as pg
+node_attributes_object.updateattrib({"R":0,"V":0,"EXPF":0,"N":0,"desc":""}) # R -> reward, V -> value, EXPF -> exploration factor
+############ initialize environment
 
+init_world = worldclass(initworldbootfunctions)
 
 class bootstrapenv():
-    def __init__(self, objective, shortdescription = "", examples = "", prioraxioms ="", stm = STM, ltm = LTM, actionset = list(ALLACTIONS.keys())):
+    def __init__(self, objective, shortdescription = "", examples = "", prioraxioms ="", stm = STM, ltm = LTM, actionset = ALLACTIONS):
          self.STM =stm
          self.LTM = ltm
+         for k,v in ALLACTIONS.items():
+             self.LTM.set(v,v,k)
+         self.graph = creategraph('programgraph')
+         self.initnode = createnode(self.graph,'iW',init_world)
          init_world = worldclass(initworldbootfunctions)
          self.skillgraph = creategraph('bootenv') 
          self.initnode = createnode(self.skillgraph,'iW',init_world)
-         self.environment = {"description": shortdescription + objective, "objective": objective, "prior axioms": prioraxioms, "belief axioms": "", "current state": self.getstate(), "examples": self.examples, "actionset": actionset}
+         self.environment = {"description": shortdescription + objective, "objective": objective, "prior axioms": prioraxioms, "belief axioms": "", "current state": self.getstate(), "examples": self.examples, "actionset": list(ALLACTIONS.keys())}
         return
     
      def reset(self):
@@ -23,18 +32,13 @@ class bootstrapenv():
 
         return state
         
-    def getfeedback(self):
-        state = stm.get("critique")
-        return
+    def getfeedback(self,terminalnode):
+        envtrace,_ = pg.fetchenvtrace(self,terminalnode)
+        return envtrace
         
-    def act(self,actiontext):
-        try:
-            exec_namespace = {}
-            exec(actiontext,exec_namespace)
-            result = exec_namespace.get("result", None)
-        except Exception as e:
-            raise world_exception("invalid action")
-        return result
+    def act(self,actiontext,relevantnodeid=1):
+        return pg.execprogram(self,relevantnodeid, actiontext)
+        
         
        
     def checkgoal(self):

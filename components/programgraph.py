@@ -1,28 +1,23 @@
-from combinatorlite import creategraph, createnode, addlink, worldclass, runp, node_attributes_object
-from combinatorlite.bootstrapactions import initworldbootfunctions
 import math
-node_attributes_object.updateattrib({"R":0,"V":0,"EXPF":0,"N":0,"desc":""}) # R -> reward, V -> value, EXPF -> exploration factor
-############ initialize environment
-
-init_world = worldclass(initworldbootfunctions)
-
+from neo.environment.bootstrapactions import primitives
+from combinatorlite import returnSubgraph, combinatorruntimeerror
 ############ initialize program graph
-graph = creategraph('programgraph')
-g1 = createnode(graph,'iW',init_world)
+
 C = 0.2 ## exploration factor
 K = 0.5 ## similarity factor
-
+gamma = 0.3
 ###### update embeddings of 
 
-def _getprogramdesc(graph,terminalnode, programdesc = {}):
+def _getprogramdesc(graph,terminalnode, programdesc = [],nodestraversed = []):
     
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
         for port,parent_label in parents.items(): ###### iterate all parents
-            if parent_label not in programdesc:
-                programdesc = _getprogramdesc(graph,parent_label,programdesc)
-    programdesc[terminalnode] = graph["nodes"]["desc"]
-    return programdesc
+            if parent_label not in nodestraveresed:
+                programdesc,nodestraversed = _getprogramdesc(graph,parent_label,programdesc,nodestraversed)
+    programdesc.append(graph["nodes"][terminalnode]["desc"])
+    nodestraversed.append(parent_label)
+    return programdesc,nodestraversed
     
 def getprogramdesc(graph,terminalnode, allprogramdesc = {}):
     if terminalnode in graph['edges']:
@@ -30,30 +25,54 @@ def getprogramdesc(graph,terminalnode, allprogramdesc = {}):
         for port,parent_label in parents.items(): ###### iterate all parents
             if parent_label not in allprogramdesc:
                 allprogramdesc = getprogramdesc(graph,parent_label,allprogramdesc)
-    allprogramdesc[terminalnode] = _getprogramdesc(graph,terminalnode)
-    allprogramdesc[terminalnode] = '\n'.join([v for k,v in sorted(allprogramdesc[terminalnode]).items()])
+    allprogramdesc[terminalnode],_ = _getprogramdesc(graph,terminalnode)
+    allprogramdesc[terminalnode] = '\n'.join(allprogramdesc[terminalnode])
     return allprogramdesc
     
 ############ update procedural memory for new program with embeddings ############
-def updateproceduremem(env,graph,terminalnode):
-    allprogramdesc = getprogramdesc(graph,terminalnode)
+def updateproceduremem(env,terminalnode):
+    allprogramdesc = getprogramdesc(env.graph,terminalnode)
     for k,v in allprogramdesc.items():
-        if not env.LTM.fetch(k,'procedural'): ## memory not present
+        if not env.LTM.fetch(k,'procedural') and env.graph["nodes"][k]["es"] ==1: ## memory not present and nodes already executed
             env.LTM.set(v,v,k,'procedural')
             
 
 ############ fetch relevant subprograms from procedural memory #################    
-def getrelevantnodes(env, graph, objective, top_k = 1):
+def getrelevantnodes(env, objective, top_k = 1):
     nodeembeddings = env.LTM.get(objective, memorytype = "procedural")   
-    nodevalues = {i[1]["id"] : [graph["nodes"][i[1]["id"]]["V"],graph["nodes"][i[1]["id"]]["EXPF"], i[0]] for i in nodeembeddings}
+    nodevalues = {i[1]["id"] : [env.graph["nodes"][i[1]["id"]]["V"],env.graph["nodes"][i[1]["id"]]["EXPF"], i[0]] for i in nodeembeddings}
     nodevalues = [[k,v[0]+C*v[1]+K*v[2]]  for k,v in nodevalues.items()]
     relevantnodes = sorted(nodevalues, key=lambda item: item[1], reverse=True)[:top_k] 
     return relevantnodes
     
-    
+def getprogramto_extend(env,query):
+    relevantnodes = getrelevantnodes(env, objective )
+    nodeid = relevantnodes[0][0]
+    programdesc,_ =  _getprogramdesc(graph,nodeid)
+    programdesc =  '\n'.join([v for k,v in sorted(programdesc).items()])
+    return nodeid,programdesc
+
+############# fetch external environment trace ##################
+def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
+    graph = env.graph
+    if terminalnode in graph['edges']:
+        parentnodes = graph['edges'][terminalnode]
+        for port,parent_label in parents.items(): ###### iterate all parents
+            if parent_label not in nodestraveresed:
+                envtrace,nodestraversed = fetchenvtrace(graph,parent_label,envtrace,nodestraversed)
+    if graph["nodes"][terminalnode]["nm"] not in list(primitives.keys()):
+    ############ for external functions only
+         args = []
+         for port,parent_label in parents.items():
+             args.append(str(graph["nodes"][parent_label]["dat"]))
+         envtrace.append("action": graph["nodes"][terminalnode]["nm"]+"("+",".join(args)+")", "observation":graph["nodes"][terminalnode]["data"])
+         nodestraversed.append(terminalnode)
+     return envtrace,nodestraversed
+ 
 ############# Update node values #####################
 
-def updatevalue(graph,terminalnode):
+def updatevalue(env,terminalnode):
+    graph = env.graph
     #graph["nodes"][terminalnode]["R"] = reward
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
@@ -65,7 +84,61 @@ def updatevalue(graph,terminalnode):
         graph["nodes"][terminalnode]["EXPF"] = math.sqrt(math.log(N)/graph["nodes"][terminalnode]["N"])
      return
 
-            
-            
+
+############### Reset data ###################
+
+def resetdata(graph,terminalnode):
+    if terminalnode in graph['edges']:
+        parentnodes = graph['edges'][terminalnode]
+        for port,parent_label in parents.items(): ###### iterate all parents
+            resetdata(graph,parent_label)
+        graph["nodes"][terminalnode]["dat"]
+        if graph['nodes'][terminalnode]['es'] != 4:
+			graph['nodes'][terminalnode]['es'] = 0
+        
+def setfailurenode(graph, terminalnode):
+    if terminalnode in graph['edges']:
+        parentnodes = graph['edges'][terminalnode]
+        parentfailure = False
+        for port,parent_label in parents.items(): ###### iterate all parents
+            if graph["nodes"][parent_label]["es"] == 1:
+                continue
+            elif graph["nodes"][parent_label]["es"] == 0:
+                setfailurenode(graph, parent_label)
+            if graph["nodes"][parent_label]["es"] == 4:
+                parentfailure = True 
+        if  parentfailure:
+            graph["nodes"][terminalnode]["es"] == 4        
+
+############ execute program #################
+ def execprogram(env,prevterminalnode, code):
+     ########### check syntax of program
+     output = None
+     graph = returnSubgraph(env.graph, prevterminalnode)
+     try:
+         exec_namespace = {"graph": graph}
+         exec(code,exec_namespace)
+         terminalnode = exec_namespace.get("terminalnode", None)
+     except Exception as e:
+         output = traceback.format_exc()
+         return 0, output
+         
+     ########## execute graph
+     exec_namespace = {"graph": env.graph}
+     exec(code,exec_namespace)
+     terminalnode = exec_namespace.get("terminalnode", None)
+     
+     ########## set data as blank for the executing subgraph
+     resetdata(env.graph,terminalnode)
+     try:
+         output = runp(env.graph,terminalnode)
+     except combinatorruntimeerror as e:
+         errornode = e.errors[0]["nodeid"]
+         env.graph["nodes"][errornode]["es"] = 4 
+         setfailurenode(env.graph, terminalnode)         
+   
+     return terminalnode
+     
+     
 
 

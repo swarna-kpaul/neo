@@ -51,23 +51,27 @@ error:
 
 CODEERRORVARIABLES = ["code","error"]
 
-actionplantemplate = """System: You are an AI action planner for an autonomous agent. You are situated in a task environment, as provide by the user, prior axioms are the fixed rules and constraints of the environment, the belief axioms are your beliefs about the environment. You need to generate an action plan in exact json format as mentioned below. Do not generate any aditional explanations.
+actionplantemplate = """System: You are an AI action planner for an autonomous agent. You are situated in a task environment, as provided by the user, prior axioms are the fixed rules and constraints of the environment, the belief axioms are your beliefs about the environment. You need to generate an action plan to meet the objective in the environment. Do not generate any aditional explanations.
  
-Use the prior axioms, belief axioms, current state to plan out and deduce valid set to actions that can be taken in the environment.
+The plan should be structured and have enough details to convert into a program.
 Prior axioms should be given more preference than belief axioms.
 The action plan should not have contradicting logic.
 
+Here is a program that might partially meet the objective. Find rest of the program to fully meet the objective.
+{programdescription}
+
+Here is the actions taken be the above program and observations recieved from the external environment 
 {envtrace}
 
-Following is the list of callable function modules.    
-stored function modules:
-    {relatedactions}
+Following is the list of stored functions.    
+ {relatedactions}
+
+Apart from above functions you may use conditional statements, arithmetic operations, logical operations, loop
 
 The output should be in following format. Do not add the json tags so that it can be directly read by python. In NO CASE the output should deviate from the following format.
 {{"planid" : <8 digit alphanumeric id>,
 "actionplan": <algorithm of actionplan in plaintext. It should contain enough details to convert it into code. If a function module is called that takes input parameters, then properly supply the value of the input parameters in the actionplan. Do not call no-existent functions in allowed actions. Do not create infinite loops. Do not make up new actions or functions. Do not generate plans in separate lines.>,
-"requiredactions" : [<distinct subset of moduleid from stored function modules needed to carry out the action plan. All modules should be strictly from stored function modules and do not make up any moduleids.>],
-"cumulative reward" : 0
+"requiredactions" : [<distinct subset of moduleid from stored function modules needed to carry out the action plan. All modules should be strictly from stored function modules and do not make up any moduleids.>]
 }}
 
 Here are some example output.
@@ -89,7 +93,7 @@ useractionplanmeetobjective = "Generate the action plan for the following enviro
 
 useractionplanexplore = "Generate a long random action plan to know more about the environment. Folow the belief axioms to generate correct action plan. Take actions to EXPLORE NEW AREAS and gain new information that is not available in belief axioms. "
     
-ACTPLANPROMPTINPUTVARIABLES = ["beliefenvironment","envtrace", "relatedactions","errorfeedback","userpromptprefix","actionplanexamples"]
+ACTPLANPROMPTINPUTVARIABLES = ["beliefenvironment","programdescription","envtrace", "relatedactions","errorfeedback","userpromptprefix","actionplanexamples"]
 
 
 actionplancritiquetemplate = """System: You are a critique of generated action plan by an AI agent situated in an environment. 
@@ -152,55 +156,110 @@ ACTPLANCRITIQUEINPUTVARIABLES = ["axioms", "actplan", "objective"]
     # Action: """
 
 #  , 
-actortemplate = """System:  You are part of an AI agent that converts action plan to concrete executable action code in form of python 3 code.
-Try to write a general code so that it can be reused in other actionplans. 
-The action is executed in an external environment. Following is the objective of AI agent in the environment.  Where the objective says your long-term goals, the beliefaxioms are your beliefs on how the enviornment works or responds and the guidelines that needs to be followed to perform an action. 
- Environment:
-        {beliefenvironment}  
 
-The actionplan is provided by the user that tries to meet the above environment objective obeying the beliefaxioms.
+actortemplate = """System: You are a programmer in a new programming model FGPM
 
+Here are the details of programming model:
+This is a dataflow graph based programming model where programs are represented as directed acyclic graph. The nodes represents operation or function and edges represents data flow.
+A function node can have multiple input ports, each serving as a placeholder for separate input arguments. It can have only one output port that emits the computed output of the function. However multiple edges can emanate from an output port and output value is copied on each output edge. A program can be composed by connecting edges between multiple nodes. Each complete executable program must start with an initial node ("iW") and end with a single terminal node. 
+Every input argument of a node should be connected to another output port of another node.
+Programs are evaluated in lazy style, such that terminal node is excecuted 1st and it calls the functions of its input arguments. This goes on recursively until initial node is reached.
 
-You can use the related function modules as reusable functions or combine and/or modify them to create a new action code as per the action plan. Following are the related function code that can be useful in constructing the action code.
-Related function modules:
-   {actions}
+A function node can be created with the command "createnode(<instance of a graph>,<function name>,<optional paramater>)". It returns a node identifier.
+An edge can be created with the command "addlink(<instance of a graph>,<parent node identifier>,<child node identifier>>)". It returns a edge identifier.
 
-The output should ONLY be in the following SINGLE JSON format PARSABLE in python3. No other text should be there. DO NOT ADD JSON TAGS. It should be a single json record only. Add escape charachters wherever required to make the following a valid json definately.
-{{
-  "name": <a meaningful name of the action not exceeding 7 tokens>,
-  "input parameter" : <required input parameters of the function in the following code. If no parameters are required then keep it blank enclosed with double quotes>, 
-  "output" : <output returned by the function. If no output is returned then keep it blank enclosed with double quotes.>
-  "description" : "<a short description of the action not exceeding 100 tokens>",
-  "code": "<executable python 3 code of the action. The output code should be complete and executable in itself. add escape charachter before double quotes  within the function definition. Should not contain infinite loops. DO NOT use WHILE LOOPS. STRICTLY Don't make up any new function call apart from whatever available in Related function modules. STRICTLY Do not add same functions (or functions with same name) here which are there in requirements below. do not import problemenv or envobject. These are presupplied objects and need not to be imported>",
-  "requirements": "<full function definition code from related function modules, if any to be used in the above code. If no requirements are needed then keep this blank. add escape charachter before double quotes  within the function definition. Do not make up new functions or modify functions. Only exact function definitions from related function modules should be here>",
-  "functioncall": "<entrypoint function name in the above code>(<required argument values. this should not be any variable but an exact value>) if no entrypoint function call is required or entrypoint function is called in above code then keep this blank"
+Here are the list of function names available.
+{functions}
+
+Here is an example program for adding two constant numbers, where g1 in initial node identifier.
+g2 = createnode(graph,'K',2);
+g3 = createnode(graph,'K',3)
+g4 = createnode(graph,'+')
+addlink(graph,g1); 
+addlink(graph,g2,g1); 
+addlink(graph,g3,g1);
+addlink(graph,g4,g3,g2);
+terminalnode = g4
+
+The output should be STRICTLY in the following python json format
+Whereever possible shorten the explanation by evaluating the node outputs
+{{"program" :[<list of statements>],
+"desc":[list of short explanation of each node based on the function it performs and value it is expected to return. Each element is a dictionary where key is the node index and value is the description. Explanations should be generated for all nodes. You may assign random node indexes in the explanations. ]
 }}
 
-The final code is concatenation of "requirements", "code" and "functioncall". Thus both "requirements" and "code" should contain valid python code.
-The final code should not have infinite loops and should run for finite time and halt. 
-The "functioncall" should contain the entrypoint function execution string of "code", if required.
+You need to generate a program as per the plan provided by user to meet the following objective.
+Objective: 
+ {objective}
+ 
+The generated program should be an extension of an existing program with terminal node identifier {terminalnode} and initial node identifier {initialnode}. You may link the relevant nodes of the generated program with this terminal node or initial node.
 
-The structure of the code will be as follows:
-import <any required inbuilt python library>
-<New function defintion with arguments and proper indentation. function body may contain python loops, conditional statements, arithmetic operations, python inbuilt functions,
-logical operations, variable assignments, complex math operations, 
-function calls with appropriate parameters that to related function modules that are defined above.
-Always return the data that you want to send to the main AI agent. 
-The return data can be any data collected from the environment, user , other AI agent or ant specific return data mention in the action plan.
-The above entrypoint function call should not be present here.>
-
+The existing program already do the following.
+  {programdescription}
   
-User: Write the action code for the following action plan
-Action plan: 
-   {actionplan}
+The terminal node of the existing program do the following.
+  {terminalnodedescription}
 
-{error}
 
-AI: 
-    
+User : Write a program in FGPM to implement the following plan by extending the existing program. You don't need to write the existing program.
+
+Plan:
+ {actionplan}
+
+AI:
+
 """
 
-ACTORPROMPTINPUTVARIABLES = ["beliefenvironment","actionplan","actions", "error"]
+ACTORPROMPTINPUTVARIABLES = ["functions","objective","programdescription", "terminalnode","initialnode","terminalnodedescription","actionplan"]
+
+# actortemplate = """System:  You are part of an AI agent that converts action plan to concrete executable action code in form of python 3 code.
+# Try to write a general code so that it can be reused in other actionplans. 
+# The action is executed in an external environment. Following is the objective of AI agent in the environment.  Where the objective says your long-term goals, the beliefaxioms are your beliefs on how the enviornment works or responds and the guidelines that needs to be followed to perform an action. 
+ # Environment:
+        # {beliefenvironment}  
+
+# The actionplan is provided by the user that tries to meet the above environment objective obeying the beliefaxioms.
+
+
+# You can use the related function modules as reusable functions or combine and/or modify them to create a new action code as per the action plan. Following are the related function code that can be useful in constructing the action code.
+# Related function modules:
+   # {actions}
+
+# The output should ONLY be in the following SINGLE JSON format PARSABLE in python3. No other text should be there. DO NOT ADD JSON TAGS. It should be a single json record only. Add escape charachters wherever required to make the following a valid json definately.
+# {{
+  # "name": <a meaningful name of the action not exceeding 7 tokens>,
+  # "input parameter" : <required input parameters of the function in the following code. If no parameters are required then keep it blank enclosed with double quotes>, 
+  # "output" : <output returned by the function. If no output is returned then keep it blank enclosed with double quotes.>
+  # "description" : "<a short description of the action not exceeding 100 tokens>",
+  # "code": "<executable python 3 code of the action. The output code should be complete and executable in itself. add escape charachter before double quotes  within the function definition. Should not contain infinite loops. DO NOT use WHILE LOOPS. STRICTLY Don't make up any new function call apart from whatever available in Related function modules. STRICTLY Do not add same functions (or functions with same name) here which are there in requirements below. do not import problemenv or envobject. These are presupplied objects and need not to be imported>",
+  # "requirements": "<full function definition code from related function modules, if any to be used in the above code. If no requirements are needed then keep this blank. add escape charachter before double quotes  within the function definition. Do not make up new functions or modify functions. Only exact function definitions from related function modules should be here>",
+  # "functioncall": "<entrypoint function name in the above code>(<required argument values. this should not be any variable but an exact value>) if no entrypoint function call is required or entrypoint function is called in above code then keep this blank"
+# }}
+
+# The final code is concatenation of "requirements", "code" and "functioncall". Thus both "requirements" and "code" should contain valid python code.
+# The final code should not have infinite loops and should run for finite time and halt. 
+# The "functioncall" should contain the entrypoint function execution string of "code", if required.
+
+# The structure of the code will be as follows:
+# import <any required inbuilt python library>
+# <New function defintion with arguments and proper indentation. function body may contain python loops, conditional statements, arithmetic operations, python inbuilt functions,
+# logical operations, variable assignments, complex math operations, 
+# function calls with appropriate parameters that to related function modules that are defined above.
+# Always return the data that you want to send to the main AI agent. 
+# The return data can be any data collected from the environment, user , other AI agent or ant specific return data mention in the action plan.
+# The above entrypoint function call should not be present here.>
+
+  
+# User: Write the action code for the following action plan
+# Action plan: 
+   # {actionplan}
+
+# {error}
+
+# AI: 
+    
+# """
+
+
 
 
 # removecodeerror = """System: You are a Python3 code corrector. Based on the log of the code error you modify the code and make sure the code runs successfully.

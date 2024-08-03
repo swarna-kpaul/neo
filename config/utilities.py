@@ -24,3 +24,4 @@ CRITIQUEPROMPT = PromptTemplate(input_variables=CRITIQUEPROMPTINPUTVARIABLES, te
 CODEEQUIVALENCEPROMPT = PromptTemplate(input_variables=CODEEQUIVALENCEVARIABLES, template=codequivalencetemplate)
 CODEERRORPROMPT = PromptTemplate(input_variables=CODEERRORVARIABLES, template=coderrortemplate)
 #PLANEQUIVALENCEPROMPT = PromptTemplate(input_variables=PLANEQVVARIABLES, template=planequivalencetemplate)
+
