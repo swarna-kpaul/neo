@@ -7,7 +7,7 @@ from neo.config.utilities import *
 def solver(env):
     stm = env.stm
     ltm = env.ltm
-    relevantextactions = ltm.get(query = env["environment"]["description"]+" "+env["environment"]["prior axioms"], memorytype ="externalactions", top_k=5)
+    relevantextactions = ltm.get(query = env.environment["description"]+" "+env.environment["prior axioms"], memorytype ="externalactions", top_k=5)
     relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
     stm.set("relevantactions",relevantextactions)
     while True:

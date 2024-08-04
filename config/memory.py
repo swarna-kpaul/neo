@@ -5,7 +5,7 @@ from config.keys import *
 from datetime import datetime
 import string
 import random
-from neo.config.utilities import embeddings_model
+from neo.config.utilities import get_embeddings
 from sklearn.metrics.pairwise import cosine_similarity
 #from langchain.chat_models import ChatGooglePalm
 import uuid
@@ -18,13 +18,13 @@ class LTM():  ######### longterm memory - 3 types of memory semantic, episodic a
         #self.dbtype = dbtype
     
     def set(self, text, data, recordid=str(uuid.uuid4()), memorytype = "semantic"):
-        embedding = embeddings_model.embed_documents(text) ### get embeddings ############
+        embedding = get_embeddings(text) ### get embeddings ############
         ########### update/insert  record
         self.memory[memorytype][recordid] = {"embedding":embedding, "data":data}
     
     
     def get(self,query, memorytype = "semantic", cutoffscore = 0.5 ,top_k=-1):
-        queryembedding = embeddings_model.embed_query(query)
+        queryembedding = get_embeddings(query)
         
         sim = [[cosine_similarity([queryembedding], [mem["embedding"]])[0][0],{"data":mem["data"],"id":id}]  for id,mem in self.memory[memorytype].items()]
         top_results = [i for i in top_results if i[0] > cutoffscore]
