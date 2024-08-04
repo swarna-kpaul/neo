@@ -6,7 +6,7 @@ initworldbootfunctions= extfunctionset
 
 
 ######## Primitive actions for FGPM ###############
-primitives = {"iW" : """Initial node; No input parameters; Ex: createnode(graph,"iW",init_world)""",
+primitives = {#"iW" : """Initial node; No input parameters; Ex: createnode(graph,"iW",init_world)""",
               "K": """Constant node always return a constant value set during creation of node; It has one input argument. Ex: createnode(graph,"K",2) - This creates a node with constant value 2.""",
               "+" : "Adds two input values; ",
               "-" : "subtracts 2nd argument from first.",
@@ -23,5 +23,5 @@ primitives = {"iW" : """Initial node; No input parameters; Ex: createnode(graph,
               
 ############# Primitives to be used in prompt ########
 ALLACTIONS = pickle.loads(pickle.dumps(primitives,-1))
-_extactions = {k: v["description"]+" "+ v["input"]+" "+v["output"] for k,v in initworldbootfunctions.items()}
-ALLACTIONS.update(_extactions)
+EXTACTIONS = {k: v["description"]+" "+ v["input"]+" "+v["output"] for k,v in initworldbootfunctions.items()}
+ALLACTIONS.update(EXTACTIONS)

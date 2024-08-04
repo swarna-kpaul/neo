@@ -62,31 +62,31 @@ class STM():  ### Short term memory -- {"conversation": , "timestamp": }
         #    stmobj.append({"chat": data , "time" : datetime.now()})                
         #else:
         #    stmobj = data
-        self.stm[memorytype] = data
+        self.memory[memorytype] = data
         
     def append(self,memorytype,data):
-        if memorytype in self.stm:
-            self.stm[memorytype].append(data)
+        if memorytype in self.memory:
+            self.memory[memorytype].append(data)
         else:
-            self.stm[memorytype] = [data]
+            self.memory[memorytype] = [data]
     
     def delete(self,memorytype):
-        if isinstance(self.stm[memorytype]) == list:
-            self.stm[memorytype] = []
-        elif isinstance(self.stm[memorytype]) == dict:
-            self.stm[memorytype] = {}
+        if isinstance(self.memory[memorytype]) == list:
+            self.memory[memorytype] = []
+        elif isinstance(self.memory[memorytype]) == dict:
+            self.memory[memorytype] = {}
         else:
-            self.stm[memorytype] = ""
+            self.memory[memorytype] = ""
     
     
     def get(self, memorytype):
         #if key == "ACPtrace": 
-        #    chatdata = [ i['chat'] for i in self.stm[key]]
-        #elif key == "currentenv" and not self.stm[key]:
+        #    chatdata = [ i['chat'] for i in self.memory[key]]
+        #elif key == "currentenv" and not self.memory[key]:
         #    id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
         #    return {'id': id, 'env': {}}
         #else:
-        data = self.stm[memorytype]
+        data = self.memory[memorytype]
         return data
     
 stm = STM()    

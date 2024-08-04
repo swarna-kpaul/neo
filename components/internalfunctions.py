@@ -88,7 +88,7 @@ def generatecode(actionplan,relevantnodeid,programdesc,env, codeerror=""):
     actionplantext = "\n".join(actionplan["actionplan"]) if isinstance(actionplan["actionplan"], list) else str(actionplan["actionplan"])
     relevantfunctions = env.LTM.get(actionplantext,"externalactions",top_k=5)
     relevantfunctionstext = "/n".join([i[1]["id"]+"->"+i[1]["data"] for i in relevantextactions])
-                            
+    relevantfunctionstext +=  "/n".join([k+" -> "+v for k,v in env.primitives])                       
     objective = env.environment["objective"] #["objective"]
     #ACPtrace = STM.get("ACPtrace")
     #prevactionplan = ACPtrace[-1]["actionplan"]["actionplan"] if ACPtrace else ""
