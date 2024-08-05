@@ -183,13 +183,6 @@ addlink(graph,g3,g1);
 addlink(graph,g4,g3,g2);
 terminalnode = g4
 
-The output should STRICTLY contain following python dictionary format.
-{{"program" :[<list of statements>],
-"desc":[list of short explanation of each node based on the function it performs and value it is expected to return. Each element is a dictionary where key is the node index and value is the description. Explanations should be generated for all nodes. You may assign random node indexes in the explanations. ]
-}}
-
-Whereever possible shorten the explanation by evaluating the node outputs.
-
 You need to generate a program to meet the objective provided by user.
 Here are the rules or constraints you need to follow.
   {axioms}
@@ -202,6 +195,14 @@ The existing program already do the following.
 The terminal node of the existing program do the following.
   {terminalnodedescription}
 
+Also add the the node descriptions in within the program by using the following statement.
+graph["nodes"][<node index (represented by the variable in the above program during node creation>]["desc"] = <short explanation of each node based on the function it performs and value it is expected to return>
+
+The output should STRICTLY contain following python dictionary format.
+{{"program" :[<list of statements>]
+}}
+
+Descriptions should be added for all nodes within the above program. Whereever possible shorten the explanation by evaluating the node outputs.
 
 User : Write a program in FGPM to meet the following objective by extending the existing program. You don't need to write the existing program. 
 Objective: 

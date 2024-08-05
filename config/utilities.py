@@ -39,7 +39,7 @@ CODEERRORPROMPT = PromptTemplate(input_variables=CODEERRORVARIABLES, template=co
 
 
 def extractdictfromtext(text):
-    dict_pattern = re.compile(r'\{.*?\}', re.DOTALL)
+    dict_pattern = re.compile(r'\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}', re.MULTILINE | re.DOTALL)
     match = dict_pattern.search(text)
     if match:
         dict_str = match.group(0)

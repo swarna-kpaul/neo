@@ -6,15 +6,15 @@ import ast
 import traceback
 
 def solver(env):
-    stm = env.stm
-    ltm = env.ltm
+    stm = env.STM
+    ltm = env.LTM
     relevantextactions = ltm.get(query = env.environment["description"]+" "+env.environment["prior axioms"], memorytype ="externalactions", top_k=5)
     relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
     stm.set("relevantactions",relevantextactions)
     while True:
         for i in range(K):
-            actionplan,relevantnodeid,programdesc = generateplan(env )
-            action = generatecode(actionplan,relevantnodeid,programdesc,env)
+            #actionplan,relevantnodeid,programdesc = generateplan(env )
+            action,relevantnodeid = generatecode(env)
             output,stm,return_status = execcode(action["program"],action["desc"],env,relevantnodeid)
             while return_status != 0:
                 action = generatecode(actionplan, relevantnodeid,programdesc,env, error = output)
@@ -88,17 +88,29 @@ def generateplan(env, explore = False ):
     return output,relevantnodeid,programdesc
     
     
-def generatecode(relevantnodeid,programdesc,env, codeerror=""):
-                 
-    #actionplantext = "\n".join(actionplan["actionplan"]) if isinstance(actionplan["actionplan"], list) else str(actionplan["actionplan"])
-    relevantfunctions = env.LTM.get(actionplantext,"externalactions",top_k=5)
-    relevantfunctionstext = "/n".join([i[1]["id"]+"->"+i[1]["data"] for i in relevantextactions])
-    relevantfunctionstext +=  "/n".join([k+" -> "+v for k,v in env.primitives])                       
-    objective = env.environment["objective"] #["objective"]
+def generatecode(env, codeerror=""):
+
+   
     axioms = env.environment["prior axioms" ]+"\n"+env.environment["belief axioms"]
+    objective = env.environment["objective"]    
+    
+    ######## fetch relevant node
+    relevantnodeid, programdesc = pg.getprogramto_extend(env,objective+"\n"+axioms)
+    ######## fetch envtrace
+    if not relevantnodeid:
+        relevantnodeid = env.initnode
+        programdesc = "Initializes the program with initial node"
+    #actionplantext = "\n".join(actionplan["actionplan"]) if isinstance(actionplan["actionplan"], list) else str(actionplan["actionplan"])
+    relevantfunctions = env.LTM.get(objective+"\n"+axioms,"externalactions",top_k=5)
+    relevantfunctionstext = "\n".join([i[1]["id"]+"->"+i[1]["data"] for i in relevantfunctions])
+    relevantfunctionstext +=  "\n".join([k+" -> "+v for k,v in env.primitives.items()])                       
+     #["objective"]
+    
     #ACPtrace = STM.get("ACPtrace")
     #prevactionplan = ACPtrace[-1]["actionplan"]["actionplan"] if ACPtrace else ""
-    messages = ACTORPROMPT.format(functions = relevantfunctionstext, \
+    
+    while True:
+        messages = ACTORPROMPT.format(functions = relevantfunctionstext, \
                     axioms = axioms, \
                     programdescription = programdesc,\
                     terminalnode = relevantnodeid, \
@@ -106,19 +118,21 @@ def generatecode(relevantnodeid,programdesc,env, codeerror=""):
                     terminalnodedescription = env.graph["nodes"][relevantnodeid]["desc"], \
                     objective = objective, \
                     error = codeerror)
-    print("ACTORPROMPT:",messages)
-    while True:
+        print("ACTORPROMPT:",messages)
         output = llm_gpt4o.predict(messages)
+        
+        print(output)
         try:
             output = extractdictfromtext(output)
             break
-        except:
+        except Exception as e:
             print("Error ACTORPROMPT output:",output)
+            codeerror = str(e)
             pass
         
     print("ACTORPROMPT output:",output)
     print("ACTOR Code:",output["program"])
-    return output 
+    return output, relevantnodeid
 
 
 def execcode(code,nodedesc,env,relevantnodeid):

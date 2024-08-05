@@ -17,6 +17,7 @@ class bootstrapenv():
          self.graph = creategraph('programgraph')
          init_world = worldclass(initworldbootfunctions)
          self.initnode = createnode(self.graph,'iW',init_world)
+         self.graph["nodes"][self.initnode]["desc"] = "Initializes the program with initial node"
          #self.skillgraph = creategraph('bootenv') 
          #self.initnode = createnode(self.skillgraph,'iW',init_world)
          self.environment = {"description": shortdescription + objective, "objective": objective, "prior axioms": prioraxioms, "belief axioms": "", "current state": self.getstate(), "examples": examples, "actionset": list(ALLACTIONS.keys())}
