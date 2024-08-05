@@ -38,15 +38,17 @@ def updateproceduremem(env,terminalnode):
             
 
 ############ fetch relevant subprograms from procedural memory #################    
-def getrelevantnodes(env, objective, top_k = 1):
-    nodeembeddings = env.LTM.get(objective, memorytype = "procedural")   
+def getrelevantnodes(env, query, top_k = 1):
+    nodeembeddings = env.LTM.get(query, memorytype = "procedural")   
     nodevalues = {i[1]["id"] : [env.graph["nodes"][i[1]["id"]]["V"],env.graph["nodes"][i[1]["id"]]["EXPF"], i[0]] for i in nodeembeddings}
     nodevalues = [[k,v[0]+C*v[1]+K*v[2]]  for k,v in nodevalues.items()]
     relevantnodes = sorted(nodevalues, key=lambda item: item[1], reverse=True)[:top_k] 
     return relevantnodes
     
 def getprogramto_extend(env,query):
-    relevantnodes = getrelevantnodes(env, objective )
+    relevantnodes = getrelevantnodes(env, query )
+    if not relevantnodes:
+        return False,None
     nodeid = relevantnodes[0][0]
     programdesc,_ =  _getprogramdesc(graph,nodeid)
     programdesc =  '\n'.join([v for k,v in sorted(programdesc).items()])

@@ -3,6 +3,8 @@ from config.prompts import *
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts.prompt import PromptTemplate
 import os
+import re
+import ast
 from openai import OpenAI
 os.environ["OPENAI_API_KEY"] = OPENAIAPIKEY
 client = OpenAI()
@@ -35,3 +37,14 @@ CODEEQUIVALENCEPROMPT = PromptTemplate(input_variables=CODEEQUIVALENCEVARIABLES,
 CODEERRORPROMPT = PromptTemplate(input_variables=CODEERRORVARIABLES, template=coderrortemplate)
 #PLANEQUIVALENCEPROMPT = PromptTemplate(input_variables=PLANEQVVARIABLES, template=planequivalencetemplate)
 
+
+def extractdictfromtext(text):
+    dict_pattern = re.compile(r'\{.*?\}', re.DOTALL)
+    match = dict_pattern.search(text)
+    if match:
+        dict_str = match.group(0)
+        dict_str = dict_str.strip()
+        return ast.literal_eval(dict_str)
+    else:
+        raise NameError("No dictionary found")
+    

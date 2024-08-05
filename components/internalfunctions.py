@@ -2,7 +2,8 @@ from combinatorlite import creategraph, createnode, addlink, worldclass, runp, n
 from neo.environment.envtemplate import env
 import neo.components.programgraph as pg
 from neo.config.utilities import *
-
+import ast
+import traceback
 
 def solver(env):
     stm = env.stm
@@ -31,15 +32,19 @@ def generateplan(env, explore = False ):
     environment = env.environment
     
     relatedactionlist = env.STM.get("relevantactions")
-    relatedactionlist = [ {"moduleid": k, "description": v} for k,v in relatedactionlist.items()]
+    relatedactionlist = [ "moduleid : " +k+"; description : "+ v for k,v in relatedactionlist.items()]
     ######## fetch relevant node
     relevantnodeid, programdesc = pg.getprogramto_extend(env,environment["objective"]+environment["prior axioms"])
     ######## fetch envtrace
-    envtrace = pg.fetchenvtrace(env,relevantnodeid)
+    if relevantnodeid:
+        envtrace = pg.fetchenvtrace(env,relevantnodeid)
+    else:
+        envtrace = ""
+        relevantnodeid = env.initnode
     #envtrace = env.STM.get("envtrace")
     #critique = env.STM.get("critique")
     #additionalinstructions,preactionppath = getinstructionfromSP(STM)#STM.get("additionalinstructions")
-    beliefaxioms = env.STM.get("relevantbeliefs")
+    beliefaxioms = "\n".join(env.STM.get("relevantbeliefs"))
     actionplanexamples = environment["examples"]
     #if  item == "explore":
     #    currentenvironment["objective"] = currentenvironment["exploreobjective"]
@@ -57,7 +62,7 @@ def generateplan(env, explore = False ):
             errorfeedbacktext = "Here are some action plans with feedback. Make sure to generate a valid new action plan. \n "+errorfeedback
         else:
             errorfeedbacktext = ""
-        messages = utilities.ACTPLANPROMPT.format(beliefenvironment = environmenttext, \
+        messages = ACTPLANPROMPT.format(beliefenvironment = environmenttext, \
                     programdescription = programdesc, \
                     envtrace = envtrace_text, \
                     relatedactions = '\n'.join(relatedactionlist), \
@@ -65,7 +70,7 @@ def generateplan(env, explore = False ):
                     userpromptprefix = useractionplanmeetobjective, \
                     errorfeedback = errorfeedback)
         print("ACTPLANPROMPT:",messages)
-        output = utilities.llm_gpt4o.predict(messages)
+        output = llm_gpt4o.predict(messages)
         
         print("ACTPLANPROMPT output:",output)
         try:
@@ -83,28 +88,29 @@ def generateplan(env, explore = False ):
     return output,relevantnodeid,programdesc
     
     
-def generatecode(actionplan,relevantnodeid,programdesc,env, codeerror=""):
+def generatecode(relevantnodeid,programdesc,env, codeerror=""):
                  
-    actionplantext = "\n".join(actionplan["actionplan"]) if isinstance(actionplan["actionplan"], list) else str(actionplan["actionplan"])
+    #actionplantext = "\n".join(actionplan["actionplan"]) if isinstance(actionplan["actionplan"], list) else str(actionplan["actionplan"])
     relevantfunctions = env.LTM.get(actionplantext,"externalactions",top_k=5)
     relevantfunctionstext = "/n".join([i[1]["id"]+"->"+i[1]["data"] for i in relevantextactions])
     relevantfunctionstext +=  "/n".join([k+" -> "+v for k,v in env.primitives])                       
     objective = env.environment["objective"] #["objective"]
+    axioms = env.environment["prior axioms" ]+"\n"+env.environment["belief axioms"]
     #ACPtrace = STM.get("ACPtrace")
     #prevactionplan = ACPtrace[-1]["actionplan"]["actionplan"] if ACPtrace else ""
-    messages = utilities.ACTORPROMPT.format(functions = relevantfunctionstext, \
-                    objective = objective, \
+    messages = ACTORPROMPT.format(functions = relevantfunctionstext, \
+                    axioms = axioms, \
                     programdescription = programdesc,\
                     terminalnode = relevantnodeid, \
                     initialnode = env.initnode, \
                     terminalnodedescription = env.graph["nodes"][relevantnodeid]["desc"], \
-                    actionplan = actionplantext, \
+                    objective = objective, \
                     error = codeerror)
     print("ACTORPROMPT:",messages)
     while True:
-        output = utilities.llm_gpt4o.predict(messages)
+        output = llm_gpt4o.predict(messages)
         try:
-            output = ast.literal_eval(output)
+            output = extractdictfromtext(output)
             break
         except:
             print("Error ACTORPROMPT output:",output)
@@ -144,11 +150,11 @@ def updatenodedescription(progdesc):
     
 def critique (env,currentactionplan,currentperception):
     currentenvironment = env.environment
-    messages = utilities.CRITIQUEPROMPT.format(beliefenvironment = str(currentenvironment), \
+    messages = CRITIQUEPROMPT.format(beliefenvironment = str(currentenvironment), \
                     actionplan = currentactionplan, \
                     perception = currentperception)
     print("CRITIQUEPROMPT:",messages)
-    output = utilities.llm_gpt4o.predict(messages)
+    output = llm_gpt4o.predict(messages)
     print("CRITIQUEPROMPT output:",output)
     output = ast.literal_eval(output)
     
@@ -169,12 +175,12 @@ def belieflearner(env):
         relatedenvironments = ["\n".join(relatedenvironments)]
     else:
         relatedenvironments = ""
-    messages = utilities.LEARNERPROMPT.format(relatedenvironments = str(relatedenvironments),
+    messages = LEARNERPROMPT.format(relatedenvironments = str(relatedenvironments),
                     beliefenvironment = str(currentbelief),
                     EnvTrace = EnvTrace_text)
         #print(messages)
     print("LEARNERPROMPT:",messages)
-    output = utilities.llm_gpt4o.predict(messages)
+    output = llm_gpt4o.predict(messages)
     print("LEARNERPROMPT output:",output)
     beliefaxioms = ast.literal_eval(output)["beliefaxioms"]
     currentenvironment["env"]["belief axioms"] = beliefaxioms

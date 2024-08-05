@@ -66,7 +66,8 @@ Here is the actions taken be the above program and observations recieved from th
 Following is the list of stored functions.    
  {relatedactions}
 
-Apart from above functions you may use conditional statements, arithmetic operations, logical operations, loop
+Apart from above functions you may use conditional statements, arithmetic operations, logical operations, loop.
+The action plan should be generated in functional style and do not use variable assignments.
 
 The output should be in following format. Do not add the json tags so that it can be directly read by python. In NO CASE the output should deviate from the following format.
 {{"planid" : <8 digit alphanumeric id>,
@@ -157,6 +158,7 @@ ACTPLANCRITIQUEINPUTVARIABLES = ["axioms", "actplan", "objective"]
 
 #  , 
 
+
 actortemplate = """System: You are a programmer in a new programming model FGPM
 
 Here are the details of programming model:
@@ -181,16 +183,17 @@ addlink(graph,g3,g1);
 addlink(graph,g4,g3,g2);
 terminalnode = g4
 
-The output should be STRICTLY in the following python json format
-Whereever possible shorten the explanation by evaluating the node outputs
+The output should STRICTLY contain following python dictionary format.
 {{"program" :[<list of statements>],
 "desc":[list of short explanation of each node based on the function it performs and value it is expected to return. Each element is a dictionary where key is the node index and value is the description. Explanations should be generated for all nodes. You may assign random node indexes in the explanations. ]
 }}
 
-You need to generate a program as per the plan provided by user to meet the following objective.
-Objective: 
- {objective}
- 
+Whereever possible shorten the explanation by evaluating the node outputs.
+
+You need to generate a program to meet the objective provided by user.
+Here are the rules or constraints you need to follow.
+  {axioms}
+
 The generated program should be an extension of an existing program with terminal node identifier {terminalnode} and initial node identifier {initialnode}. You may link the relevant nodes of the generated program with this terminal node or initial node.
 
 The existing program already do the following.
@@ -200,16 +203,72 @@ The terminal node of the existing program do the following.
   {terminalnodedescription}
 
 
-User : Write a program in FGPM to implement the following plan by extending the existing program. You don't need to write the existing program.
+User : Write a program in FGPM to meet the following objective by extending the existing program. You don't need to write the existing program. 
+Objective: 
+ {objective}
 
-Plan:
- {actionplan}
+Lets think step by step.
 
 AI:
 
 """
 
-ACTORPROMPTINPUTVARIABLES = ["functions","objective","programdescription", "terminalnode","initialnode","terminalnodedescription","actionplan"]
+ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription", "terminalnode","initialnode","terminalnodedescription","objective"]
+
+##################################################### with action plan #################################################
+# actortemplate = """System: You are a programmer in a new programming model FGPM
+
+# Here are the details of programming model:
+# This is a dataflow graph based programming model where programs are represented as directed acyclic graph. The nodes represents operation or function and edges represents data flow.
+# A function node can have multiple input ports, each serving as a placeholder for separate input arguments. It can have only one output port that emits the computed output of the function. However multiple edges can emanate from an output port and output value is copied on each output edge. A program can be composed by connecting edges between multiple nodes. Each complete executable program must start with an initial node ("iW") and end with a single terminal node. 
+# Every input argument of a node should be connected to another output port of another node.
+# Programs are evaluated in lazy style, such that terminal node is excecuted 1st and it calls the functions of its input arguments. This goes on recursively until initial node is reached.
+
+# A function node can be created with the command "createnode(<instance of a graph>,<function name>,<optional paramater>)". It returns a node identifier.
+# An edge can be created with the command "addlink(<instance of a graph>,<parent node identifier>,<child node identifier>>)". It returns a edge identifier.
+
+# Here are the list of function names available.
+# {functions}
+
+# Here is an example program for adding two constant numbers, where g1 in initial node identifier.
+# g2 = createnode(graph,'K',2);
+# g3 = createnode(graph,'K',3)
+# g4 = createnode(graph,'+')
+# addlink(graph,g1); 
+# addlink(graph,g2,g1); 
+# addlink(graph,g3,g1);
+# addlink(graph,g4,g3,g2);
+# terminalnode = g4
+
+# The output should be STRICTLY in the following python json format
+# Whereever possible shorten the explanation by evaluating the node outputs
+# {{"program" :[<list of statements>],
+# "desc":[list of short explanation of each node based on the function it performs and value it is expected to return. Each element is a dictionary where key is the node index and value is the description. Explanations should be generated for all nodes. You may assign random node indexes in the explanations. ]
+# }}
+
+# You need to generate a program as per the plan provided by user to meet the following objective.
+# Objective: 
+ # {objective}
+ 
+# The generated program should be an extension of an existing program with terminal node identifier {terminalnode} and initial node identifier {initialnode}. You may link the relevant nodes of the generated program with this terminal node or initial node.
+
+# The existing program already do the following.
+  # {programdescription}
+  
+# The terminal node of the existing program do the following.
+  # {terminalnodedescription}
+
+
+# User : Write a program in FGPM to implement the following plan by extending the existing program. You don't need to write the existing program.
+
+# Plan:
+ # {actionplan}
+
+# AI:
+
+# """
+
+#ACTORPROMPTINPUTVARIABLES = ["functions","objective","programdescription", "terminalnode","initialnode","terminalnodedescription","actionplan"]
 
 # actortemplate = """System:  You are part of an AI agent that converts action plan to concrete executable action code in form of python 3 code.
 # Try to write a general code so that it can be reused in other actionplans. 
