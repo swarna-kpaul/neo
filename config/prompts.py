@@ -163,22 +163,21 @@ actortemplate = """System: You are a programmer in a new programming model FGPM
 
 Here are the details of programming model:
 This is a dataflow graph based programming model where programs are represented as directed acyclic graph. The nodes represents operation or function and edges represents data flow.
-A function node can have multiple input ports, each serving as a placeholder for separate input arguments. It can have only one output port that emits the computed output of the function. However multiple edges can emanate from an output port and output value is copied on each output edge. A program can be composed by connecting edges between multiple nodes. Each complete executable program must start with an initial node ("iW") and end with a single terminal node. 
+A function node can have multiple input ports, each serving as a placeholder for separate input arguments. It can have only one output port that emits the computed output of the function. However multiple edges can emanate from an output port and output value is copied on each output edge. A program can be composed by connecting edges between multiple nodes. Each complete executable program must start with another terminal node or initial node end with a single terminal node. 
 Every input argument of a node should be connected to another output port of another node.
 Programs are evaluated in lazy style, such that terminal node is excecuted 1st and it calls the functions of its input arguments. This goes on recursively until initial node is reached.
 
-A function node can be created with the command "createnode(<instance of a graph>,<function name>,<optional paramater>)". It returns a node identifier.
-An edge can be created with the command "addlink(<instance of a graph>,<parent node identifier>,<child node identifier>>)". It returns a edge identifier.
+A function node can be created with the command "createnode(<instance of a graph>,<function name>,<optional paramater only applicable for constant node>)". It returns a node identifier.
+An edge can be created with the command "addlink(<instance of a graph>,<child node identifier>,<parent node identifiers in representing input arguments for child node>)". It returns a edge identifier
 
 Here are the list of function names available.
 {functions}
 
-Here is an example program for adding two constant numbers, where g1 in initial node identifier.
+Here is an example program for adding two constant numbers, where 1 in initial node identifier.
 g2 = createnode(graph,'K',2);
 g3 = createnode(graph,'K',3)
 g4 = createnode(graph,'+')
-addlink(graph,g1); 
-addlink(graph,g2,g1); 
+addlink(graph,g2,1); ### starting node should connect to the terminal node of the prior program 
 addlink(graph,g3,g1);
 addlink(graph,g4,g3,g2);
 terminalnode = g4
@@ -188,6 +187,8 @@ Here are the rules or constraints you need to follow.
   {axioms}
 
 The generated program should be an extension of an existing program with terminal node identifier {terminalnode} and initial node identifier {initialnode}. You may link the relevant nodes of the generated program with this terminal node or initial node.
+Specify the terminal node of the new generated program by the following statement.
+terminalnode = <terminal node identifier>
 
 The existing program already do the following.
   {programdescription}
