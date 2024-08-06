@@ -131,16 +131,16 @@ def generatecode(env, codeerror=""):
             pass
         
     print("ACTORPROMPT output:",output)
-    print("ACTOR Code:",output["program"])
-    return output, relevantnodeid
+    print("ACTOR Code:","\n".join(output["program"]))
+    return "\n".join(output["program"]), relevantnodeid
 
 
-def execcode(code,nodedesc,env,relevantnodeid):
+def execcode(code,env,relevantnodeid):
     output = None
     return_status = None
     error = None
     print("exec code", code)
-    code += updatenodedescription(nodedesc)
+    #code += updatenodedescription(nodedesc)
     try:
 # Create an empty namespace (dictionary) for the exec function
         terminalnode = env.act(code,relevantnodeid)

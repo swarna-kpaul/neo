@@ -1,6 +1,7 @@
 import math
 from neo.environment.bootstrapactions import primitives
 from combinatorlite import returnSubgraph, combinatorruntimeerror
+import pickle
 ############ initialize program graph
 
 C = 0.2 ## exploration factor
@@ -92,7 +93,7 @@ def updatevalue(env,terminalnode):
 def resetdata(graph,terminalnode):
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
-        for port,parent_label in parents.items(): ###### iterate all parents
+        for port,parent_label in parentnodes.items(): ###### iterate all parents
             resetdata(graph,parent_label)
         graph["nodes"][terminalnode]["dat"]
         if graph['nodes'][terminalnode]['es'] != 4:
@@ -116,7 +117,10 @@ def setfailurenode(graph, terminalnode):
 def execprogram(env,prevterminalnode, code):
      ########### check syntax of program
      output = None
-     graph = returnSubgraph(env.graph, prevterminalnode)
+     if len(graph["nodes"]) == 1:
+         graph = pickle.loads(pickle.dumps(env.graph,-1))
+     else:
+         graph = returnSubgraph(env.graph, prevterminalnode)
      try:
          exec_namespace = {"graph": graph}
          exec(code,exec_namespace)
