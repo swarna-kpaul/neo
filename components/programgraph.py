@@ -13,7 +13,7 @@ def _getprogramdesc(graph,terminalnode, programdesc = [],nodestraversed = []):
     
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
-        for port,parent_label in parents.items(): ###### iterate all parents
+        for port,parent_label in parentnodes.items(): ###### iterate all parents
             if parent_label not in nodestraveresed:
                 programdesc,nodestraversed = _getprogramdesc(graph,parent_label,programdesc,nodestraversed)
     programdesc.append(graph["nodes"][terminalnode]["desc"])
@@ -23,16 +23,16 @@ def _getprogramdesc(graph,terminalnode, programdesc = [],nodestraversed = []):
 def getprogramdesc(graph,terminalnode, allprogramdesc = {}):
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
-        for port,parent_label in parents.items(): ###### iterate all parents
+        for port,parent_label in parentnodes.items(): ###### iterate all parents
             if parent_label not in allprogramdesc:
                 allprogramdesc = getprogramdesc(graph,parent_label,allprogramdesc)
-    allprogramdesc[terminalnode],_ = _getprogramdesc(graph,terminalnode)
+    allprogramdesc[terminalnode],_ = _getprogramdesc(graph,terminalnode,[],[])
     allprogramdesc[terminalnode] = '\n'.join(allprogramdesc[terminalnode])
     return allprogramdesc
     
 ############ update procedural memory for new program with embeddings ############
 def updateproceduremem(env,terminalnode):
-    allprogramdesc = getprogramdesc(env.graph,terminalnode)
+    allprogramdesc = getprogramdesc(env.graph,terminalnode,{})
     for k,v in allprogramdesc.items():
         if not env.LTM.fetch(k,'procedural') and env.graph["nodes"][k]["es"] ==1: ## memory not present and nodes already executed
             env.LTM.set(v,v,k,'procedural')
@@ -60,7 +60,7 @@ def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
     graph = env.graph
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
-        for port,parent_label in parents.items(): ###### iterate all parents
+        for port,parent_label in parentnodes.items(): ###### iterate all parents
             if parent_label not in nodestraveresed:
                 envtrace,nodestraversed = fetchenvtrace(graph,parent_label,envtrace,nodestraversed)
     if graph["nodes"][terminalnode]["nm"] not in list(primitives.keys()):
@@ -79,7 +79,8 @@ def updatevalue(env,terminalnode):
     #graph["nodes"][terminalnode]["R"] = reward
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
-        for port,parent_label in parents.items(): ###### iterate all parents
+        N = 0
+        for port,parent_label in parentnodes.items(): ###### iterate all parents
             if graph["nodes"][parent_label]["V"] < gamma*graph["nodes"][terminalnode]["V"]+ graph["nodes"][parent_label]["R"]:
                 graph["nodes"][parent_label]["V"] = gamma*graph["nodes"][terminalnode]["V"] + graph["nodes"][parent_label]["R"]
             N += graph["nodes"][parent_label]["N"]
@@ -95,7 +96,7 @@ def resetdata(graph,terminalnode):
         parentnodes = graph['edges'][terminalnode]
         for port,parent_label in parentnodes.items(): ###### iterate all parents
             resetdata(graph,parent_label)
-        graph["nodes"][terminalnode]["dat"]
+        graph["nodes"][terminalnode]["dat"] = None
         if graph['nodes'][terminalnode]['es'] != 4:
             graph['nodes'][terminalnode]['es'] = 0
         
@@ -111,39 +112,50 @@ def setfailurenode(graph, terminalnode):
             if graph["nodes"][parent_label]["es"] == 4:
                 parentfailure = True 
         if  parentfailure:
-            graph["nodes"][terminalnode]["es"] == 4        
+            graph["nodes"][terminalnode]["es"] == 4    
+
+############ update visit node count #################
+
+def updateN(env,terminalnode):
+    graph = env.graph
+    #graph["nodes"][terminalnode]["R"] = reward
+    if terminalnode in graph['edges']:
+        parentnodes = graph['edges'][terminalnode]
+        for port,parent_label in parentnodes.items(): ###### iterate all parents   
+             updatevalue(env, parent_label)  
+    graph["nodes"][terminalnode]["N"] += 1                
 
 ############ execute program #################
 def execprogram(env,prevterminalnode, code):
-     ########### check syntax of program
-     output = None
-     if len(graph["nodes"]) == 1:
-         graph = pickle.loads(pickle.dumps(env.graph,-1))
-     else:
-         graph = returnSubgraph(env.graph, prevterminalnode)
-     try:
-         exec_namespace = {"graph": graph}
-         exec(code,exec_namespace)
-         terminalnode = exec_namespace.get("terminalnode", None)
-     except Exception as e:
-         output = traceback.format_exc()
-         return 0, output
+    ########### check syntax of program
+    output = None
+    graph,_,_ = returnSubgraph(env.graph, prevterminalnode)
+    try:
+        exec_namespace = globals()
+        exec_namespace["graph"] =  graph
+        exec(code,exec_namespace)
+        terminalnode = exec_namespace.get("terminalnode", None)
+    except Exception as e:
+        output = traceback.format_exc()
+        return 0, output
          
      ########## execute graph
-     exec_namespace = {"graph": env.graph}
-     exec(code,exec_namespace)
-     terminalnode = exec_namespace.get("terminalnode", None)
+    exec_namespace["graph"] =  env.graph
+    exec(code,exec_namespace)
+    terminalnode = exec_namespace.get("terminalnode", None)
      
-     ########## set data as blank for the executing subgraph
-     resetdata(env.graph,terminalnode)
-     try:
-         output = runp(env.graph,terminalnode)
-     except combinatorruntimeerror as e:
-         errornode = e.errors[0]["nodeid"]
-         env.graph["nodes"][errornode]["es"] = 4 
-         setfailurenode(env.graph, terminalnode)         
+    ########## set data as blank for the executing subgraph
+    pg.resetdata(env.graph,terminalnode)
+    try:
+        output = runp(terminalnode,env.graph)
+        updateN(env,terminalnode)
+    except combinatorruntimeerror as e:
+        print(traceback.format_exc())
+        errornode = e.errors[0]["nodeid"]
+        env.graph["nodes"][errornode]["es"] = 4 
+        pg.setfailurenode(env.graph, terminalnode)         
    
-     return terminalnode
+    return terminalnode
      
      
 

@@ -29,7 +29,7 @@ class LTM():  ######### longterm memory - 3 types of memory semantic, episodic a
         sim = [[cosine_similarity([queryembedding], [mem["embedding"]])[0][0],{"data":mem["data"],"id":id}]  for id,mem in self.memory[memorytype].items()]
         top_results = [i for i in sim if i[0] > cutoffscore]
         if top_k > 0:
-            top_results  = sorted(sim, key=lambda item: item[0], reverse=True)[:top_k]
+            top_results  = sorted(top_results, key=lambda item: item[0], reverse=True)[:top_k]
         #top_results = [i[1] for i in top_results]
         return top_results
         
