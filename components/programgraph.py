@@ -1,6 +1,6 @@
 import math
 from neo.environment.bootstrapactions import primitives
-from combinatorlite import returnSubgraph, combinatorruntimeerror
+from combinatorlite import *
 import pickle
 ############ initialize program graph
 
@@ -145,7 +145,7 @@ def execprogram(env,prevterminalnode, code):
     terminalnode = exec_namespace.get("terminalnode", None)
      
     ########## set data as blank for the executing subgraph
-    pg.resetdata(env.graph,terminalnode)
+    resetdata(env.graph,terminalnode)
     try:
         output = runp(terminalnode,env.graph)
         updateN(env,terminalnode)
@@ -153,7 +153,7 @@ def execprogram(env,prevterminalnode, code):
         print(traceback.format_exc())
         errornode = e.errors[0]["nodeid"]
         env.graph["nodes"][errornode]["es"] = 4 
-        pg.setfailurenode(env.graph, terminalnode)         
+        setfailurenode(env.graph, terminalnode)         
    
     return terminalnode
      

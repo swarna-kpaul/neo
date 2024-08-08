@@ -177,21 +177,24 @@ An edge can be created with the command "addlink(<instance of a graph>,<child no
 Here are the list of function names available.
 {functions}
 
-Here is an example program for adding two constant numbers, where 1 in initial node identifier.
+Here is an example program for adding two constant numbers, where g1 in initial node identifier.
 g2 = createnode(graph,'K',2);
 g3 = createnode(graph,'K',3)
 g4 = createnode(graph,'+')
-addlink(graph,g2,1); ### starting node should connect to the terminal node of the prior program 
-addlink(graph,g3,1); ### starting node should connect to the terminal node of the prior program 
+addlink(graph,g2,g1); ### starting node should connect to the terminal node of the prior program 
+addlink(graph,g3,g1); ### starting node should connect to the terminal node of the prior program 
 addlink(graph,g4,g3,g2); 
 terminalnode = g4
+
+THE ABOVE PROGRAM IS JUST AN EXAMPLE. DO NOT INCLUDE THIS IN THE FINAL OUTPUT.
 
 You need to generate a program to meet the objective provided by user.
 Here are the rules or constraints you need to follow.
   {axioms}
 
 The generated program should be an extension of an existing program with terminal node identifier {terminalnode} and initial node identifier {initialnode}. 
-Always link the starting nodes of the generated program with this terminal node or initial node.
+Always link only the starting nodes (input ports that are not connected to any other nodes) of the generated program with this terminal node or initial node.
+There should not be any unconnected input ports.
 Every input port of all nodes of the generated program should be cennected with a parent node.
 Specify the terminal node of the new generated program by the following statement. The terminal node should not have any output connection.
 terminalnode = <terminal node identifier>

@@ -8,7 +8,7 @@ import traceback
 def solver(env):
     stm = env.STM
     ltm = env.LTM
-    relevantextactions = ltm.get(query = env.environment["description"]+" "+env.environment["prior axioms"], memorytype ="externalactions", top_k=5)
+    relevantextactions = ltm.get(query = env.environment["description"]+" "+env.environment["prior axioms"], memorytype ="externalactions", cutoffscore =0.2, top_k=5)
     relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
     stm.set("relevantactions",relevantextactions)
     while True:
@@ -101,8 +101,8 @@ def generatecode(env, codeerror=""):
         relevantnodeid = env.initnode
         programdesc = "Initializes the program with initial node"
     #actionplantext = "\n".join(actionplan["actionplan"]) if isinstance(actionplan["actionplan"], list) else str(actionplan["actionplan"])
-    relevantfunctions = env.LTM.get(objective+"\n"+axioms,"externalactions",top_k=5)
-    relevantfunctionstext = "\n".join([i[1]["id"]+"->"+i[1]["data"] for i in relevantfunctions])
+    relevantfunctions = env.STM.get("relevantactions") #env.LTM.get(objective+"\n"+axioms,"externalactions",top_k=5)
+    relevantfunctionstext = "\n".join([k+" -> "+v for k,v in relevantfunctions.items()])
     relevantfunctionstext +=  "\n".join([k+" -> "+v for k,v in env.primitives.items()])                       
      #["objective"]
     
