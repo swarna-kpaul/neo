@@ -1,5 +1,6 @@
 import sys
 from neo.config.keys import *
+from neo.environment.envtemplate import *
 from langchain.utilities import BingSearchAPIWrapper
 import os
 from langchain.chat_models import ChatOpenAI
@@ -9,7 +10,22 @@ os.environ["BING_SEARCH_URL"] = "https://api.bing.microsoft.com/v7.0/search"
 search = BingSearchAPIWrapper(k=2)
 llm_model = ChatOpenAI(temperature=0.7, request_timeout = 30,model="gpt-3.5-turbo",openai_api_key=OPENAIAPIKEY)
 
+
+################### decorator wrapper to record environment trace ###################
+def captureenvtrace(env):
+    def decorator(func):
+        def inner(*args, **kwargs):
+            output = func(*args, **kwargs)
+            envtrace = {"action": str(func())+"("+str(args)+str(kwargs)+")", perception: str(output)}
+            env.STM.append("envtrace",envtrace)
+            return output
+        return inner
+    return decorator
+    
+
+
 ################## Get user text input ####################
+@captureenvtrace(env)
 def textdataread(display_message = ""):
     text = input(display_message)
     return text

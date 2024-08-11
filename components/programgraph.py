@@ -9,30 +9,30 @@ K = 0.5 ## similarity factor
 gamma = 0.3
 ###### update embeddings of 
 
-def _getprogramdesc(graph,terminalnode, programdesc = [],nodestraversed = []):
+def getprogramdesc(graph,terminalnode, programdesc = [],nodestraversed = []):
     
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
         for port,parent_label in parentnodes.items(): ###### iterate all parents
             if parent_label not in nodestraversed:
-                programdesc,nodestraversed = _getprogramdesc(graph,parent_label,programdesc,nodestraversed)
+                programdesc,nodestraversed = getprogramdesc(graph,parent_label,programdesc,nodestraversed)
     programdesc.append(graph["nodes"][terminalnode]["desc"])
     nodestraversed.append(terminalnode)
     return programdesc,nodestraversed
     
-def getprogramdesc(graph,terminalnode, allprogramdesc = {}):
+def getallprogramdesc(graph,terminalnode, allprogramdesc = {}):
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
         for port,parent_label in parentnodes.items(): ###### iterate all parents
             if parent_label not in allprogramdesc:
-                allprogramdesc = getprogramdesc(graph,parent_label,allprogramdesc)
-    allprogramdesc[terminalnode],_ = _getprogramdesc(graph,terminalnode,[],[])
+                allprogramdesc = getallprogramdesc(graph,parent_label,allprogramdesc)
+    allprogramdesc[terminalnode],_ = getprogramdesc(graph,terminalnode,[],[])
     allprogramdesc[terminalnode] = '\n'.join(allprogramdesc[terminalnode])
     return allprogramdesc
     
 ############ update procedural memory for new program with embeddings ############
 def updateproceduremem(env,terminalnode):
-    allprogramdesc = getprogramdesc(env.graph,terminalnode,{})
+    allprogramdesc = getallprogramdesc(env.graph,terminalnode,{})
     for k,v in allprogramdesc.items():
         if not env.LTM.fetch(k,'procedural') and env.graph["nodes"][k]["es"] ==1: ## memory not present and nodes already executed
             env.LTM.set(v,v,k,'procedural')
@@ -40,7 +40,7 @@ def updateproceduremem(env,terminalnode):
 
 ############ fetch relevant subprograms from procedural memory #################    
 def getrelevantnodes(env, query, top_k = 1):
-    nodeembeddings = env.LTM.get(query, memorytype = "procedural")   
+    nodeembeddings = env.LTM.get(query, memorytype = "procedural", cutoffscore = 0.1, top_k = 3)   
     nodevalues = {i[1]["id"] : [env.graph["nodes"][i[1]["id"]]["V"],env.graph["nodes"][i[1]["id"]]["EXPF"], i[0]] for i in nodeembeddings}
     nodevalues = [[k,v[0]+C*v[1]+K*v[2]]  for k,v in nodevalues.items()]
     relevantnodes = sorted(nodevalues, key=lambda item: item[1], reverse=True)[:top_k] 
@@ -51,8 +51,8 @@ def getprogramto_extend(env,query):
     if not relevantnodes:
         return False,None
     nodeid = relevantnodes[0][0]
-    programdesc,_ =  _getprogramdesc(graph,nodeid)
-    programdesc =  '\n'.join([v for k,v in programdesc.items()])
+    programdesc,_ =  getprogramdesc(graph,nodeid, programdesc = [],nodestraversed = [])
+    programdesc =  '\n'.join(programdesc)
     return nodeid,programdesc
 
 ############# fetch external environment trace ##################

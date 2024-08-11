@@ -1,5 +1,5 @@
-from combinatorlite import creategraph, createnode, addlink, worldclass, runp, node_attributes_object
-from neo.environment.envtemplate import env
+#from combinatorlite import creategraph, createnode, addlink, worldclass, runp, node_attributes_object
+from neo.environment import *
 import neo.components.programgraph as pg
 from neo.config.utilities import *
 import ast
@@ -143,9 +143,10 @@ def execcode(code,env,relevantnodeid):
     #code += updatenodedescription(nodedesc)
     try:
 # Create an empty namespace (dictionary) for the exec function
+        env.STM.set("envtrace",[]) ######## reset envtrace
         terminalnode = env.act(code,relevantnodeid)
         pg.updateproceduremem(env,terminalnode)
-        pg.updatevalue(env,terminalnode)
+        
     except world_exception as e:
         return_status = 0
     except Exception as e:
@@ -162,17 +163,27 @@ def execcode(code,env,relevantnodeid):
 #    return codetext
 
     
-def critique (env,currentactionplan,currentperception):
+def critique (env,currentactionplan,terminalnode):
     currentenvironment = env.environment
-    messages = CRITIQUEPROMPT.format(beliefenvironment = str(currentenvironment), \
-                    actionplan = currentactionplan, \
+    currentenvironment_text = "objective: "+currentenvironment["objective"]+"   \n  "+"axioms: "+ currentenvironment["prior axioms"]+" \n"+currentenvironment["belief axioms"]
+    progdesc,_ = pg.getprogramdesc(env.graph, terminalnode, programdesc = [],nodestraversed = [])
+    
+    currentperception = "\n".join(str(env.STM.get("envtrace")))
+    
+    messages = CRITIQUEPROMPT.format(beliefenvironment = str(currentenvironment_text), \
+                    actionplan = "\n".join(progdesc), \
                     perception = currentperception)
     print("CRITIQUEPROMPT:",messages)
     output = llm_gpt4o.predict(messages)
     print("CRITIQUEPROMPT output:",output)
-    output = ast.literal_eval(output)
+    #output = ast.literal_eval(output)
+    output = extractdictfromtext(output)
     
     env.STM.set("critique", output)
+    
+    env.graph["nodes"][terminalnode]["R"] = output["feedback"] ## set the reward
+    pg.updatevalue(env,terminalnode)
+    
     return output
     
     
