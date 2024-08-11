@@ -14,10 +14,10 @@ def _getprogramdesc(graph,terminalnode, programdesc = [],nodestraversed = []):
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
         for port,parent_label in parentnodes.items(): ###### iterate all parents
-            if parent_label not in nodestraveresed:
+            if parent_label not in nodestraversed:
                 programdesc,nodestraversed = _getprogramdesc(graph,parent_label,programdesc,nodestraversed)
     programdesc.append(graph["nodes"][terminalnode]["desc"])
-    nodestraversed.append(parent_label)
+    nodestraversed.append(terminalnode)
     return programdesc,nodestraversed
     
 def getprogramdesc(graph,terminalnode, allprogramdesc = {}):
@@ -52,7 +52,7 @@ def getprogramto_extend(env,query):
         return False,None
     nodeid = relevantnodes[0][0]
     programdesc,_ =  _getprogramdesc(graph,nodeid)
-    programdesc =  '\n'.join([v for k,v in sorted(programdesc).items()])
+    programdesc =  '\n'.join([v for k,v in programdesc.items()])
     return nodeid,programdesc
 
 ############# fetch external environment trace ##################
@@ -84,7 +84,7 @@ def updatevalue(env,terminalnode):
             if graph["nodes"][parent_label]["V"] < gamma*graph["nodes"][terminalnode]["V"]+ graph["nodes"][parent_label]["R"]:
                 graph["nodes"][parent_label]["V"] = gamma*graph["nodes"][terminalnode]["V"] + graph["nodes"][parent_label]["R"]
             N += graph["nodes"][parent_label]["N"]
-            updatevalue(graph, parent_label)
+            updatevalue(env, parent_label)
         graph["nodes"][terminalnode]["EXPF"] = math.sqrt(math.log(N)/graph["nodes"][terminalnode]["N"])
     #return 
 
@@ -122,7 +122,7 @@ def updateN(env,terminalnode):
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
         for port,parent_label in parentnodes.items(): ###### iterate all parents   
-             updatevalue(env, parent_label)  
+             updateN(env, parent_label)  
     graph["nodes"][terminalnode]["N"] += 1                
 
 ############ execute program #################

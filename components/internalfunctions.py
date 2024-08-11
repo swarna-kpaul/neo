@@ -155,11 +155,11 @@ def execcode(code,env,relevantnodeid):
     print ("ACTION EXECUTION OUTPUT", output,return_status)    
     return (output,terminalnode,return_status)
  
-def updatenodedescription(progdesc): 
-    codetext = ""
-    for nodeid,desc in progdesc.items():
-        codetext +="\n"+"pg.setval_graph('desc','"+desc+"',graph,"+nodeid+",'N')"
-    return codetext
+#def updatenodedescription(progdesc): 
+#    codetext = ""
+#    for nodeid,desc in progdesc.items():
+#        codetext +="\n"+"pg.setval_graph('desc','"+desc+"',graph,"+nodeid+",'N')"
+#    return codetext
 
     
 def critique (env,currentactionplan,currentperception):
