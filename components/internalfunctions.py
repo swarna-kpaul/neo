@@ -1,5 +1,5 @@
 #from combinatorlite import creategraph, createnode, addlink, worldclass, runp, node_attributes_object
-from neo.environment import *
+from neo.environment.envtemplate import *
 import neo.components.programgraph as pg
 from neo.config.utilities import *
 import ast
@@ -146,7 +146,8 @@ def execcode(code,env,relevantnodeid):
         env.STM.set("envtrace",[]) ######## reset envtrace
         terminalnode = env.act(code,relevantnodeid)
         pg.updateproceduremem(env,terminalnode)
-        
+        envtrace,_ = pg.fetchenvtrace(env,terminalnode,[],[])
+        env.STM.set("envtrace",envtrace)
     except world_exception as e:
         return_status = 0
     except Exception as e:
@@ -156,11 +157,6 @@ def execcode(code,env,relevantnodeid):
     print ("ACTION EXECUTION OUTPUT", output,return_status)    
     return (output,terminalnode,return_status)
  
-#def updatenodedescription(progdesc): 
-#    codetext = ""
-#    for nodeid,desc in progdesc.items():
-#        codetext +="\n"+"pg.setval_graph('desc','"+desc+"',graph,"+nodeid+",'N')"
-#    return codetext
 
     
 def critique (env,currentactionplan,terminalnode):
@@ -188,26 +184,22 @@ def critique (env,currentactionplan,terminalnode):
     
     
 def belieflearner(env):
-    EnvTrace = env.STM.get("ltmenvtrace")
+    EnvTrace = env.STM.get("envtrace")
     #critique = self.stm.get("critique")
-    currentenvironment = STM.get("currentenv")
-    currentbelief = "  objective:"+ currentenvironment['env']['objective']+"\n  belief axioms:"+ str(currentenvironment['env']["belief axioms"])
+    currentenvironment = env.environment
+    currentbelief = "  objective:"+ currentenvironment['objective']+"\n belief axioms: \n  "+ str(currentenvironment["belief axioms"])
     #ACPtrace_text = "\n".join([ "    Action plan: "+ i["actionplan"]["actionplan"]+"\n    Environment response: "+ i["perception"] for i in ACPtrace])
     EnvTrace_text = "\n".join([str(i) for i in EnvTrace])
-    relatedenvironments = LTM.get(str(currentenvironment['env']), namespace = "environments")
-    if relatedenvironments:
-        relatedenvironments = [ "    Environment "+str(i)+":\n    objective: "+str(env["metadata"]["objective"])+"\n   belief axioms:"+ str(env["metadata"]["belief axioms"]) for i,env in enumerate(relatedenvironments) if env["id"] != currentenvironment['id'] ] 
-        relatedenvironments = ["\n".join(relatedenvironments)]
-    else:
-        relatedenvironments = ""
-    messages = LEARNERPROMPT.format(relatedenvironments = str(relatedenvironments),
-                    beliefenvironment = str(currentbelief),
+    #relatedenvironments = LTM.get(str(currentenvironment['env']), namespace = "environments")
+
+    messages = LEARNERPROMPT.format(beliefenvironment = str(currentbelief),
                     EnvTrace = EnvTrace_text)
         #print(messages)
     print("LEARNERPROMPT:",messages)
     output = llm_gpt4o.predict(messages)
     print("LEARNERPROMPT output:",output)
-    beliefaxioms = ast.literal_eval(output)["beliefaxioms"]
+    output = extractdictfromtext(output)
+    beliefaxioms = output["beliefaxioms"]
     currentenvironment["env"]["belief axioms"] = beliefaxioms
     env.STM.set("currentenv",{'id': currentenvironment['id'], 'env':currentenvironment["env"]})
     currentenvironment["env"]['type'] = "environments"

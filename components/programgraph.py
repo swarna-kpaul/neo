@@ -61,15 +61,15 @@ def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
         for port,parent_label in parentnodes.items(): ###### iterate all parents
-            if parent_label not in nodestraveresed:
-                envtrace,nodestraversed = fetchenvtrace(graph,parent_label,envtrace,nodestraversed)
-    if graph["nodes"][terminalnode]["nm"] not in list(primitives.keys()):
+            if parent_label not in nodestraversed:
+                envtrace,nodestraversed = fetchenvtrace(env,parent_label,envtrace,nodestraversed)
+        if graph["nodes"][terminalnode]["nm"] not in list(primitives.keys()):
     ############ for external functions only
-         args = []
-         for port,parent_label in parents.items():
-             args.append(str(graph["nodes"][parent_label]["dat"]))
-         envtrace.append({"action": graph["nodes"][terminalnode]["nm"]+"("+",".join(args)+")", "observation":graph["nodes"][terminalnode]["data"]})
-         nodestraversed.append(terminalnode)
+            args = []
+            for port,parent_label in parentnodes.items():
+                args.append(str(graph["nodes"][parent_label]["dat"]))
+            envtrace.append({"action": graph["nodes"][terminalnode]["nm"]+"("+",".join(args)+")", "observation":graph["nodes"][terminalnode]["dat"]})
+    nodestraversed.append(terminalnode)
     return envtrace,nodestraversed
  
 ############# Update node values #####################
