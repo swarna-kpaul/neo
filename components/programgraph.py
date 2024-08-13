@@ -77,6 +77,8 @@ def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
 def updatevalue(env,terminalnode):
     graph = env.graph
     #graph["nodes"][terminalnode]["R"] = reward
+    if graph["nodes"][terminalnode]["V"] == -2:
+       graph["nodes"][terminalnode]["V"] = graph["nodes"][terminalnode]["R"] 
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
         N = 0

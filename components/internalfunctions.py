@@ -106,6 +106,7 @@ def generatecode(env, codeerror=""):
     query = "Objective: \n"+objective+"\n Partial plan to meet the objective: \n"+ programdesc
     memory = env.LTM.get(query, memorytype = "semantic", cutoffscore = 0.2 ,top_k=5)
     learnings = "\n".join([i[1]["data"] for i in memory])
+    env.STM.set("relevantbeliefs", learnings)
     axioms += "\n"+learnings
     ######## fetch relevant actions
     relevantfunctions = env.STM.get("relevantactions") #env.LTM.get(objective+"\n"+axioms,"externalactions",top_k=5)
@@ -133,10 +134,10 @@ def generatecode(env, codeerror=""):
             
             ############ excute code ###########
             input("press a key to continue... ")
-            output,terminalnode,return_status = execcode("\n".join(output["program"]),env,relevantnodeid)
-            if return_status != 0:
-                codeerror = output
-                continue
+            #output,terminalnode,return_status = execcode("\n".join(output["program"]),env,relevantnodeid)
+            #if return_status != 0:
+            #    codeerror = output
+            #    continue
             break
         except Exception as e:
             print("Error ACTORPROMPT output:",output)
@@ -145,12 +146,12 @@ def generatecode(env, codeerror=""):
         
     print("ACTORPROMPT output:",output)
     print("ACTOR Code:","\n".join(output["program"]))
-    return "\n".join(output["program"]), terminalnode
+    return "\n".join(output["program"]), relevantnodeid
 
 
 def execcode(code,env,relevantnodeid):
     output = None
-    return_status = None
+    return_status = 0
     error = None
     print("exec code", code)
     #code += updatenodedescription(nodedesc)
@@ -169,14 +170,16 @@ def execcode(code,env,relevantnodeid):
     print ("ACTION EXECUTION OUTPUT", output,return_status)    
     return (output,terminalnode,return_status)
  
+###################### update failure status
 
+###############################################
     
 def critique (env,terminalnode):
     currentenvironment = env.environment
-    currentenvironment_text = "objective: "+currentenvironment["objective"]+"   \n  "+"axioms: "+ currentenvironment["prior axioms"]+" \n"+currentenvironment["belief axioms"]
+    currentenvironment_text = "objective: "+currentenvironment["objective"]+"   \n  "+"axioms: "+ currentenvironment["prior axioms"]+" \n "+env.STM.get("relevantbeliefs")
     progdesc,_ = pg.getprogramdesc(env.graph, terminalnode, programdesc = [],nodestraversed = [])
     
-    currentperception = "\n".join(str(env.STM.get("envtrace")))
+    currentperception = "\n".join([str(i) for i in env.STM.get("envtrace")])
     
     messages = CRITIQUEPROMPT.format(beliefenvironment = str(currentenvironment_text), \
                     actionplan = "\n".join(progdesc), \

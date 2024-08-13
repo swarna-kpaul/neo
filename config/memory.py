@@ -45,7 +45,7 @@ class LTM():  ######### longterm memory - 3 types of memory semantic, episodic a
 
 class STM():  ### Short term memory -- {"conversation": , "timestamp": }
     def __init__ (self,memorysize = DEFAULT_STM_SIZE):
-        self.memory = {"critique":{"feedback":-1,"reason":""}, "actionplan":[], "envtrace":[], "state": "","relevantbeliefs":[], "relevantactions":{}}
+        self.memory = {"critique":{"feedback":-1,"reason":""}, "actionplan":[], "envtrace":[], "state": "","relevantbeliefs":"", "relevantactions":{}}
         self.memorysize = memorysize
         
     def set(self,memorytype,data):

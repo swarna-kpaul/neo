@@ -424,7 +424,7 @@ Environment response:
 If the above response contains any feedback or reward signal then update your critique accordingly. Give more importance on environment response for updating the feedback value. If the environment response gives negative feedback then always update the feedback with negative value.
 
 The output should be in the following json format. In no case the output should deviate from the following prescribed format.
-{{"reason": <a detailed reason for the feedback based on action plan, environment response (should be given most importance), beliefaxioms (if available) and objective> ,
+{{"reason": <a detailed reason for the feedback based on action plan, environment response (should be given most importance), beliefaxioms (if available) and objective. This should not exceed 50 words> ,
   "feedback": <positive or negative reinforcement. It can be a real number between -1 and 1. If there are reward or feedback present in environment response. Then this should always match with that value>
 }}
 
