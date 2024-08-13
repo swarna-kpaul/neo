@@ -23,7 +23,7 @@ class LTM():  ######### longterm memory - 3 types of memory semantic, episodic a
         self.memory[memorytype][recordid] = {"embedding":embedding, "data":data}
     
     
-    def get(self,query, memorytype = "semantic", cutoffscore = 0.5 ,top_k=-1):
+    def get(self,query, memorytype = "semantic", cutoffscore = 0.1 ,top_k=-1):
         queryembedding = get_embeddings(query)
         
         sim = [[cosine_similarity([queryembedding], [mem["embedding"]])[0][0],{"data":mem["data"],"id":id}]  for id,mem in self.memory[memorytype].items()]

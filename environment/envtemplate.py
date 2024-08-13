@@ -11,7 +11,7 @@ class bootstrapenv():
     def __init__(self, objective, shortdescription = "", examples = "", prioraxioms ="", stm = stm, ltm = ltm):
         self.STM =stm
         self.LTM = ltm
-        self.environment = {"description": shortdescription + objective, "objective": objective, "prior axioms": prioraxioms, "belief axioms": "", "current state": self.getstate(), "examples": examples, "actionset": []}
+        self.environment = {"description": shortdescription + objective, "objective": objective, "prior axioms": prioraxioms, "current state": self.getstate(), "examples": examples, "actionset": []}
         
          
     #def initializeenv(self,EXTACTIONS,primitives,initworldbootfunctions,ALLACTIONS ):

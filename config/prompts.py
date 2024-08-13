@@ -189,7 +189,7 @@ terminalnode = g4
 THE ABOVE PROGRAM IS JUST AN EXAMPLE. DO NOT INCLUDE THIS IN THE FINAL OUTPUT.
 
 You need to generate a program to meet the objective provided by user.
-Here are the rules or constraints you need to follow.
+Use the following rules and learnings about the task environment to generate solution program.
   {axioms}
 
 The generated program should be an extension of an existing program with terminal node identifier {terminalnode} and initial node identifier {initialnode}. 
@@ -340,33 +340,37 @@ ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription", "termina
 
  
 searchertemplate = """System: You are an expert assitant. You are given ACTION OBSERVATION TRACE, a sequence of actions that an agent made in a environment to accomplish a task and the perceptions it got.
-The ACTION OBSERVATION TRACE is accompanied by an CRITIQUE indicating the success of the attempt to the task.
-You need to derive a comprehensive LEARNINGS as BELIEFAXIOMS. Capture all the details in the ACTION OBSERVATION TRACE.
-You can use the beliefaxioms from a list of related similar problem environments to derive the new one. 
-Generate beliefaxioms, that will help the agent to successfully accomplish the SAME objective AGAIN, in the SAME environment.
+A CRITIQUE indicates the success of the attempt to the task.
+You need to derive a comprehensive LEARNINGS. Capture all the details in the ACTION OBSERVATION TRACE.
+Generate learnings, that will help the agent to successfully accomplish the SAME objective AGAIN, in the SAME environment.
 Each line can ONLY be of the following forms :
                             X Y Z 
 
 where X and Z are entities, subject, object, events from action perception trace and Y is relation between X and Z. DO NOT add "_" in X, Y or Z. Rogorously capture everything in the action observation trace as memory. COMBINE MULTIPLE LINES into one if either X and Y are same or Y and Z are same.
 
     
-Update on top of the current estimated belief axioms of the current environment based on the action observation trace. 
-Modify or remove the existing beliefs only if it contradicts with  ACTION OBSERVATION TRACE. You can add your new beliefs to the belief axioms.
+Update on top of the current learnings based on the action observation trace and critique. 
+Modify or remove the existing learnings only if it contradicts with  ACTION OBSERVATION TRACE. You can add your new learnings.
 
 The output should always be STRICTLY generated in the following json structure. DO NOT enclose output with JSON TAGS. Add escape charachters wherever required to make the following a valid json definately.
 {{  
- "beliefaxioms": <list of learnings. do not write redundant or contradicting statements>
+ "learnings": <list of learnings. do not write redundant or contradicting statements>
  }}
     
-Here is the environment objective and current belief axioms. You should update and output the belief axioms based on the action observation trace provided by the user.
+Here is the environment objective and prior axioms. 
 Environment:
-    {beliefenvironment}
+    {environment}
 
+Here is the list of current learnings. You should update these learnings.
+Learnings:
+    {learnings}
 
-User: Here is the action observation trace. Provide the belied axioms for this.
+User: Here is the action observation trace and critique. Provide the learnings for this.
 Action observation trace:
     {EnvTrace}
-    
+
+Critique:
+    {critique}  
        
 AI:
 
@@ -376,7 +380,7 @@ AI:
 #       {critique}
 
 
-SEARCHERPROMPTINPUTVARIABLES = ["beliefenvironment","relatedenvironments","EnvTrace"] #, "critique"
+SEARCHERPROMPTINPUTVARIABLES = ["environment","learnings","EnvTrace","critique"] #, "critique"
 
 
 # DEFAULTCRITIQUEOBJECTIVE = """You are a critique of actions taken by an AI agent.

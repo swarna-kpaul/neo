@@ -14,17 +14,20 @@ def solver(env):
     while True:
         for i in range(K):
             #actionplan,relevantnodeid,programdesc = generateplan(env )
-            action,relevantnodeid = generatecode(env)
-            output,stm,return_status = execcode(action["program"],action["desc"],env,relevantnodeid)
-            while return_status != 0:
-                action = generatecode(actionplan, relevantnodeid,programdesc,env, error = output)
-                output,terminalnode,return_status = execcode(action["program"],action["desc"],env,relevantnodeid)
-            extfeedback = env.getfeedback(terminalnode)    
-            feedback = critique(stm,actionplan,extfeedback)
+            action,terminalnode = generatecode(env)
+            #output,stm,return_status = execcode(action["program"],action["desc"],env,relevantnodeid)
+            #while return_status != 0:
+            #    action = generatecode(actionplan, relevantnodeid,programdesc,env, error = output)
+            #    output,terminalnode,return_status = execcode(action["program"],action["desc"],env,relevantnodeid)
+            #extfeedback = env.getfeedback(terminalnode)   
+            input("press a key to continue")             
+            feedback = critique(env,terminalnode)
+            input("press a key to continue")
+            output  = belieflearner(env)
             #updateltmtrace(stm)
             #updatestatespace(stm, env.rootstate)
         #output,stm,ltm = belieflearner(stm,ltm)
-        env.reset()
+        #env.reset()
         
 
 
@@ -44,7 +47,10 @@ def generateplan(env, explore = False ):
     #envtrace = env.STM.get("envtrace")
     #critique = env.STM.get("critique")
     #additionalinstructions,preactionppath = getinstructionfromSP(STM)#STM.get("additionalinstructions")
-    beliefaxioms = "\n".join(env.STM.get("relevantbeliefs"))
+    query = "Objective: \n"+environment["objective"]+"\n Partial plan to meet the objective: \n"+ programdesc
+    memory = env.LTM.get(query, memorytype = "semantic", cutoffscore = 0.2 ,top_k=5)
+    
+    beliefaxioms = "\n".join([i[1]["data"] for i in memory])
     actionplanexamples = environment["examples"]
     #if  item == "explore":
     #    currentenvironment["objective"] = currentenvironment["exploreobjective"]
@@ -89,27 +95,25 @@ def generateplan(env, explore = False ):
     
     
 def generatecode(env, codeerror=""):
-
-   
-    axioms = env.environment["prior axioms" ]+"\n"+env.environment["belief axioms"]
-    objective = env.environment["objective"]    
-    
-    ######## fetch relevant node
+    objective = env.environment["objective"]  
+    axioms = env.environment["prior axioms" ]    
     relevantnodeid, programdesc = pg.getprogramto_extend(env,objective+"\n"+axioms)
-    ######## fetch envtrace
     if not relevantnodeid:
         relevantnodeid = env.initnode
         programdesc = "Initializes the program with initial node"
-    #actionplantext = "\n".join(actionplan["actionplan"]) if isinstance(actionplan["actionplan"], list) else str(actionplan["actionplan"])
+    
+    ################ fetch learnings #########################################
+    query = "Objective: \n"+objective+"\n Partial plan to meet the objective: \n"+ programdesc
+    memory = env.LTM.get(query, memorytype = "semantic", cutoffscore = 0.2 ,top_k=5)
+    learnings = "\n".join([i[1]["data"] for i in memory])
+    axioms += "\n"+learnings
+    ######## fetch relevant actions
     relevantfunctions = env.STM.get("relevantactions") #env.LTM.get(objective+"\n"+axioms,"externalactions",top_k=5)
     relevantfunctionstext = "\n".join([k+" -> "+v for k,v in relevantfunctions.items()])
     relevantfunctionstext +=  "\n".join([k+" -> "+v for k,v in env.primitives.items()])                       
-     #["objective"]
-    
-    #ACPtrace = STM.get("ACPtrace")
-    #prevactionplan = ACPtrace[-1]["actionplan"]["actionplan"] if ACPtrace else ""
     
     while True:
+        input("press a key to continue... ")
         messages = ACTORPROMPT.format(functions = relevantfunctionstext, \
                     axioms = axioms, \
                     programdescription = programdesc,\
@@ -124,6 +128,15 @@ def generatecode(env, codeerror=""):
         print(output)
         try:
             output = extractdictfromtext(output)
+            
+            ############ validate code #######################
+            
+            ############ excute code ###########
+            input("press a key to continue... ")
+            output,terminalnode,return_status = execcode("\n".join(output["program"]),env,relevantnodeid)
+            if return_status != 0:
+                codeerror = output
+                continue
             break
         except Exception as e:
             print("Error ACTORPROMPT output:",output)
@@ -132,7 +145,7 @@ def generatecode(env, codeerror=""):
         
     print("ACTORPROMPT output:",output)
     print("ACTOR Code:","\n".join(output["program"]))
-    return "\n".join(output["program"]), relevantnodeid
+    return "\n".join(output["program"]), terminalnode
 
 
 def execcode(code,env,relevantnodeid):
@@ -145,21 +158,20 @@ def execcode(code,env,relevantnodeid):
 # Create an empty namespace (dictionary) for the exec function
         env.STM.set("envtrace",[]) ######## reset envtrace
         terminalnode = env.act(code,relevantnodeid)
-        pg.updateproceduremem(env,terminalnode)
-        envtrace,_ = pg.fetchenvtrace(env,terminalnode,[],[])
-        env.STM.set("envtrace",envtrace)
     except world_exception as e:
         return_status = 0
     except Exception as e:
         output = traceback.format_exc()
         return_status = 1
-    
+    pg.updateproceduremem(env,terminalnode)
+    envtrace,_ = pg.fetchenvtrace(env,terminalnode,[],[])
+    env.STM.set("envtrace",envtrace)
     print ("ACTION EXECUTION OUTPUT", output,return_status)    
     return (output,terminalnode,return_status)
  
 
     
-def critique (env,currentactionplan,terminalnode):
+def critique (env,terminalnode):
     currentenvironment = env.environment
     currentenvironment_text = "objective: "+currentenvironment["objective"]+"   \n  "+"axioms: "+ currentenvironment["prior axioms"]+" \n"+currentenvironment["belief axioms"]
     progdesc,_ = pg.getprogramdesc(env.graph, terminalnode, programdesc = [],nodestraversed = [])
@@ -185,25 +197,30 @@ def critique (env,currentactionplan,terminalnode):
     
 def belieflearner(env):
     EnvTrace = env.STM.get("envtrace")
-    #critique = self.stm.get("critique")
-    currentenvironment = env.environment
-    currentbelief = "  objective:"+ currentenvironment['objective']+"\n belief axioms: \n  "+ str(currentenvironment["belief axioms"])
-    #ACPtrace_text = "\n".join([ "    Action plan: "+ i["actionplan"]["actionplan"]+"\n    Environment response: "+ i["perception"] for i in ACPtrace])
     EnvTrace_text = "\n".join([str(i) for i in EnvTrace])
-    #relatedenvironments = LTM.get(str(currentenvironment['env']), namespace = "environments")
-
-    messages = LEARNERPROMPT.format(beliefenvironment = str(currentbelief),
-                    EnvTrace = EnvTrace_text)
+    critique = self.stm.get("critique")["reason"]
+    currentenvironment = env.environment
+    currentenvironmenttext = "  objective:"+ currentenvironment['objective']+"\n prior axioms: \n  "+ str(currentenvironment["prior axioms"])
+    ###################### fetch learnings ################
+    memory = env.LTM.get(query = EnvTrace_text, memorytype = "semantic", cutoffscore = 0.4, top_k = 10)
+    learningstext = "\n".join([ i[1]["data"] for i in memory])
+    memoryid = [ i[1]["id"] for i in memory]
+    ###################### delete memory to be updated
+    for id in memoryid:
+        env.LTM.delete(id,"semantic")
+    ######################################################################   
+    messages = LEARNERPROMPT.format(environment = currentenvironmenttext,
+                    learnings = learningstext,
+                    EnvTrace = EnvTrace_text,
+                    critique = critique)
         #print(messages)
     print("LEARNERPROMPT:",messages)
     output = llm_gpt4o.predict(messages)
     print("LEARNERPROMPT output:",output)
     output = extractdictfromtext(output)
-    beliefaxioms = output["beliefaxioms"]
-    currentenvironment["env"]["belief axioms"] = beliefaxioms
-    env.STM.set("currentenv",{'id': currentenvironment['id'], 'env':currentenvironment["env"]})
-    currentenvironment["env"]['type'] = "environments"
-    ltmdata = [{'id': currentenvironment['id'], 'values': currentenvironment["env"]['description'], 'metadata': currentenvironment["env"] }]
-    #self.ltm.set(data = ltmdata, namespace = "environments")
-    env.STM.set("ltmenvtrace",[])
-    return output,STM,LTM
+    learnings = output["learnings"]
+    #currentenvironment["env"]["belief axioms"] = beliefaxioms
+    for learning in learnings:
+        self.ltm.set(text = learning, data = learning, memorytype = "semantic")
+
+    return output
