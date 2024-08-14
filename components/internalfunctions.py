@@ -14,19 +14,21 @@ def solver(env):
     while True:
         for i in range(K):
             #actionplan,relevantnodeid,programdesc = generateplan(env )
-            action,terminalnode = generatecode(env)
-            #output,stm,return_status = execcode(action["program"],action["desc"],env,relevantnodeid)
-            #while return_status != 0:
-            #    action = generatecode(actionplan, relevantnodeid,programdesc,env, error = output)
-            #    output,terminalnode,return_status = execcode(action["program"],action["desc"],env,relevantnodeid)
-            #extfeedback = env.getfeedback(terminalnode)   
+            relevantnodes = env.STM.get("relevantnodes")
+            if relevantnodes:
+                if relevantnodes[0][1] > SOLVEDVALUE:
+                    terminalnode = relevantnodes[0][0]
+                    code = "terminalnode = "+str(terminalnode)
+                    execcode(code,env,terminalnode)
+                else:
+                    action,terminalnode = generatecode(env)
+            else:
+                action,terminalnode = generatecode(env)
+            #output,stm,return_status = execcode(action["program"],action["desc"],env,relevantnodeid) 
             input("press a key to continue")             
             feedback = critique(env,terminalnode)
             input("press a key to continue")
             output  = belieflearner(env)
-            #updateltmtrace(stm)
-            #updatestatespace(stm, env.rootstate)
-        #output,stm,ltm = belieflearner(stm,ltm)
         #env.reset()
         
 
@@ -134,10 +136,11 @@ def generatecode(env, codeerror=""):
             
             ############ excute code ###########
             input("press a key to continue... ")
-            #output,terminalnode,return_status = execcode("\n".join(output["program"]),env,relevantnodeid)
-            #if return_status != 0:
-            #    codeerror = output
-            #    continue
+            output,terminalnode,return_status = execcode("\n".join(output["program"]),env,relevantnodeid)
+            if return_status != 0:
+                codeerror = output
+                print("CODERROR: ", codeerror)
+                continue
             break
         except Exception as e:
             print("Error ACTORPROMPT output:",output)

@@ -50,6 +50,7 @@ def getprogramto_extend(env,query):
     relevantnodes = getrelevantnodes(env, query )
     if not relevantnodes:
         return False,None
+    env.STM.set("relevantnodes", relevantnodes)
     nodeid = relevantnodes[0][0]
     programdesc,_ =  getprogramdesc(graph,nodeid, programdesc = [],nodestraversed = [])
     programdesc =  '\n'.join(programdesc)
