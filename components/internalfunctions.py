@@ -201,7 +201,7 @@ def critique (env,terminalnode):
 def belieflearner(env):
     EnvTrace = env.STM.get("envtrace")
     EnvTrace_text = "\n".join([str(i) for i in EnvTrace])
-    critique = self.stm.get("critique")["reason"]
+    critique = env.STM.get("critique")["reason"]
     currentenvironment = env.environment
     currentenvironmenttext = "  objective:"+ currentenvironment['objective']+"\n prior axioms: \n  "+ str(currentenvironment["prior axioms"])
     ###################### fetch learnings ################
@@ -224,6 +224,6 @@ def belieflearner(env):
     learnings = output["learnings"]
     #currentenvironment["env"]["belief axioms"] = beliefaxioms
     for learning in learnings:
-        self.ltm.set(text = learning, data = learning, memorytype = "semantic")
+        env.LTM.set(text = learning, data = learning, memorytype = "semantic")
 
     return output
