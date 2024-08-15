@@ -12,23 +12,22 @@ def solver(env):
     relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
     stm.set("relevantactions",relevantextactions)
     while True:
-        for i in range(K):
-            #actionplan,relevantnodeid,programdesc = generateplan(env )
-            relevantnodes = env.STM.get("relevantnodes")
-            if relevantnodes:
-                if relevantnodes[0][1] > SOLVEDVALUE:
-                    terminalnode = relevantnodes[0][0]
-                    code = "terminalnode = "+str(terminalnode)
-                    execcode(code,env,terminalnode)
-                else:
-                    action,terminalnode = generatecode(env)
+        #actionplan,relevantnodeid,programdesc = generateplan(env )
+        relevantnodes = env.STM.get("relevantnodes")
+        if relevantnodes:
+            if relevantnodes[0][1] > SOLVEDVALUE:
+                terminalnode = relevantnodes[0][0]
+                code = "terminalnode = "+str(terminalnode)
+                execcode(code,env,terminalnode)
             else:
                 action,terminalnode = generatecode(env)
-            #output,stm,return_status = execcode(action["program"],action["desc"],env,relevantnodeid) 
-            input("press a key to continue")             
-            feedback = critique(env,terminalnode)
-            input("press a key to continue")
-            output  = belieflearner(env)
+        else:
+            action,terminalnode = generatecode(env)
+        #output,stm,return_status = execcode(action["program"],action["desc"],env,relevantnodeid) 
+        input("press a key to continue")             
+        feedback = critique(env,terminalnode)
+        input("press a key to continue")
+        output  = belieflearner(env)
         #env.reset()
         
 
@@ -161,16 +160,15 @@ def execcode(code,env,relevantnodeid):
     try:
 # Create an empty namespace (dictionary) for the exec function
         env.STM.set("envtrace",[]) ######## reset envtrace
-        terminalnode = env.act(code,relevantnodeid)
-    except world_exception as e:
-        return_status = 0
+        return_status,terminalnode,output = env.act(code,relevantnodeid)
     except Exception as e:
         output = traceback.format_exc()
         return_status = 1
-    pg.updateproceduremem(env,terminalnode)
-    envtrace,_ = pg.fetchenvtrace(env,terminalnode,[],[])
-    env.STM.set("envtrace",envtrace)
-    print ("ACTION EXECUTION OUTPUT", output,return_status)    
+    if  return_status != 1:
+        pg.updateproceduremem(env,terminalnode)
+        envtrace,_ = pg.fetchenvtrace(env,terminalnode,[],[])
+        env.STM.set("envtrace",envtrace)
+        print ("ACTION EXECUTION OUTPUT", output,return_status)    
     return (output,terminalnode,return_status)
  
 ###################### update failure status

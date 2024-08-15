@@ -140,7 +140,7 @@ def execprogram(env,prevterminalnode, code):
         terminalnode = exec_namespace.get("terminalnode", None)
     except Exception as e:
         output = traceback.format_exc()
-        return 0, output
+        return 1, prevterminalnode,output
          
      ########## execute graph
     exec_namespace["graph"] =  env.graph
@@ -158,7 +158,7 @@ def execprogram(env,prevterminalnode, code):
         env.graph["nodes"][errornode]["es"] = 4 
         setfailurenode(env.graph, terminalnode)         
    
-    return terminalnode
+    return 0,terminalnode,output
      
      
 
