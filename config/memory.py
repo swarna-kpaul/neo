@@ -39,7 +39,7 @@ class LTM():  ######### longterm memory - 3 types of memory semantic, episodic a
         else:
             return False
         
-    def delete(self, id, memorytype = "semantic"):
+    def delete(self, recordid, memorytype = "semantic"):
         del self.memory[memorytype][recordid]
         
 

@@ -20,9 +20,9 @@ def solver(env):
                 code = "terminalnode = "+str(terminalnode)
                 execcode(code,env,terminalnode)
             else:
-                action,terminalnode = generatecode(env)
+                output,terminalnode = generatecode(env)
         else:
-            action,terminalnode = generatecode(env)
+            output,terminalnode = generatecode(env)
         #output,stm,return_status = execcode(action["program"],action["desc"],env,relevantnodeid) 
         input("press a key to continue")             
         feedback = critique(env,terminalnode)
@@ -129,8 +129,9 @@ def generatecode(env, codeerror=""):
         
         print(output)
         try:
+            codeerror = ""
             output = extractdictfromtext(output)
-            
+            print("ACTOR Code:","\n".join(output["program"]))
             ############ validate code #######################
             
             ############ excute code ###########
@@ -142,13 +143,13 @@ def generatecode(env, codeerror=""):
                 continue
             break
         except Exception as e:
-            print("Error ACTORPROMPT output:",output)
-            codeerror = str(e)
+            print("Error : ",traceback.format_exc())
+            #codeerror = str(e)
             pass
         
-    print("ACTORPROMPT output:",output)
-    print("ACTOR Code:","\n".join(output["program"]))
-    return "\n".join(output["program"]), relevantnodeid
+    #print("ACTORPROMPT output:",output)
+    #print("ACTOR Code:","\n".join(output["program"]))
+    return output, terminalnode
 
 
 def execcode(code,env,relevantnodeid):
@@ -157,13 +158,14 @@ def execcode(code,env,relevantnodeid):
     error = None
     print("exec code", code)
     #code += updatenodedescription(nodedesc)
-    try:
+    #try:
 # Create an empty namespace (dictionary) for the exec function
-        env.STM.set("envtrace",[]) ######## reset envtrace
-        return_status,terminalnode,output = env.act(code,relevantnodeid)
-    except Exception as e:
-        output = traceback.format_exc()
-        return_status = 1
+    env.STM.set("envtrace",[]) ######## reset envtrace
+    return_status,terminalnode,output = env.act(code,relevantnodeid)
+   # except Exception as e:
+   #     output = traceback.format_exc()
+   #     print("Error output: ", output)
+   #     return_status = 1
     if  return_status != 1:
         pg.updateproceduremem(env,terminalnode)
         envtrace,_ = pg.fetchenvtrace(env,terminalnode,[],[])

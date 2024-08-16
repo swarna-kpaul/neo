@@ -2,7 +2,7 @@ from combinatorlite import creategraph, createnode, addlink, worldclass, runp, n
 from neo.environment.bootstrapactions import ALLACTIONS, initworldbootfunctions,EXTACTIONS,primitives
 from neo.config.memory import *
 import neo.components.programgraph as pg
-node_attributes_object.updateattrib({"R":0,"V":-2,"EXPF":0,"N":1,"desc":""}) # R -> reward, V -> value, EXPF -> exploration factor
+node_attributes_object.updateattrib({"R":0,"V":0.0000001,"EXPF":0,"N":1,"desc":""}) # R -> reward, V -> value, EXPF -> exploration factor
 ############ initialize environment
 
 

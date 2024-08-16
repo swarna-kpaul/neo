@@ -4,8 +4,9 @@ from combinatorlite import *
 import pickle
 ############ initialize program graph
 
-C = 0.2 ## exploration factor
-K = 0.5 ## similarity factor
+C = 0.1 ## exploration factor
+K = 0.4 ## similarity factor
+X = 0.5 ## value factor
 gamma = 0.3
 ###### update embeddings of 
 
@@ -42,7 +43,7 @@ def updateproceduremem(env,terminalnode):
 def getrelevantnodes(env, query, top_k = 1):
     nodeembeddings = env.LTM.get(query, memorytype = "procedural", cutoffscore = 0.1, top_k = 3)   
     nodevalues = {i[1]["id"] : [env.graph["nodes"][i[1]["id"]]["V"],env.graph["nodes"][i[1]["id"]]["EXPF"], i[0]] for i in nodeembeddings}
-    nodevalues = [[k,v[0]+C*v[1]+K*v[2]]  for k,v in nodevalues.items()]
+    nodevalues = [[k,X*v[0]+C*v[1]+K*v[2]]  for k,v in nodevalues.items()]
     relevantnodes = sorted(nodevalues, key=lambda item: item[1], reverse=True)[:top_k] 
     return relevantnodes
     
@@ -78,7 +79,7 @@ def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
 def updatevalue(env,terminalnode):
     graph = env.graph
     #graph["nodes"][terminalnode]["R"] = reward
-    if graph["nodes"][terminalnode]["V"] == -2:
+    if graph["nodes"][terminalnode]["V"] == 0.0000001:
        graph["nodes"][terminalnode]["V"] = graph["nodes"][terminalnode]["R"] 
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]

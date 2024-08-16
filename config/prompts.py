@@ -218,13 +218,16 @@ User : Write a program in FGPM to meet the following objective by extending the 
 Objective: 
  {objective}
 
+Error:
+{error}
+
 Lets think step by step.
 
 AI:
 
 """
 
-ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription", "terminalnode","initialnode","terminalnodedescription","objective"]
+ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription", "terminalnode","initialnode","terminalnodedescription","objective", "error"]
 
 ##################################################### with action plan #################################################
 # actortemplate = """System: You are a programmer in a new programming model FGPM
