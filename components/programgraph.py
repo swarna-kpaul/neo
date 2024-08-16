@@ -2,6 +2,7 @@ import math
 from neo.environment.bootstrapactions import primitives
 from combinatorlite import *
 import pickle
+import ast
 ############ initialize program graph
 
 C = 0.1 ## exploration factor
@@ -143,6 +144,11 @@ def execprogram(env,prevterminalnode, code):
         output = "Here is the previous code: \n"+ code+ "\n Here is the error after running the code :\n"+traceback.format_exc()
         return 1, prevterminalnode,output
          
+    
+    status, errormsg = checkcorrectness(graph,prevterminalnode, terminalnode,env.initnode, code)
+    if status == 1:
+       errormsg = "Here is the previous code: \n"+ code+ "\n Here is the error after running the code :\n"+ errormsg
+       return 1,prevterminalnode,errormsg
      ########## execute graph
     exec_namespace["graph"] =  env.graph
     exec(code,exec_namespace)
@@ -155,7 +161,7 @@ def execprogram(env,prevterminalnode, code):
         updateN(env,terminalnode)
     except combinatorruntimeerror as e:
         print(traceback.format_exc())
-        errornode = e.errors[0]["nodeid"]
+        errornode = e.error[0]["nodeid"]
         env.graph["nodes"][errornode]["es"] = 4 
         setfailurenode(env.graph, terminalnode)         
    
@@ -163,4 +169,74 @@ def execprogram(env,prevterminalnode, code):
      
      
 
+################# check correctness of program
+def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code):
+    errormsg = ""
+    status = 0
+################# check if graph is broken
+    if not [k for k,v in graph["edges"].items() if prevterminalnode in v.values()]:
+        ######################### no connection to prevterminalnode
+        errormsg += " no nodes of new program is connected to the terminal node identifier of existing program " 
+        status = 1
+    ##################### broken graph    
+    errornodes,_ = checkprogram(graph,terminalnode, initialnode, nodestraversed = [], errornodes = [])
+    if errornodes:
+        unconnectednodes = []
+        for node in errornodes:
+            errormsg += "\n all input ports of "+extract_variables_with_value(code, node)[0]+" are not connected."
+            status = 1
+    ######################### broken node
+    danglingnodes = [k for k,v in graph["nodes"].items() if k not in list(graph["edges"].keys()) and k != initialnode]
+    for node in danglingnodes:
+        errormsg += "\n none of the input ports of "+extract_variables_with_value(code, node)[0]+" are connected."
+        status = 1
+    
+    return status, errormsg
+    
+    
+    
 
+def checkprogram(graph,terminalnode, initialnode, nodestraversed = [], errornodes = []):
+    if terminalnode != initialnode:
+        parentnodes = graph['edges'][terminalnode]
+        if graph['nodes'][terminalnode]['args'] != len(parentnodes): 
+        ######## some ports are not connected
+            errornodes.append(terminalnode)
+        for port,parent_label in parentnodes.items(): ###### iterate all parents
+            if parent_label not in nodestraversed:
+                errornodes,nodestraversed = checkprogram(graph,parent_label,initialnode,nodestraversed, errornodes)
+    nodestraversed.append(terminalnode)
+    return errornodes,nodestraversed
+
+
+def extract_variables_with_value(code, target_value):
+    # Parse the code into an AST
+    tree = ast.parse(code)
+    
+    # Dictionary to store variables and their values
+    variables_with_values = {}
+
+    class VariableValueVisitor(ast.NodeVisitor):
+        def visit_Assign(self, node):
+            # Check if the right-hand side of the assignment is a constant
+            if isinstance(node.value, ast.Constant):
+                value = node.value.value
+            else:
+                # If the value is not a constant, skip (more complex cases can be handled)
+                return
+            
+            # Iterate through targets (left-hand side variables)
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    variables_with_values[target.id] = value
+
+            self.generic_visit(node)
+
+    # Create an instance of the visitor and visit the AST nodes
+    visitor = VariableValueVisitor()
+    visitor.visit(tree)
+    
+    # Filter variables that match the target value
+    matching_variables = [var for var, val in variables_with_values.items() if val == target_value]
+    
+    return matching_variables
