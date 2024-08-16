@@ -139,7 +139,7 @@ def execprogram(env,prevterminalnode, code):
         exec(code,exec_namespace)
         terminalnode = exec_namespace.get("terminalnode", None)
     except Exception as e:
-        output = traceback.format_exc()
+        output = "Here is the previous code: \n"+ code+ "\n Here is the error after running the code :\n"+traceback.format_exc()
         return 1, prevterminalnode,output
          
      ########## execute graph
