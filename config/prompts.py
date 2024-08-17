@@ -218,7 +218,6 @@ User : Write a program in FGPM to meet the following objective by extending the 
 Objective: 
  {objective}
 
-Error:
 {error}
 
 Lets think step by step.

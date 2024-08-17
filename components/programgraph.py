@@ -144,11 +144,12 @@ def execprogram(env,prevterminalnode, code):
         output = "Here is the previous code: \n"+ code+ "\n Here is the error after running the code :\n"+traceback.format_exc()
         return 1, prevterminalnode,output
          
-    
+    ################ check FGPM correctness
     status, errormsg = checkcorrectness(graph,prevterminalnode, terminalnode,env.initnode, code)
     if status == 1:
        errormsg = "Here is the previous code: \n"+ code+ "\n Here is the error after running the code :\n"+ errormsg
-       return 1,prevterminalnode,errormsg
+       return 1,prevterminalnode, errormsg
+       
      ########## execute graph
     exec_namespace["graph"] =  env.graph
     exec(code,exec_namespace)
