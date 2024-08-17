@@ -86,7 +86,7 @@ def updatevalue(env,terminalnode):
         parentnodes = graph['edges'][terminalnode]
         N = 0
         for port,parent_label in parentnodes.items(): ###### iterate all parents
-            if graph["nodes"][parent_label]["V"] < gamma*graph["nodes"][terminalnode]["V"]+ graph["nodes"][parent_label]["R"]:
+            if graph["nodes"][parent_label]["V"] < gamma*graph["nodes"][terminalnode]["V"]+ graph["nodes"][parent_label]["R"] or graph["nodes"][parent_label]["V"] == 0.0000001:
                 graph["nodes"][parent_label]["V"] = gamma*graph["nodes"][terminalnode]["V"] + graph["nodes"][parent_label]["R"]
             N += graph["nodes"][parent_label]["N"]
             updatevalue(env, parent_label)
@@ -193,6 +193,17 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code):
         errormsg += "\n none of the input ports of "+check_variables_in_globals(allvariablenames, node)[0]+" are connected."
         status = 1
     
+    ######################### check for multiple terminalnodes ##############
+    nodeids = [globals()[var] for var in allvariablenames if var in globals()]
+    allparentids = [v.values() for k,v in graph["edges"].items()] 
+    uniqueelements = lambda lol: list(set([item for sublist in lol for item in sublist]))
+    allparentids = uniqueelements(allparentids)
+    
+    terminalnodes = [node for node in nodeids if node not in allparentids]
+    if len(terminalnodes) > 1:
+    ######## multiple terminal nodes
+        errormsg += ', '.join([check_variables_in_globals(allvariablenames, node)[0] for node in nodes ])+ " are multiple terminal nodes created by the program. There should be only single terminal node such that all other nodes should have atleast a child node."
+    
     return status, errormsg
     
     
@@ -231,7 +242,7 @@ def extract_variable_names(code):
     
     return variable_names
     
- def check_variables_in_globals(variable_names, target_value):
+def check_variables_in_globals(variable_names, target_value):
     # Find variables in globals that match the target value
     matching_variables = [var for var in variable_names if var in globals() and globals()[var] == target_value]
     #if not matching_variables:
