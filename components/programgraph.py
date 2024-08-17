@@ -179,17 +179,18 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code):
         ######################### no connection to prevterminalnode
         errormsg += " no nodes of new program is connected to the terminal node identifier of existing program " 
         status = 1
-    ##################### broken graph    
+    ##################### broken graph   
+    allvariablenames = extract_variable_names(code)    
     errornodes,_ = checkprogram(graph,terminalnode, initialnode, nodestraversed = [], errornodes = [])
     if errornodes:
         unconnectednodes = []
         for node in errornodes:
-            errormsg += "\n all input ports of "+extract_variables_with_value(code, node)[0]+" are not connected."
+            errormsg += "\n all input ports of "+check_variables_in_globals(allvariablenames, node)[0]+" are not connected."
             status = 1
     ######################### broken node
     danglingnodes = [k for k,v in graph["nodes"].items() if k not in list(graph["edges"].keys()) and k != initialnode]
     for node in danglingnodes:
-        errormsg += "\n none of the input ports of "+extract_variables_with_value(code, node)[0]+" are connected."
+        errormsg += "\n none of the input ports of "+check_variables_in_globals(allvariablenames, node)[0]+" are connected."
         status = 1
     
     return status, errormsg
@@ -210,34 +211,29 @@ def checkprogram(graph,terminalnode, initialnode, nodestraversed = [], errornode
     return errornodes,nodestraversed
 
 
-def extract_variables_with_value(code, target_value):
+def extract_variable_names(code):
     # Parse the code into an AST
     tree = ast.parse(code)
     
-    # Dictionary to store variables and their values
-    variables_with_values = {}
+    # Set to store variable names
+    variable_names = set()
 
-    class VariableValueVisitor(ast.NodeVisitor):
-        def visit_Assign(self, node):
-            # Check if the right-hand side of the assignment is a constant
-            if isinstance(node.value, ast.Constant):
-                value = node.value.value
-            else:
-                # If the value is not a constant, skip (more complex cases can be handled)
-                return
-            
-            # Iterate through targets (left-hand side variables)
-            for target in node.targets:
-                if isinstance(target, ast.Name):
-                    variables_with_values[target.id] = value
-
+    class VariableNameVisitor(ast.NodeVisitor):
+        def visit_Name(self, node):
+            # If the node is a variable being assigned (Store context), add its name
+            if isinstance(node.ctx, ast.Store):
+                variable_names.add(node.id)
             self.generic_visit(node)
 
     # Create an instance of the visitor and visit the AST nodes
-    visitor = VariableValueVisitor()
+    visitor = VariableNameVisitor()
     visitor.visit(tree)
     
-    # Filter variables that match the target value
-    matching_variables = [var for var, val in variables_with_values.items() if val == target_value]
+    return variable_names
     
+ def check_variables_in_globals(variable_names, target_value):
+    # Find variables in globals that match the target value
+    matching_variables = [var for var in variable_names if var in globals() and globals()[var] == target_value]
+    #if not matching_variables:
+    #    matching_variables = [""]
     return matching_variables
