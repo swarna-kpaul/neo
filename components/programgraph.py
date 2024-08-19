@@ -8,7 +8,7 @@ import ast
 C = 0.1 ## exploration factor
 K = 0.4 ## similarity factor
 X = 0.5 ## value factor
-gamma = 0.3
+gamma = 0.8
 ###### update embeddings of 
 
 def getprogramdesc(graph,terminalnode, programdesc = [],nodestraversed = []):
@@ -86,7 +86,7 @@ def updatevalue(env,terminalnode):
         parentnodes = graph['edges'][terminalnode]
         N = 0
         for port,parent_label in parentnodes.items(): ###### iterate all parents
-            if graph["nodes"][parent_label]["V"] < gamma*graph["nodes"][terminalnode]["V"]+ graph["nodes"][parent_label]["R"] or graph["nodes"][parent_label]["V"] == 0.0000001:
+            if (graph["nodes"][parent_label]["V"] < gamma*graph["nodes"][terminalnode]["V"]+ graph["nodes"][parent_label]["R"] or graph["nodes"][parent_label]["V"] == 0.0000001) and graph["nodes"][parent_label]["nm"] != "iW":
                 graph["nodes"][parent_label]["V"] = gamma*graph["nodes"][terminalnode]["V"] + graph["nodes"][parent_label]["R"]
             N += graph["nodes"][parent_label]["N"]
             updatevalue(env, parent_label)
@@ -184,8 +184,8 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code):
     errornodes,_ = checkprogram(graph,terminalnode, initialnode, nodestraversed = [], errornodes = [])
     if errornodes:
         unconnectednodes = []
-        for node in errornodes:
-            errormsg += "\n all input ports of "+check_variables_in_globals(allvariablenames, node)[0]+" are not connected."
+        for node,args,connected in errornodes:
+            errormsg += "\n"+check_variables_in_globals(allvariablenames, node)[0]+" takes "+ str(args)+" input arguments, but there are "+str(connected)+" input connections."
             status = 1
     ######################### broken node
     danglingnodes = [k for k,v in graph["nodes"].items() if k not in list(graph["edges"].keys()) and k != initialnode]
@@ -199,10 +199,10 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code):
     uniqueelements = lambda lol: list(set([item for sublist in lol for item in sublist]))
     allparentids = uniqueelements(allparentids)
     
-    terminalnodes = [node for node in nodeids if node not in allparentids]
+    terminalnodes = list(set([node for node in nodeids if node not in allparentids]))
     if len(terminalnodes) > 1:
     ######## multiple terminal nodes
-        errormsg += ', '.join([check_variables_in_globals(allvariablenames, node)[0] for node in nodes ])+ " are multiple terminal nodes created by the program. There should be only single terminal node such that all other nodes should have atleast a child node."
+        errormsg += "\n"+', '.join([check_variables_in_globals(allvariablenames, node)[0] for node in terminalnodes ])+ " are multiple terminal nodes created by the program. There should be only single terminal node such that all other nodes should have atleast a child node."
     
     return status, errormsg
     
@@ -211,13 +211,14 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code):
 
 def checkprogram(graph,terminalnode, initialnode, nodestraversed = [], errornodes = []):
     if terminalnode != initialnode:
-        parentnodes = graph['edges'][terminalnode]
-        if graph['nodes'][terminalnode]['args'] != len(parentnodes): 
+        if terminalnode in graph['edges']:
+            parentnodes = graph['edges'][terminalnode]
+            if graph['nodes'][terminalnode]['args'] != len(parentnodes): 
         ######## some ports are not connected
-            errornodes.append(terminalnode)
-        for port,parent_label in parentnodes.items(): ###### iterate all parents
-            if parent_label not in nodestraversed:
-                errornodes,nodestraversed = checkprogram(graph,parent_label,initialnode,nodestraversed, errornodes)
+                errornodes.append((terminalnode,graph['nodes'][terminalnode]['args'],len(parentnodes)))
+            for port,parent_label in parentnodes.items(): ###### iterate all parents
+                if parent_label not in nodestraversed:
+                    errornodes,nodestraversed = checkprogram(graph,parent_label,initialnode,nodestraversed, errornodes)
     nodestraversed.append(terminalnode)
     return errornodes,nodestraversed
 
