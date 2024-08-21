@@ -6,6 +6,7 @@ import ast
 import traceback
 
 SOLVEDVALUE = 0.99
+MAXERRORRETRYCOUNT = 2
 
 def solver(env):
     stm = env.STM
@@ -116,8 +117,12 @@ def generatecode(env, codeerror=""):
     relevantfunctionstext = "\n".join([k+" -> "+v for k,v in relevantfunctions.items()])
     relevantfunctionstext +=  "\n".join([k+" -> "+v for k,v in env.primitives.items()])                       
     
+    retrycount = 0
     while True:
         input("press a key to continue... ")
+        if retrycount > MAXERRORRETRYCOUNT:
+            codeerror = ""
+            retrycount = 0
         messages = ACTORPROMPT.format(functions = relevantfunctionstext, \
                     axioms = axioms, \
                     programdescription = programdesc,\
@@ -142,6 +147,7 @@ def generatecode(env, codeerror=""):
             if return_status != 0:
                 codeerror = output
                 print("CODERROR: ", codeerror)
+                retrycount += 1
                 continue
             break
         except Exception as e:
