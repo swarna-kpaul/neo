@@ -66,24 +66,24 @@ extfunctionset = {"textdataread": {"description": """A function to read and coll
                      "function": textshow,
                      "input": "It has one input port that takes a text message that should be displayed to the user. ",
                      "output": "Returns blank text.",
-                     "type": {'fun':{'i':['any'],'o':['any']}}
+                     "type": {'fun':{'i':['any'],'o':['any']}},
                      "args": 1},
                    "askgpt":  {"description": """A function (named askgpt) to provide answer to general questions using GPT3.5 LLM. It can also provide output in code or structured format like, json yaml etc. if properly prompted to do so. """,
                      "function": askgpt,
                      "input": "It has one input port that takes one input question or prompt in plaintext. ",
                      "output": "Returns answer in plaintext.",
-                     "type": {'fun':{'i':['any'],'o':['text']}}
+                     "type": {'fun':{'i':['any'],'o':['text']}},
                      "args": 1},
                    "bingsearch":  {"description": """A function (named bingsearch) to search the web based on input text. The search may return most updated results to date for any search string. """,
                      "code": bingsearch,
                      "input": "It has one input port that takes one input question or search string in plaintext. ",
                      "output": "Returns search result in plaintext.",
-                     "type": {'fun':{'i':['any'],'o':['text']}}
+                     "type": {'fun':{'i':['any'],'o':['text']}},
                      "args":1},
                    "getanswer":   {"description": """A function (named getanswer) to get precise answer to a question based on a given text. The answer is given in the expected datatype. The output datatype can be number, boolean, list, dictionary and text. """,
                      "code": getanswer,
                      "input": "It has 3 input port that takes 3 input. a question, a text from where the question needs to be answered and an expected output data type. ",
                      "output": "Returns the answer in the expected output datatype.",
-                     "type": {'fun':{'i':['text','text','text'],'o':['text']}}
+                     "type": {'fun':{'i':['text','text','text'],'o':['text']}},
                      "args":3}
                      }

@@ -138,7 +138,7 @@ def generatecode(env, codeerror=""):
             input("press a key to continue... ")
             output,terminalnode,return_status = execcode("\n".join(output["program"]),env,relevantnodeid)
             if return_status != 0:
-                codeerror = output.upper()
+                codeerror = output
                 print("CODERROR: ", codeerror)
                 continue
             break

@@ -177,7 +177,7 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code):
 ################# check if graph is broken
     if not [k for k,v in graph["edges"].items() if prevterminalnode in v.values()]:
         ######################### no connection to prevterminalnode
-        errormsg += " no nodes of new program is connected to the terminal node identifier of existing program " 
+        errormsg += " NO NODES OF NEW PROGRAM IS CONNECTED TO THE TERMINAL NODE IDENTIFIER OF EXISTING PROGRAM " 
         status = 1
     ##################### broken graph   
     allvariablenames = extract_variable_names(code)    
@@ -185,12 +185,12 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code):
     if errornodes:
         unconnectednodes = []
         for node,args,connected in errornodes:
-            errormsg += "\n"+check_variables_in_globals(allvariablenames, node)[0]+" takes "+ str(args)+" input arguments, but there are "+str(connected)+" input connections."
+            errormsg += "\n"+check_variables_in_globals(allvariablenames, node)[0]+" TAKES "+ str(args)+" INPUT ARGUMENTS, BUT THERE ARE "+str(connected)+" INPUT CONNECTIONS."
             status = 1
     ######################### broken node
     danglingnodes = [k for k,v in graph["nodes"].items() if k not in list(graph["edges"].keys()) and k != initialnode]
     for node in danglingnodes:
-        errormsg += "\n none of the input ports of "+check_variables_in_globals(allvariablenames, node)[0]+" are connected."
+        errormsg += "\n NONE OF THE INPUT PORTS OF "+check_variables_in_globals(allvariablenames, node)[0]+" ARE CONNECTED."
         status = 1
     
     ######################### check for multiple terminalnodes ##############
@@ -202,7 +202,7 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code):
     terminalnodes = list(set([node for node in nodeids if node not in allparentids]))
     if len(terminalnodes) > 1:
     ######## multiple terminal nodes
-        errormsg += "\n"+', '.join([check_variables_in_globals(allvariablenames, node)[0] for node in terminalnodes ])+ " are multiple terminal nodes created by the program. There should be only single terminal node such that all other nodes should have atleast a child node."
+        errormsg += "\n"+', '.join([check_variables_in_globals(allvariablenames, node)[0] for node in terminalnodes ])+ " ARE MULTIPLE TERMINAL NODES CREATED BY THE PROGRAM. THERE SHOULD BE ONLY A SINGLE TERMINAL NODE SUCH THAT ALL OTHER NODES SHOULD HAVE AT LEAST A CHILD NODE."
     
     return status, errormsg
     
