@@ -4,8 +4,9 @@ import neo.components.programgraph as pg
 from neo.config.utilities import *
 import ast
 import traceback
+import uuid
 
-SOLVEDVALUE = 0.99
+SOLVEDVALUE = 0.90
 MAXERRORRETRYCOUNT = 2
 
 def solver(env):
@@ -18,7 +19,7 @@ def solver(env):
         #actionplan,relevantnodeid,programdesc = generateplan(env )
         relevantnodes = env.STM.get("relevantnodes")
         if relevantnodes:
-            if relevantnodes[0][1] > SOLVEDVALUE:
+            if env.graph["nodes"][relevantnodes[0][0]]["V"] > SOLVEDVALUE:
                 terminalnode = relevantnodes[0][0]
                 code = "terminalnode = "+str(terminalnode)
                 execcode(code,env,terminalnode)
@@ -108,7 +109,7 @@ def generatecode(env, codeerror=""):
     
     ################ fetch learnings #########################################
     query = "Objective: \n"+objective+"\n Partial plan to meet the objective: \n"+ programdesc
-    memory = env.LTM.get(query, memorytype = "semantic", cutoffscore = 0.2 ,top_k=5)
+    memory = env.LTM.get(query, memorytype = "semantic", cutoffscore = 0.1 ,top_k=5)
     learnings = "\n".join([i[1]["data"] for i in memory])
     env.STM.set("relevantbeliefs", learnings)
     axioms += "\n"+learnings
@@ -235,6 +236,6 @@ def belieflearner(env):
     learnings = output["learnings"]
     #currentenvironment["env"]["belief axioms"] = beliefaxioms
     for learning in learnings:
-        env.LTM.set(text = learning, data = learning, memorytype = "semantic")
+        env.LTM.set(text = learning, data = learning, recordid=str(uuid.uuid4()), memorytype = "semantic")
 
     return output
