@@ -188,7 +188,7 @@ terminalnode = g4
 
 THE ABOVE PROGRAM IS JUST AN EXAMPLE. DO NOT INCLUDE THIS IN THE FINAL OUTPUT.
 
-You need to generate a program to partially or fully meet the objective provided by user. Limit the program length to ATMOST 10 LINES.
+You need to generate a program to partially or fully meet the objective provided by user. 
 Use the following rules and learnings about the task environment to generate solution program.
   {axioms}
 
@@ -215,7 +215,7 @@ The output should STRICTLY contain following python dictionary format.
 Descriptions should be added for all nodes within the above program. Whereever possible shorten the explanation by evaluating the node outputs.
 
 
-User : Write a program in FGPM to meet the following objective by extending the existing program. You don't need to write the existing program. 
+User : Write a program in FGPM to partially or fully meet the following objective by extending the existing program. You don't need to write the existing program. LIMIT THE PROGRAM LENGHTH ATMOST 10 LINES. IF THE FULL OBJECTIVE CANNOT BE MET WITHIN 10 LINES THEN PARTIALLY SOLVE THE OBJECTIVE IN THE BEST WAY POSSIBLE.
 Objective: 
  {objective}
 

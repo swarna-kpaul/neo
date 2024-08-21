@@ -5,6 +5,8 @@ from neo.config.utilities import *
 import ast
 import traceback
 
+SOLVEDVALUE = 0.99
+
 def solver(env):
     stm = env.STM
     ltm = env.LTM

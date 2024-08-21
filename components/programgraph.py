@@ -6,9 +6,9 @@ import ast
 ############ initialize program graph
 
 C = 0.1 ## exploration factor
-K = 0.4 ## similarity factor
-X = 0.5 ## value factor
-gamma = 0.8
+K = 0.3 ## similarity factor
+X = 0.6 ## value factor
+gamma = 0.9
 ###### update embeddings of 
 
 def getprogramdesc(graph,terminalnode, programdesc = [],nodestraversed = []):
@@ -42,7 +42,7 @@ def updateproceduremem(env,terminalnode):
 
 ############ fetch relevant subprograms from procedural memory #################    
 def getrelevantnodes(env, query, top_k = 1):
-    nodeembeddings = env.LTM.get(query, memorytype = "procedural", cutoffscore = 0.1, top_k = 3)   
+    nodeembeddings = env.LTM.get(query, memorytype = "procedural", cutoffscore = 0.1, top_k = 300)   
     nodevalues = {i[1]["id"] : [env.graph["nodes"][i[1]["id"]]["V"],env.graph["nodes"][i[1]["id"]]["EXPF"], i[0]] for i in nodeembeddings}
     nodevalues = [[k,X*v[0]+C*v[1]+K*v[2]]  for k,v in nodevalues.items()]
     relevantnodes = sorted(nodevalues, key=lambda item: item[1], reverse=True)[:top_k] 
