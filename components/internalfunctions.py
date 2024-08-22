@@ -19,6 +19,7 @@ def solver(env):
         #actionplan,relevantnodeid,programdesc = generateplan(env )
         relevantnodes = env.STM.get("relevantnodes")
         if relevantnodes:
+            print("node val", env.graph["nodes"][relevantnodes[0][0]]["V"])
             if env.graph["nodes"][relevantnodes[0][0]]["V"] > SOLVEDVALUE:
                 terminalnode = relevantnodes[0][0]
                 code = "terminalnode = "+str(terminalnode)
@@ -204,7 +205,10 @@ def critique (env,terminalnode):
     
     env.STM.set("critique", output)
     
-    env.graph["nodes"][terminalnode]["R"] = output["feedback"] ## set the reward
+    if env.graph["nodes"][terminalnode]["R"] == 0.0000001:
+        env.graph["nodes"][terminalnode]["R"] = output["feedback"] ## set the reward
+    else:
+        env.graph["nodes"][terminalnode]["R"] = (env.graph["nodes"][terminalnode]["R"]+ output["feedback"])/2
     pg.updatevalue(env,terminalnode)
     
     return output

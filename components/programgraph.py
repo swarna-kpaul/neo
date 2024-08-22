@@ -77,11 +77,16 @@ def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
  
 ############# Update node values #####################
 
-def updatevalue(env,terminalnode):
+def updatevalue(env,terminalnode,finalnode = True):
     graph = env.graph
     #graph["nodes"][terminalnode]["R"] = reward
-    if graph["nodes"][terminalnode]["V"] == 0.0000001:
-       graph["nodes"][terminalnode]["V"] = graph["nodes"][terminalnode]["R"] 
+    
+    if finalnode and not [k for k,v in graph["edges"].items() if terminalnode in v.values()]: #graph["nodes"][terminalnode]["V"] == 0.0000001:
+       childnodes = [k for k,v in graph["edges"].items() if terminalnode in v.values()]
+       if not childnodes:
+           graph["nodes"][terminalnode]["V"] = gamma*graph["nodes"][terminalnode]["V"] + graph["nodes"][terminalnode]["R"] 
+       else:
+           graph["nodes"][terminalnode]["V"] = gamma*max([ graph["nodes"][node]["V"] for node in childnodes]) + graph["nodes"][terminalnode]["R"] 
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
         N = 0
@@ -175,7 +180,7 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code):
     errormsg = ""
     status = 0
 ################# check if graph is broken
-    if not [k for k,v in graph["edges"].items() if prevterminalnode in v.values()]:
+    if not [k for k,v in graph["edges"].items() if prevterminalnode in v.values()] and prevterminalnode != terminalnode :
         ######################### no connection to prevterminalnode
         errormsg += " NO NODES OF NEW PROGRAM IS CONNECTED TO THE TERMINAL NODE IDENTIFIER OF EXISTING PROGRAM " 
         status = 1
