@@ -229,6 +229,16 @@ AI:
 
 ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription", "terminalnode","initialnode","terminalnodedescription","objective", "error"]
 
+summarizetext = """System: You are an efficient summarizer of text.
+You need to summarize the User provided text within 10 words. The summary should contain all relevant information from user text.
+
+User: {objective}
+
+AI:
+"""
+
+SUMMARIZEVARIABLES = ["objective"]
+
 ##################################################### with action plan #################################################
 # actortemplate = """System: You are a programmer in a new programming model FGPM
 

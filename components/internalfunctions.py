@@ -15,6 +15,7 @@ def solver(env):
     relevantextactions = ltm.get(query = env.environment["description"]+" "+env.environment["prior axioms"], memorytype ="externalactions", cutoffscore =0.2, top_k=5)
     relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
     stm.set("relevantactions",relevantextactions)
+    summarizeobjective(env)
     while True:
         #actionplan,relevantnodeid,programdesc = generateplan(env )
         relevantnodes = env.STM.get("relevantnodes")
@@ -98,7 +99,15 @@ def generateplan(env, explore = False ):
         break
 
     return output,relevantnodeid,programdesc
-    
+
+
+def summarizeobjective(env):
+    objective = env.environment["objective"]
+    messages = SUMMARIZEPROMPT.format(objective = objective)
+    output = llm_gpt4o.predict(messages)
+    env.STM.set("summaryobjective",output)
+    print("summaryobjective",ouptut)
+    return     
     
 def generatecode(env, codeerror=""):
     objective = env.environment["objective"]  
@@ -240,6 +249,7 @@ def belieflearner(env):
     learnings = output["learnings"]
     #currentenvironment["env"]["belief axioms"] = beliefaxioms
     for learning in learnings:
-        env.LTM.set(text = learning, data = learning, recordid=str(uuid.uuid4()), memorytype = "semantic")
+        text = "objective: "+env.STM.get("summaryobjective")+"\n learning: "+learning
+        env.LTM.set(text = text, data = learning, recordid=str(uuid.uuid4()), memorytype = "semantic")
 
     return output

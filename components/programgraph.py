@@ -80,6 +80,14 @@ def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
 def updatevalue(env,terminalnode,finalnode = False):
     graph = env.graph
     #graph["nodes"][terminalnode]["R"] = reward
+    if graph["nodes"][terminalnode]["nm"] != "iW":
+           allchildnodes = [k for k,v in graph["edges"].items() if terminalnode in v.values()]
+           if allchildnodes:
+               maxchildvalue = max([ graph["nodes"][node]["V"] for node in allchildnodes])
+           else:
+               maxchildvalue = 0
+           graph["nodes"][terminalnode]["V"] = gamma*maxchildvalue + graph["nodes"][terminalnode]["R"]
+           
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
         N = 0
@@ -87,13 +95,7 @@ def updatevalue(env,terminalnode,finalnode = False):
             N += graph["nodes"][parent_label]["N"]
             updatevalue(env, parent_label, False)
             
-        if graph["nodes"][terminalnode]["nm"] != "iW":
-           allchildnodes = [k for k,v in graph["edges"].items() if terminalnode in v.values()]
-           if allchildnodes:
-               maxchildvalue = max([ graph["nodes"][node]["V"] for node in allchildnodes])
-           else:
-               maxchildvalue = 0
-           graph["nodes"][terminalnode]["V"] = gamma*maxchildvalue + graph["nodes"][terminalnode]["R"]
+        
         graph["nodes"][terminalnode]["EXPF"] = math.sqrt(math.log(N)/graph["nodes"][terminalnode]["N"])
     #return 
 
