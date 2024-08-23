@@ -77,24 +77,23 @@ def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
  
 ############# Update node values #####################
 
-def updatevalue(env,terminalnode,finalnode = True):
+def updatevalue(env,terminalnode,finalnode = False):
     graph = env.graph
     #graph["nodes"][terminalnode]["R"] = reward
-    
-    if finalnode and not [k for k,v in graph["edges"].items() if terminalnode in v.values()]: #graph["nodes"][terminalnode]["V"] == 0.0000001:
-       childnodes = [k for k,v in graph["edges"].items() if terminalnode in v.values()]
-       if not childnodes:
-           graph["nodes"][terminalnode]["V"] = gamma*graph["nodes"][terminalnode]["V"] + graph["nodes"][terminalnode]["R"] 
-       else:
-           graph["nodes"][terminalnode]["V"] = gamma*max([ graph["nodes"][node]["V"] for node in childnodes]) + graph["nodes"][terminalnode]["R"] 
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
         N = 0
         for port,parent_label in parentnodes.items(): ###### iterate all parents
-            if (graph["nodes"][parent_label]["V"] < gamma*graph["nodes"][terminalnode]["V"]+ graph["nodes"][parent_label]["R"] or graph["nodes"][parent_label]["V"] == 0.0000001) and graph["nodes"][parent_label]["nm"] != "iW":
-                graph["nodes"][parent_label]["V"] = gamma*graph["nodes"][terminalnode]["V"] + graph["nodes"][parent_label]["R"]
             N += graph["nodes"][parent_label]["N"]
-            updatevalue(env, parent_label)
+            updatevalue(env, parent_label, False)
+            
+        if graph["nodes"][terminalnode]["nm"] != "iW":
+           allchildnodes = [k for k,v in graph["edges"].items() if terminalnode in v.values()]
+           if allchildnodes:
+               maxchildvalue = max([ graph["nodes"][node]["V"] for node in allchildnodes])
+           else:
+               maxchildvalue = 0
+           graph["nodes"][terminalnode]["V"] = gamma*maxchildvalue + graph["nodes"][terminalnode]["R"]
         graph["nodes"][terminalnode]["EXPF"] = math.sqrt(math.log(N)/graph["nodes"][terminalnode]["N"])
     #return 
 

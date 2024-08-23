@@ -209,7 +209,7 @@ def critique (env,terminalnode):
         env.graph["nodes"][terminalnode]["R"] = output["feedback"] ## set the reward
     else:
         env.graph["nodes"][terminalnode]["R"] = (env.graph["nodes"][terminalnode]["R"]+ output["feedback"])/2
-    pg.updatevalue(env,terminalnode)
+    pg.updatevalue(env,terminalnode,True)
     
     return output
     
