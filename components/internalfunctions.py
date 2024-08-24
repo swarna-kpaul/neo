@@ -106,7 +106,7 @@ def summarizeobjective(env):
     messages = SUMMARIZEPROMPT.format(objective = objective)
     output = llm_gpt4o.predict(messages)
     env.STM.set("summaryobjective",output)
-    print("summaryobjective",ouptut)
+    print("summaryobjective",output)
     return     
     
 def generatecode(env, codeerror=""):
