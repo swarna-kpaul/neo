@@ -151,7 +151,9 @@ def execprogram(env,prevterminalnode, code):
         return 1, prevterminalnode,output
          
     ################ check FGPM correctness
-    status, errormsg = checkcorrectness(graph,prevterminalnode, terminalnode,env.initnode, code)
+    #namespace = globals()
+    
+    status, errormsg = checkcorrectness(graph,prevterminalnode, terminalnode,env.initnode, code, exec_namespace)
     if status == 1:
        errormsg = "Here is the previous code: \n"+ code+ "\n Here is the error after running the code :\n"+ errormsg
        return 1,prevterminalnode, errormsg
@@ -177,7 +179,7 @@ def execprogram(env,prevterminalnode, code):
      
 
 ################# check correctness of program
-def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code):
+def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code, exec_namespace):
     errormsg = ""
     status = 0
 ################# check if graph is broken
@@ -191,16 +193,16 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code):
     if errornodes:
         unconnectednodes = []
         for node,args,connected in errornodes:
-            errormsg += "\n"+check_variables_in_globals(allvariablenames, node)[0]+" TAKES "+ str(args)+" INPUT ARGUMENTS, BUT THERE ARE "+str(connected)+" INPUT CONNECTIONS."
+            errormsg += "\n"+check_variables_in_globals(allvariablenames, node,exec_namespace)[0]+" TAKES "+ str(args)+" INPUT ARGUMENTS, BUT THERE ARE "+str(connected)+" INPUT CONNECTIONS."
             status = 1
     ######################### broken node
     danglingnodes = [k for k,v in graph["nodes"].items() if k not in list(graph["edges"].keys()) and k != initialnode]
     for node in danglingnodes:
-        errormsg += "\n NONE OF THE INPUT PORTS OF "+check_variables_in_globals(allvariablenames, node)[0]+" ARE CONNECTED."
+        errormsg += "\n NONE OF THE INPUT PORTS OF "+check_variables_in_globals(allvariablenames, node,exec_namespace)[0]+" ARE CONNECTED."
         status = 1
     
     ######################### check for multiple terminalnodes ##############
-    nodeids = [globals()[var] for var in allvariablenames if var in globals()]
+    nodeids = [exec_namespace[var] for var in allvariablenames if var in exec_namespace]
     allparentids = [v.values() for k,v in graph["edges"].items()] 
     uniqueelements = lambda lol: list(set([item for sublist in lol for item in sublist]))
     allparentids = uniqueelements(allparentids)
@@ -208,7 +210,7 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code):
     terminalnodes = list(set([node for node in nodeids if node not in allparentids]))
     if len(terminalnodes) > 1:
     ######## multiple terminal nodes
-        errormsg += "\n"+', '.join([check_variables_in_globals(allvariablenames, node)[0] for node in terminalnodes ])+ " ARE MULTIPLE TERMINAL NODES CREATED BY THE PROGRAM. THERE SHOULD BE ONLY A SINGLE TERMINAL NODE SUCH THAT ALL OTHER NODES SHOULD HAVE AT LEAST A CHILD NODE."
+        errormsg += "\n"+', '.join([check_variables_in_globals(allvariablenames, node,exec_namespace)[0] for node in terminalnodes ])+ " ARE MULTIPLE TERMINAL NODES CREATED BY THE PROGRAM. THERE SHOULD BE ONLY A SINGLE TERMINAL NODE SUCH THAT ALL OTHER NODES SHOULD HAVE AT LEAST A CHILD NODE."
     
     return status, errormsg
     
@@ -249,9 +251,9 @@ def extract_variable_names(code):
     
     return variable_names
     
-def check_variables_in_globals(variable_names, target_value):
+def check_variables_in_globals(variable_names, target_value,exec_namespace):
     # Find variables in globals that match the target value
-    matching_variables = [var for var in variable_names if var in globals() and globals()[var] == target_value]
+    matching_variables = [var for var in variable_names if var in exec_namespace and exec_namespace[var] == target_value]
     #if not matching_variables:
     #    matching_variables = [""]
     return matching_variables

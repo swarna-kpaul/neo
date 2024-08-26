@@ -8,7 +8,7 @@ initworldbootfunctions= extfunctionset
 ######## Primitive actions for FGPM ###############
 primitives = {#"iW" : """Initial node; No input parameters; Ex: createnode(graph,"iW",init_world)""",
               "K": """Constant node always return a constant value set during creation of node; It has one input argument. Ex: createnode(graph,"K",2) - This creates a node with constant value 2.""",
-              "+" : "Adds two input values; ",
+              "+" : "Adds two input if they are numbers; concats values if they are text; ",
               "-" : "subtracts 2nd argument from first.",
               "*" : "Multiplies 2 inputs",
               "/" : "Divides 1st argument by 2nd",
