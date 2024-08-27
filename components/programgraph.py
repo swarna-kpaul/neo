@@ -102,9 +102,9 @@ def updatevalue(env,terminalnode,finalnode = False):
 ##################################
 def dedupaddlink(graph,childnode,*parentnodes):
     ############ check if same childnode exists with same parents ############
-    for dedupnodeid, node in graph["nodes"].items() if graph["nodes"][childnode]["nm"] = node["nm"]:
-        if graph["edges"][dedupnodeid]:
-            if list(graph["edges"][dedupnodeid].values) == list(parentnodes):
+    for dedupnodeid in [dedupnodeid for dedupnodeid, node in graph["nodes"].items() if graph["nodes"][childnode]["nm"] == node["nm"]]:
+        if dedupnodeid in graph["edges"]:
+            if list(graph["edges"][dedupnodeid].values()) == list(parentnodes):
                 ################# same node exists
                 ########## reconnect all childnodes of childnode if any
                 for childid, edges in graph["edges"].items():
@@ -115,8 +115,8 @@ def dedupaddlink(graph,childnode,*parentnodes):
                 pg.remove_node(graph,childnode)
                 #childnode = dedupnodeid
                 return dedupnodeid
-     pg.addlink(graph,childnode,*parentnodes)           
-     return childnode
+    addlink(graph,childnode,*parentnodes)           
+    return childnode
 
 ############### Reset data ###################
 
