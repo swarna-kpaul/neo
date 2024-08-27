@@ -99,6 +99,24 @@ def updatevalue(env,terminalnode,finalnode = False):
         graph["nodes"][terminalnode]["EXPF"] = math.sqrt(math.log(N)/graph["nodes"][terminalnode]["N"])
     #return 
 
+##################################
+def dedupaddlink(graph,childnode,*parentnodes):
+    ############ check if same childnode exists with same parents ############
+    for dedupnodeid, node in graph["nodes"].items() if graph["nodes"][childnode]["nm"] = node["nm"]:
+        if graph["edges"][dedupnodeid]:
+            if list(graph["edges"][dedupnodeid].values) == list(parentnodes):
+                ################# same node exists
+                ########## reconnect all childnodes of childnode if any
+                for childid, edges in graph["edges"].items():
+                    for port,parentid in edges.items():
+                        if parentid == childnode:
+                            graph["edges"][childid][port] = dedupnodeid
+                ############ delete childnode #######
+                pg.remove_node(graph,childnode)
+                #childnode = dedupnodeid
+                return dedupnodeid
+     pg.addlink(graph,childnode,*parentnodes)           
+     return childnode
 
 ############### Reset data ###################
 
@@ -211,7 +229,7 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code, exe
     if len(terminalnodes) > 1:
     ######## multiple terminal nodes
         errormsg += "\n"+', '.join([check_variables_in_globals(allvariablenames, node,exec_namespace)[0] for node in terminalnodes ])+ " ARE MULTIPLE TERMINAL NODES CREATED BY THE PROGRAM. THERE SHOULD BE ONLY A SINGLE TERMINAL NODE SUCH THAT ALL OTHER NODES SHOULD HAVE AT LEAST A CHILD NODE."
-    
+        status = 1
     return status, errormsg
     
     
@@ -257,3 +275,6 @@ def check_variables_in_globals(variable_names, target_value,exec_namespace):
     #if not matching_variables:
     #    matching_variables = [""]
     return matching_variables
+
+
+
