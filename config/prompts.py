@@ -172,7 +172,7 @@ A program should have starting edge from terminal node of another program or ini
 Programs are evaluated in lazy style, such that terminal node is excecuted 1st and it calls the functions of its input arguments. This goes on recursively until initial node is reached.
 
 A function node can be created with the command "createnode(<instance of a graph>,<function name>,<optional paramater only applicable for constant node>)". It returns a node identifier.
-An edge can be created with the command "addlink(<instance of a graph>,<child node identifier>,<parent node identifiers in representing input arguments for child node>)". It returns a edge identifier
+An edge can be created with the command "dedupaddlink(<instance of a graph>,<child node identifier>,<parent node identifiers in representing input arguments for child node>)". It returns the child node identifier.
 
 Here are the list of function names available.
 {functions}
@@ -181,9 +181,9 @@ Here is an example program for adding two constant numbers, where g1 in initial 
 g2 = createnode(graph,'K',2);
 g3 = createnode(graph,'K',3)
 g4 = createnode(graph,'+')
-addlink(graph,g2,g1); ### starting node should connect to the terminal node of the prior program 
-addlink(graph,g3,g1); ### starting node should connect to the terminal node of the prior program 
-addlink(graph,g4,g3,g2); 
+g2 = dedupaddlink(graph,g2,g1); ### starting node should connect to the terminal node of the prior program 
+g3 = dedupaddlink(graph,g3,g1); ### starting node should connect to the terminal node of the prior program 
+g4 = dedupaddlink(graph,g4,g3,g2); 
 terminalnode = g4
 
 THE ABOVE PROGRAM IS JUST AN EXAMPLE. DO NOT INCLUDE THIS IN THE FINAL OUTPUT.
