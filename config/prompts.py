@@ -215,7 +215,7 @@ The output should STRICTLY contain following python dictionary format.
 Descriptions should be added for all nodes within the above program. Whereever possible shorten the explanation by evaluating the node outputs.
 
 
-User : Write a program in FGPM to partially or fully meet the following objective by extending the existing program. You don't need to write the existing program. LIMIT THE PROGRAM LENGHTH ATMOST 10 LINES. IF THE FULL OBJECTIVE CANNOT BE MET WITHIN 10 LINES THEN PARTIALLY SOLVE THE OBJECTIVE IN THE BEST WAY POSSIBLE.
+User : Write a program in FGPM to partially or fully meet the following objective by extending the existing program. You don't need to write the existing program. LIMIT THE PROGRAM LENGHTH ATMOST 10 LINES. IF THE FULL OBJECTIVE CANNOT BE MET WITHIN 10 LINES THEN PARTIALLY SOLVE THE OBJECTIVE IN THE BEST WAY POSSIBLE. FOCUS ON GENERATING CORRECT PROGRAM.
 Objective: 
  {objective}
 
