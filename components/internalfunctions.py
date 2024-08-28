@@ -111,18 +111,19 @@ def summarizeobjective(env):
     
 def generatecode(env, codeerror=""):
     objective = env.environment["objective"]  
-    axioms = env.environment["prior axioms" ]    
+    axioms = env.environment["prior axioms" ]   
+    ################ fetch learnings #########################################
+    query = "Objective: \n"+objective+"\n Critique recieved while solving the objective: \n"+ env.STM.get("critique")["reason"]
+    memory = env.LTM.get(query, memorytype = "semantic", cutoffscore = 0.1 ,top_k=5)
+    learnings = "\n".join([i[1]["data"] for i in memory])
+    env.STM.set("relevantbeliefs", learnings)
+    axioms += "\n"+learnings
+    
     relevantnodeid, programdesc = pg.getprogramto_extend(env,objective+"\n"+axioms)
     if not relevantnodeid:
         relevantnodeid = env.initnode
         programdesc = "Initializes the program with initial node"
     
-    ################ fetch learnings #########################################
-    query = "Objective: \n"+objective+"\n Partial plan to meet the objective: \n"+ programdesc
-    memory = env.LTM.get(query, memorytype = "semantic", cutoffscore = 0.1 ,top_k=5)
-    learnings = "\n".join([i[1]["data"] for i in memory])
-    env.STM.set("relevantbeliefs", learnings)
-    axioms += "\n"+learnings
     ######## fetch relevant actions
     relevantfunctions = env.STM.get("relevantactions") #env.LTM.get(objective+"\n"+axioms,"externalactions",top_k=5)
     relevantfunctionstext = "\n".join([k+" -> "+v for k,v in relevantfunctions.items()])
@@ -139,7 +140,7 @@ def generatecode(env, codeerror=""):
                     programdescription = programdesc,\
                     terminalnode = relevantnodeid, \
                     initialnode = env.initnode, \
-                    terminalnodedescription = env.graph["nodes"][relevantnodeid]["desc"], \
+                    #terminalnodedescription = env.graph["nodes"][relevantnodeid]["desc"], \
                     objective = objective, \
                     error = codeerror)
         print("ACTORPROMPT:",messages)

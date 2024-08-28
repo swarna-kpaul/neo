@@ -193,17 +193,16 @@ Use the following rules and learnings about the task environment to generate sol
   {axioms}
 
 The generated program should be an extension of an existing program with terminal node identifier {terminalnode} and initial node identifier {initialnode}. 
-Always link only the starting nodes (input ports that are not connected to any other nodes) of the generated program with this terminal node or initial node.
+Always link only the starting nodes (input ports that are not connected to any other nodes) of the generated program with any of the relevant nodes of the existing program or initial node.
 There should not be any unconnected input ports.
 Every input port of all nodes of the generated program should be cennected with a parent node.
 Specify the terminal node of the new generated program by the following statement. The terminal node should not have any output connection.
 terminalnode = <terminal node identifier>
 
-The existing program already do the following.
+The existing program already does the following. Each line represents a function carried out by a node represented by corresponding node id.
   {programdescription}
   
-The terminal node of the existing program do the following.
-  {terminalnodedescription}
+
 
 Also add the the node descriptions in within the program by using the following statement.
 graph["nodes"][<node index (represented by the variable in the above program during node creation>]["desc"] = <short explanation of each node based on the function it performs and value it is expected to return>
@@ -227,7 +226,10 @@ AI:
 
 """
 
-ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription", "terminalnode","initialnode","terminalnodedescription","objective", "error"]
+#The terminal node of the existing program do the following.
+#  {terminalnodedescription}
+
+ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription", "terminalnode","initialnode","objective", "error"]
 
 summarizetext = """System: You are an efficient summarizer of text.
 You need to summarize the User provided text within 10 words. The summary should contain all relevant information from user text.

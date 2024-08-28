@@ -18,7 +18,7 @@ def getprogramdesc(graph,terminalnode, programdesc = [],nodestraversed = []):
         for port,parent_label in parentnodes.items(): ###### iterate all parents
             if parent_label not in nodestraversed:
                 programdesc,nodestraversed = getprogramdesc(graph,parent_label,programdesc,nodestraversed)
-    programdesc.append(graph["nodes"][terminalnode]["desc"])
+    programdesc.append((graph["nodes"][terminalnode]["desc"],terminalnode))
     nodestraversed.append(terminalnode)
     return programdesc,nodestraversed
     
@@ -29,6 +29,7 @@ def getallprogramdesc(graph,terminalnode, allprogramdesc = {}):
             if parent_label not in allprogramdesc:
                 allprogramdesc = getallprogramdesc(graph,parent_label,allprogramdesc)
     allprogramdesc[terminalnode],_ = getprogramdesc(graph,terminalnode,[],[])
+    allprogramdesc[terminalnode] = [desc for desc,nodeid in allprogramdesc[terminalnode]]
     allprogramdesc[terminalnode] = '\n'.join(allprogramdesc[terminalnode])
     return allprogramdesc
     
@@ -55,6 +56,7 @@ def getprogramto_extend(env,query):
     env.STM.set("relevantnodes", relevantnodes)
     nodeid = relevantnodes[0][0]
     programdesc,_ =  getprogramdesc(graph,nodeid, programdesc = [],nodestraversed = [])
+    programdesc = [desc+"; node id -> "+str(idx) for desc,idx in programdesc]
     programdesc =  '\n'.join(programdesc)
     return nodeid,programdesc
 
@@ -112,7 +114,7 @@ def dedupaddlink(graph,childnode,*parentnodes):
                         if parentid == childnode:
                             graph["edges"][childid][port] = dedupnodeid
                 ############ delete childnode #######
-                pg.remove_node(graph,childnode)
+                remove_node(graph,childnode)
                 #childnode = dedupnodeid
                 return dedupnodeid
     addlink(graph,childnode,*parentnodes)           
@@ -201,9 +203,14 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code, exe
     errormsg = ""
     status = 0
 ################# check if graph is broken
-    if not [k for k,v in graph["edges"].items() if prevterminalnode in v.values()] and prevterminalnode != terminalnode :
+    programdesc,_ =  getprogramdesc(graph,prevterminalnode, programdesc = [],nodestraversed = [])
+    prevprogramnodeids = list(set([idx for desc,idx in programdesc if idx != terminalnode]))
+    allparentnodes = [list(v.values()) for k,v in graph["edges"].items()]
+    allparentnodes = list(set([item for sublist in allparentnodes for item in sublist]))
+    
+    if not list(set(prevprogramnodeids).intersection(allparentnodes)): #[k for k,v in graph["edges"].items() if prevterminalnode in v.values()] and prevterminalnode != terminalnode 
         ######################### no connection to prevterminalnode
-        errormsg += " NO NODES OF NEW PROGRAM IS CONNECTED TO THE TERMINAL NODE IDENTIFIER OF EXISTING PROGRAM " 
+        errormsg += " NO NODES OF NEW PROGRAM IS CONNECTED TO THE ANY NODE OF EXISTING PROGRAM " 
         status = 1
     ##################### broken graph   
     allvariablenames = extract_variable_names(code)    
