@@ -201,7 +201,7 @@ def critique (env,terminalnode):
     currentenvironment = env.environment
     currentenvironment_text = "objective: "+currentenvironment["objective"]+"   \n  "+"axioms: "+ currentenvironment["prior axioms"]+" \n "+env.STM.get("relevantbeliefs")
     progdesc,_ = pg.getprogramdesc(env.graph, terminalnode, programdesc = [],nodestraversed = [])
-    
+    progdesc = [desc for desc,idx in progdesc]
     currentperception = "\n".join([str(i) for i in env.STM.get("envtrace")])
     
     messages = CRITIQUEPROMPT.format(beliefenvironment = str(currentenvironment_text), \
