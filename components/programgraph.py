@@ -117,6 +117,9 @@ def dedupaddlink(graph,childnode,*parentnodes):
                 remove_node(graph,childnode)
                 #childnode = dedupnodeid
                 return dedupnodeid
+    ########### delete existing edges of childnode
+    if childnode in graph["edges"]:
+        del graph["edges"][childnode]
     addlink(graph,childnode,*parentnodes)           
     return childnode
 
@@ -167,7 +170,11 @@ def execprogram(env,prevterminalnode, code):
         exec(code,exec_namespace)
         terminalnode = exec_namespace.get("terminalnode", None)
     except Exception as e:
-        output = "Here is the previous code: \n"+ code+ "\n Here is the error after running the code :\n"+traceback.format_exc()
+        tb = traceback.format_exc().splitlines()
+        tb = [x.strip() for x in tb]
+        tb = tb[tb.index("exec(code,exec_namespace)")+1:]
+        tb = "\n".join(tb)
+        output = "Here is the previous code: \n"+ code+ "\n Here is the error after running the previous code :\n"+ tb
         return 1, prevterminalnode,output
          
     ################ check FGPM correctness
