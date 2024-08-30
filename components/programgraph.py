@@ -103,6 +103,10 @@ def updatevalue(env,terminalnode,finalnode = False):
 
 ##################################
 def dedupaddlink(graph,childnode,*parentnodes):
+    ########### check self loop ############
+    if childnode in parentnodes:
+        
+        raise NameError("a self loop is not allowed in node link")
     ############ check if same childnode exists with same parents ############
     for dedupnodeid in [dedupnodeid for dedupnodeid, node in graph["nodes"].items() if graph["nodes"][childnode]["nm"] == node["nm"]]:
         if dedupnodeid in graph["edges"]:
