@@ -168,7 +168,8 @@ def execprogram(env,prevterminalnode, code):
         exec_namespace = globals()
         exec_namespace["graph"] =  graph
         exec(code,exec_namespace)
-        terminalnode = exec_namespace.get("terminalnode", None)
+        #graph = exec_namespace.get("graph", None)
+        terminalnode = list(graph["terminalnodes"].keys())[0]
     except Exception as e:
         tb = traceback.format_exc().splitlines()
         tb = [x.strip() for x in tb]
@@ -188,7 +189,15 @@ def execprogram(env,prevterminalnode, code):
      ########## execute graph
     exec_namespace["graph"] =  env.graph
     exec(code,exec_namespace)
-    terminalnode = exec_namespace.get("terminalnode", None)
+    ############ get terminalnode
+    terminalnodes = list(env.graph["terminalnodes"].keys())
+    allvariablenames = extract_variable_names(code)
+    terminalnode = prevterminalnode
+    for _terminalnode in terminalnodes:
+        if check_variables_in_globals(allvariablenames, _terminalnode,exec_namespace):
+            terminalnode = _terminalnode
+            break
+    #terminalnode = exec_namespace.get("terminalnode", None)
      
     ########## set data as blank for the executing subgraph
     resetdata(env.graph,terminalnode)
@@ -200,7 +209,9 @@ def execprogram(env,prevterminalnode, code):
         errornode = e.error[0]["nodeid"]
         env.graph["nodes"][errornode]["es"] = 4 
         setfailurenode(env.graph, terminalnode)         
-   
+    
+    for var in allvariablenames:
+        del var
     return 0,terminalnode,output
      
      

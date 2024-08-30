@@ -179,25 +179,23 @@ Here are the list of function names available.
 
 
 There should not be any unconnected input ports.
-Every input port of all nodes of the generated program should be cennected with a parent node.
-Specify the terminal node of the new generated program by the following statement. The terminal node should not have any output connection.
-terminalnode = <terminal node identifier>
+Every input port of all nodes of the generated program should be connected with a parent node.
 
 Also add the the node descriptions in within the program by using the following statement.
 graph["nodes"][<node index (represented by the variable in the program during node creation)>]["desc"] = <short explanation of each node based on the function it performs and value it is expected to return>
 
 
-Here is an example program for adding two constant numbers, where g1 is an initial node identifier.
+Here is an example program for adding two constant numbers, where g1 is a node identifier of prior program.
 g2 = createnode(graph,'K',2);
 graph["nodes"][g2]["desc"] = "a constant node with value 2"
 g3 = createnode(graph,'K',3)
 graph["nodes"][g3]["desc"] = "a constant node with value 3"
 g4 = createnode(graph,'+')
-g2 = dedupaddlink(graph,g2,g1); ### starting node should connect to the terminal node of the prior program 
-g3 = dedupaddlink(graph,g3,g1); ### starting node should connect to the terminal node of the prior program 
+g2 = dedupaddlink(graph,g2,g1); ### starting node should connect to any node of the prior program 
+g3 = dedupaddlink(graph,g3,g1); ### starting node should connect to any node of the prior program 
 g4 = dedupaddlink(graph,g4,g3,g2); 
 graph["nodes"][g4]["desc"] = "an addition node that adds 2 with 3"
-terminalnode = g4
+
 
 THE ABOVE PROGRAM IS JUST AN EXAMPLE. DO NOT INCLUDE THIS IN THE FINAL OUTPUT.
 
@@ -205,13 +203,11 @@ You need to generate a program to partially or fully meet the objective provided
 Use the following rules and learnings about the task environment to generate solution program.
   {axioms}
 
-
-
 The existing program already does the following. Each line represents a function carried out by a node represented by corresponding node id.
   {programdescription}
   
-The generated program should be an extension of this existing program with terminal node identifier {terminalnode} and initial node identifier {initialnode}. 
-Always link only the starting nodes (input ports that are not connected to any other nodes) of the generated program with any of the relevant nodes of the existing program or initial node.
+The generated program should be an extension of this existing program with terminal node identifier {terminalnode}.
+Always link only the starting nodes (input ports that are not connected to any other nodes) of the generated program with any of the relevant nodes of the existing program.
 
 
 The output should STRICTLY contain following python dictionary format.
