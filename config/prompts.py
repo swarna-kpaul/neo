@@ -42,6 +42,27 @@
 
 #The action plan should get positive feedback from the critique in long term and meet the objective in the environment. From the action plan history if there is no progress observed in meeting the objective or gets negative feedback, the plan needs to be changed. If some actions are invalid in the plan then change the actions.
 
+
+subtasktemplate = """System: You need to break a task into multiple sequential sutasks. 
+Try to break the task into atomic tasks and keep the number of subtasks as minimum as possible. 
+Generate the subtasks in such a way so that solving all of them sequentially solves the original task.
+if a subtask needs input/help from any other subtasks please specify that explicitly in the corresponding subtask.
+
+Keep the axioms about the problem environment in consideration while breaking the task
+ Axioms:
+ {axioms}
+
+The output should be in following format.
+{{"subtasks": [<list of subtasks>] }}
+
+User: Generate the subtasks for the following task
+ {task}
+
+"""
+
+SUBTASKVARIABLES = ["axioms","task"]
+
+
 coderrortemplate = """Here is the error recieved after running the following code. Correct the following code to remove all errors.
  {code}
 
@@ -166,8 +187,7 @@ This is a dataflow graph based programming model where programs are represented 
 A function node can have multiple input ports, each serving as a placeholder for separate input arguments. It can have only one output port that emits the computed output of the function. However multiple edges can emanate from an output port and output value is copied on each output edge. 
 A program can be composed by connecting edges between multiple nodes. 
 Every input argument of a node should be connected to another output port of another node.
-Each complete executable program must end with a single node called as terminal node. 
-A program should have starting edge from terminal node of another program or initial node. 
+Each complete executable program must end with a single node called as terminal node.  
 
 Programs are evaluated in lazy style, such that terminal node is excecuted 1st and it calls the functions of its input arguments. This goes on recursively until initial node is reached.
 
@@ -185,7 +205,7 @@ Also add the the node descriptions in within the program by using the following 
 graph["nodes"][<node index (represented by the variable in the program during node creation)>]["desc"] = <short explanation of each node based on the function it performs and value it is expected to return>
 
 
-Here is an example program for adding two constant numbers, where g1 is a node identifier of prior program.
+Here is an example program for adding two constant numbers, where g1 is terminal node identifier of prior program.
 g2 = createnode(graph,'K',2);
 graph["nodes"][g2]["desc"] = "a constant node with value 2"
 g3 = createnode(graph,'K',3)

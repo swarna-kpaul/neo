@@ -9,14 +9,28 @@ import uuid
 SOLVEDVALUE = 0.90
 MAXERRORRETRYCOUNT = 2
 
-def solver(env):
+
+
+def rootsolver(env):
+    subtasks = subtaskbreaker(env)
+    rootobjective = env.environment["objective"]
+    while True:
+        for subtask in subtasks:
+            env.environment["objective"] = subtask
+            solver(env)
+        env.environment["objective"] = rootobjective
+        if solver(env,tries=3):
+            break
+        
+
+def solver(env,tries = 1000000):
     stm = env.STM
     ltm = env.LTM
     relevantextactions = ltm.get(query = env.environment["description"]+" "+env.environment["prior axioms"], memorytype ="externalactions", cutoffscore =0.2, top_k=5)
     relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
     stm.set("relevantactions",relevantextactions)
     summarizeobjective(env)
-    while True:
+    for trie in range(tries):
         #actionplan,relevantnodeid,programdesc = generateplan(env )
         relevantnodes = env.STM.get("relevantnodes")
         if relevantnodes:
@@ -25,6 +39,8 @@ def solver(env):
                 terminalnode = relevantnodes[0][0]
                 code = "terminalnode = "+str(terminalnode)
                 execcode(code,env,terminalnode)
+                print("SOLVED")
+                return 1
             else:
                 output,terminalnode = generatecode(env)
         else:
@@ -35,6 +51,7 @@ def solver(env):
         input("press a key to continue")
         output  = belieflearner(env)
         #env.reset()
+    return 0
         
 
 
@@ -100,6 +117,14 @@ def generateplan(env, explore = False ):
 
     return output,relevantnodeid,programdesc
 
+
+def subtaskbreaker(env):
+    objective = env.environment["objective"]
+    axioms = env.environment["prior axioms" ]   
+    messages = ACTORPROMPT.format(axioms = axioms, task = objective)
+    output = llm_gpt4o.predict(messages)
+    output = extractdictfromtext(output)
+    return output["subtasks"]
 
 def summarizeobjective(env):
     objective = env.environment["objective"]

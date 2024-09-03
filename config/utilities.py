@@ -37,6 +37,7 @@ CODEEQUIVALENCEPROMPT = PromptTemplate(input_variables=CODEEQUIVALENCEVARIABLES,
 CODEERRORPROMPT = PromptTemplate(input_variables=CODEERRORVARIABLES, template=coderrortemplate)
 #PLANEQUIVALENCEPROMPT = PromptTemplate(input_variables=PLANEQVVARIABLES, template=planequivalencetemplate)
 SUMMARIZEPROMPT = PromptTemplate(input_variables=SUMMARIZEVARIABLES, template=summarizetext)
+SUBTASKPROMPT = PromptTemplate(input_variables=SUBTASKVARIABLES, template=subtasktemplate)
 
 
 def extractdictfromtext(text):

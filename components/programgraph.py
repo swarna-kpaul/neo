@@ -173,17 +173,22 @@ def execprogram(env,prevterminalnode, code):
         exec_namespace["graph"] =  graph
         exec(code,exec_namespace)
         #graph = exec_namespace.get("graph", None)
-        terminalnode = list(graph["terminalnodes"].keys())[0]
+        #terminalnode = list(graph["terminalnodes"].keys())[0]
     except Exception as e:
         tb = traceback.format_exc().splitlines()
         tb = [x.strip() for x in tb]
         tb = tb[tb.index("exec(code,exec_namespace)")+1:]
         tb = "\n".join(tb)
-        output = "Here is the previous code: \n"+ code+ "\n Here is the error after running the previous code :\n"+ tb
+        output = "Here is the previous code: \n"+ code+ "\n\n Here is the error after running the previous code :\n"+ tb
         return 1, prevterminalnode,output
          
     ################ check FGPM correctness
     #namespace = globals()
+    terminalnodes = list(env.graph["terminalnodes"].keys())
+    if terminalnodes:
+        terminalnode = terminalnodes[0]
+    else:
+        terminalnode = prevterminalnode
     
     status, errormsg = checkcorrectness(graph,prevterminalnode, terminalnode,env.initnode, code, exec_namespace)
     if status == 1:
