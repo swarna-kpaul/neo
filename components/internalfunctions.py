@@ -32,7 +32,11 @@ def solver(env,tries = 1000000):
     summarizeobjective(env)
     for trie in range(tries):
         #actionplan,relevantnodeid,programdesc = generateplan(env )
-        relevantnodes = env.STM.get("relevantnodes")
+        #relevantnodeid, programdesc = pg.getprogramto_extend(env,objective+"\n"+axioms)
+        #env.STM.set("relevantprogramdesc", programdesc)
+        #env.STM.set("relevantprogramdesc", programdesc)
+        #relevantnodes = env.STM.set("relevantnodes", )
+        relevantnodes = pg.getrelevantnodes(env, env.environment["objective"] +"\n"+ env.environment["prior axioms" ])
         if relevantnodes:
             print("node val", env.graph["nodes"][relevantnodes[0][0]]["V"])
             if env.graph["nodes"][relevantnodes[0][0]]["V"] > SOLVEDVALUE:
@@ -121,7 +125,7 @@ def generateplan(env, explore = False ):
 def subtaskbreaker(env):
     objective = env.environment["objective"]
     axioms = env.environment["prior axioms" ]   
-    messages = ACTORPROMPT.format(axioms = axioms, task = objective)
+    messages = SUBTASKPROMPT.format(axioms = axioms, task = objective)
     output = llm_gpt4o.predict(messages)
     output = extractdictfromtext(output)
     return output["subtasks"]
@@ -145,6 +149,8 @@ def generatecode(env, codeerror=""):
     axioms += "\n"+learnings
     
     relevantnodeid, programdesc = pg.getprogramto_extend(env,objective+"\n"+axioms)
+    #relevantnodeid = env.STM.get("relevantnodes")[0][0]
+    #programdesc = 
     if not relevantnodeid:
         relevantnodeid = env.initnode
         programdesc = "Initializes the program with initial node"

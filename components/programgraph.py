@@ -184,7 +184,7 @@ def execprogram(env,prevterminalnode, code):
          
     ################ check FGPM correctness
     #namespace = globals()
-    terminalnodes = list(env.graph["terminalnodes"].keys())
+    terminalnodes = list(graph["terminalnodes"].keys())
     if terminalnodes:
         terminalnode = terminalnodes[0]
     else:
