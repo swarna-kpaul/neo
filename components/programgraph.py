@@ -88,7 +88,11 @@ def updatevalue(env,terminalnode,finalnode = False):
                maxchildvalue = max([ graph["nodes"][node]["V"] for node in allchildnodes])
            else:
                maxchildvalue = 0
-           graph["nodes"][terminalnode]["V"] = gamma*maxchildvalue + graph["nodes"][terminalnode]["R"]
+           if graph["nodes"][terminalnode]["N"] > 1:
+               rewardpenalty = math.log2(graph["nodes"][terminalnode]["N"])
+           else:
+               rewardpenalty = 1
+           graph["nodes"][terminalnode]["V"] = gamma*maxchildvalue + graph["nodes"][terminalnode]["R"]/rewardpenalty
            
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]

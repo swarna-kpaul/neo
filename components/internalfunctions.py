@@ -36,24 +36,27 @@ def solver(env,tries = 1000000):
         #env.STM.set("relevantprogramdesc", programdesc)
         #env.STM.set("relevantprogramdesc", programdesc)
         #relevantnodes = env.STM.set("relevantnodes", )
-        relevantnodes = pg.getrelevantnodes(env, env.environment["objective"] +"\n"+ env.environment["prior axioms" ])
-        if relevantnodes:
-            print("node val", env.graph["nodes"][relevantnodes[0][0]]["V"])
-            if env.graph["nodes"][relevantnodes[0][0]]["V"] > SOLVEDVALUE:
-                terminalnode = relevantnodes[0][0]
-                code = "terminalnode = "+str(terminalnode)
-                execcode(code,env,terminalnode)
-                print("SOLVED")
-                return 1
-            else:
-                output,terminalnode = generatecode(env)
-        else:
-            output,terminalnode = generatecode(env)
+        # relevantnodes = pg.getrelevantnodes(env, env.environment["objective"] +"\n"+ env.environment["prior axioms" ])
+        # if relevantnodes:
+            # print("node val", env.graph["nodes"][relevantnodes[0][0]]["V"])
+            # if env.graph["nodes"][relevantnodes[0][0]]["V"] > SOLVEDVALUE:
+                # terminalnode = relevantnodes[0][0]
+                # code = "terminalnode = "+str(terminalnode)
+                # execcode(code,env,terminalnode)
+                # print("SOLVED")
+                # return 1
+            # else:
+                # output,terminalnode = generatecode(env)
+        # else:
+        output,terminalnode = generatecode(env)
         #output,stm,return_status = execcode(action["program"],action["desc"],env,relevantnodeid) 
         input("press a key to continue")             
-        feedback = critique(env,terminalnode)
+        reward = critique(env,terminalnode)
         input("press a key to continue")
         output  = belieflearner(env)
+        if reward == 1:
+            print("SOLVED")
+            return 1
         #env.reset()
     return 0
         
@@ -252,7 +255,7 @@ def critique (env,terminalnode):
         env.graph["nodes"][terminalnode]["R"] = (env.graph["nodes"][terminalnode]["R"]+ output["feedback"])/2
     pg.updatevalue(env,terminalnode,True)
     
-    return output
+    return env.graph["nodes"][terminalnode]["R"]
     
     
 def belieflearner(env):
