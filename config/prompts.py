@@ -228,6 +228,9 @@ The existing program already does the following. Each line represents a function
   
 The generated program should be an extension of this existing program with terminal node identifier {terminalnode}.
 Always link only the starting nodes (input ports that are not connected to any other nodes) of the generated program with any of the relevant nodes of the existing program.
+If the existing program already fully meets the user specified objective then just output the following statement as generated program.
+
+solved = 'yes'
 
 
 The output should STRICTLY contain following python dictionary format.
@@ -381,6 +384,8 @@ searchertemplate = """System: You are an expert assitant. You are given ACTION O
 A CRITIQUE indicates the success of the attempt to the task.
 You need to derive a comprehensive LEARNINGS. Capture all the details in the ACTION OBSERVATION TRACE.
 Generate learnings, that will help the agent to successfully accomplish the SAME objective AGAIN, in the SAME environment.
+Keep the learning sentences short. Do not use short forms.
+Keep fairly novel learnings about the environment and omit very common well known learnings.
 Each line can ONLY be of the following forms :
                             X Y Z 
 

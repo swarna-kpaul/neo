@@ -113,6 +113,9 @@ def dedupaddlink(graph,childnode,*parentnodes):
         raise NameError("a self loop is not allowed in node link")
     ############ check if same childnode exists with same parents ############
     for dedupnodeid in [dedupnodeid for dedupnodeid, node in graph["nodes"].items() if graph["nodes"][childnode]["nm"] == node["nm"]]:
+        if graph["nodes"][childnode]["nm"] == "K": 
+            if graph["nodes"][childnode]["K"] != graph["nodes"][dedupnodeid]["K"]:
+                continue
         if dedupnodeid in graph["edges"]:
             if list(graph["edges"][dedupnodeid].values()) == list(parentnodes):
                 ################# same node exists
@@ -196,7 +199,7 @@ def execprogram(env,prevterminalnode, code):
     
     status, errormsg = checkcorrectness(graph,prevterminalnode, terminalnode,env.initnode, code, exec_namespace)
     if status == 1:
-       errormsg = "Here is the previous code: \n"+ code+ "\n Here is the error after running the code :\n"+ errormsg
+       errormsg = "Here is the previous code: \n"+ code+ "\n\n Here is the error after running the code :\n"+ errormsg
        return 1,prevterminalnode, errormsg
        
      ########## execute graph
@@ -268,6 +271,7 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code, exe
     ######## multiple terminal nodes
         errormsg += "\n"+', '.join([check_variables_in_globals(allvariablenames, node,exec_namespace)[0] for node in terminalnodes ])+ " ARE MULTIPLE TERMINAL NODES CREATED BY THE PROGRAM. THERE SHOULD BE ONLY A SINGLE TERMINAL NODE SUCH THAT ALL OTHER NODES SHOULD HAVE AT LEAST A CHILD NODE."
         status = 1
+    errormsg += "\n\n MAKE SURE TO CORRECT THE ABOVE ERROR AT ALL COST"
     return status, errormsg
     
     

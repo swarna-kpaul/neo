@@ -54,7 +54,7 @@ def solver(env,tries = 1000000):
         reward = critique(env,terminalnode)
         input("press a key to continue")
         output  = belieflearner(env)
-        if reward == 1:
+        if reward > SOLVEDVALUE:
             print("SOLVED")
             return 1
         #env.reset()

@@ -9,7 +9,7 @@ from openai import OpenAI
 os.environ["OPENAI_API_KEY"] = OPENAIAPIKEY
 client = OpenAI()
 
-def get_embeddings(text,model="text-embedding-3-large"):
+def get_embeddings(text,model="text-embedding-3-small"):
     response = client.embeddings.create(input = [text], model=model).data[0].embedding
     return response
 
