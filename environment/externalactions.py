@@ -82,7 +82,7 @@ extfunctionset = {"textdataread": {"description": """A function to read and coll
                      "args":1},
                    "getanswer":   {"description": """A function (named getanswer) to get precise answer to a question based on a given text. The answer is given in the expected datatype. The output datatype can be number, boolean, list, dictionary and text. """,
                      "function": getanswer,
-                     "input": "It has 3 input port that takes 3 input. a question, a text from where the question needs to be answered and an expected output data type. ",
+                     "input": "It has 3 input port that takes 3 input. the original question, a text from where the original question needs to be answered and an expected output data type. ",
                      "output": "Returns the answer in the expected output datatype.",
                      "type": {'fun':{'i':['text','text','text'],'o':['text']}},
                      "args":3}

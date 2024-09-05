@@ -397,7 +397,7 @@ Modify or remove the existing learnings only if it contradicts with  ACTION OBSE
 
 The output should always be STRICTLY generated in the following json structure. DO NOT enclose output with JSON TAGS. Add escape charachters wherever required to make the following a valid json definately.
 {{  
- "learnings": <list of learnings. do not write redundant or contradicting statements>
+ "learnings": <list of learnings. DO NOT WRITE REDUNDANT LEARNINGS. DO NOT WRITE CONTRADICTING LEARNINGS>
  }}
     
 Here is the environment objective and prior axioms. 
