@@ -6,8 +6,8 @@ import ast
 ############ initialize program graph
 
 C = 0.1 ## exploration factor
-K = 0.3 ## similarity factor
-X = 0.6 ## value factor
+K = 0.5 ## similarity factor
+X = 0.4 ## value factor
 gamma = 0.9
 ###### update embeddings of 
 

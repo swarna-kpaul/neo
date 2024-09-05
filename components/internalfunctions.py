@@ -14,6 +14,8 @@ MAXERRORRETRYCOUNT = 2
 def rootsolver(env):
     subtasks = subtaskbreaker(env)
     rootobjective = env.environment["objective"]
+    print("Subtasks",subtasks)
+    input()
     while True:
         for subtask in subtasks:
             env.environment["objective"] = subtask
@@ -21,6 +23,14 @@ def rootsolver(env):
         env.environment["objective"] = rootobjective
         if solver(env,tries=3):
             break
+
+def interactwithuser(role="You are a arithmetic problem solver"):
+    while True:
+        inputtext = textdataread("Enter your task: ")
+        env.environment["objective"] = inputtext
+        env.environment["prior axioms"] = role
+        rootsolver(env)
+
         
 
 def solver(env,tries = 1000000):

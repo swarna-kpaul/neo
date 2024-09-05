@@ -80,7 +80,7 @@ extfunctionset = {"textdataread": {"description": """A function to read and coll
                      "output": "Returns search result in plaintext.",
                      "type": {'fun':{'i':['any'],'o':['text']}},
                      "args":1},
-                   "getanswer":   {"description": """A function (named getanswer) to get precise answer to a question based on a given text. The answer is given in the expected datatype. The output datatype can be number, boolean, list, dictionary and text. """,
+                   "getanswer":   {"description": """A function (named getanswer) to get precise answer to a question based on a given text. The answer is given in the expected datatype. The output datatype can be number, boolean, list, dictionary and text. For getting a structured answer for a question on a given context use this function""",
                      "function": getanswer,
                      "input": "It has 3 input port that takes 3 input. the original question, a text from where the original question needs to be answered and an expected output data type. ",
                      "output": "Returns the answer in the expected output datatype.",
