@@ -16,17 +16,18 @@ def rootsolver(env):
     rootobjective = env.environment["objective"]
     print("Subtasks",subtasks)
     input()
-    while True:
-        for subtask in subtasks:
-            env.environment["objective"] = subtask
-            solver(env)
-        env.environment["objective"] = rootobjective
-        if solver(env,tries=3):
-            break
+    for id,subtask in subtasks.items():
+        env.environment["objective"] = subtask
+        solver(env)
+    env.environment["objective"] = rootobjective
+    if len(subtasks) > 1:
+       if solver(env,tries=3):
+           print("END ROOTSOLVER")
+           return
 
 def interactwithuser(role="You are a arithmetic problem solver"):
     while True:
-        inputtext = textdataread("Enter your task: ")
+        inputtext = input("Enter your task: ")
         env.environment["objective"] = inputtext
         env.environment["prior axioms"] = role
         rootsolver(env)
@@ -141,7 +142,11 @@ def subtaskbreaker(env):
     messages = SUBTASKPROMPT.format(axioms = axioms, task = objective)
     output = llm_gpt4o.predict(messages)
     output = extractdictfromtext(output)
-    return output["subtasks"]
+    subtasks = pickle.loads(pickle.dumps(output,-1))
+    for id, subtask in output.items():
+        subtasks[id] ={"desc": " ".join([subtasks[i]["desc"] for i in subtask["dependencies"]])+ " "+subtask["desc"]}
+    
+    return subtasks
 
 def summarizeobjective(env):
     objective = env.environment["objective"]
@@ -275,7 +280,7 @@ def belieflearner(env):
     currentenvironment = env.environment
     currentenvironmenttext = "  objective:"+ currentenvironment['objective']+"\n prior axioms: \n  "+ str(currentenvironment["prior axioms"])
     ###################### fetch learnings ################
-    memory = env.LTM.get(query = EnvTrace_text, memorytype = "semantic", cutoffscore = 0.4, top_k = 10)
+    memory = env.LTM.get(query = EnvTrace_text+'\n'+critique, memorytype = "semantic", cutoffscore = 0.4, top_k = 10)
     learningstext = "\n".join([ i[1]["data"] for i in memory])
     memoryid = [ i[1]["id"] for i in memory]
     ###################### delete memory to be updated

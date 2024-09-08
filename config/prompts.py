@@ -43,17 +43,20 @@
 #The action plan should get positive feedback from the critique in long term and meet the objective in the environment. From the action plan history if there is no progress observed in meeting the objective or gets negative feedback, the plan needs to be changed. If some actions are invalid in the plan then change the actions.
 
 
-subtasktemplate = """System: You need to break a task into multiple sequential sutasks. 
+subtasktemplate = """System: You need to break a large complex task into multiple sequential sutasks. 
 Try to break the task into atomic tasks and keep the number of subtasks as minimum as possible. 
+Do not generate unnecessary ambigous subtasks.
 Generate the subtasks in such a way so that solving all of them sequentially solves the original task.
-if a subtask needs input/help from any other subtasks please specify that explicitly in the corresponding subtask.
+if a subtask needs input/help from any other subtasks then add identifiers of the dependent subtasks in the corresponding subtask.
+
+If the task is simple and short then you dont need to break the task instead return the same task as only subtask.
 
 Keep the axioms about the problem environment in consideration while breaking the task
  Axioms:
  {axioms}
 
 The output should be in following format.
-{{"subtasks": [<list of subtasks>] }}
+{{<unique id of a subtask> : { "desc": "description of subtask", "dependencies": [<id of dependent subtasks>]} }}
 
 User: Generate the subtasks for the following task
  {task}
