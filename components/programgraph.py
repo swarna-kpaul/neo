@@ -38,8 +38,9 @@ def getallprogramdesc(graph,terminalnode, allprogramdesc = {}):
 def updateproceduremem(env,terminalnode):
     allprogramdesc = getallprogramdesc(env.graph,terminalnode,{})
     for k,v in allprogramdesc.items():
-        progsummary = summarize(v)
+        
         if not env.LTM.fetch(k,'procedural') and env.graph["nodes"][k]["es"] ==1: ## memory not present and nodes already executed
+            progsummary = summarize(v)
             env.LTM.set(progsummary,progsummary,k,'procedural')
             
 
@@ -94,7 +95,7 @@ def updatevalue(env,terminalnode,finalnode = False):
                rewardpenalty = math.log2(graph["nodes"][terminalnode]["N"])
            else:
                rewardpenalty = 1
-           graph["nodes"][terminalnode]["V"] = gamma*maxchildvalue + graph["nodes"][terminalnode]["R"]/rewardpenalty
+           graph["nodes"][terminalnode]["V"] = gamma*maxchildvalue + graph["nodes"][terminalnode]["R"] #/rewardpenalty
            
     if terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
@@ -233,6 +234,17 @@ def execprogram(env,prevterminalnode, code):
     return 0,terminalnode,output
      
      
+def detectloop(graph,terminalnode,childnodes = [],loopcon = []):
+    if terminalnode in graph['edges']:
+        parentnodes = graph['edges'][terminalnode]
+        childnodes.append(terminalnode)
+        for port,parent_label in parentnodes.items():
+            if parent_label in childnodes:
+                loopcon.append((terminalnode,parent_label))
+            childnodes,loopcon=detectloop(graph,parent_label,childnodes,loopcon)
+        return childnodes,loopcon
+    else:
+        return [],loopcon
 
 ################# check correctness of program
 def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code, exec_namespace):
@@ -274,6 +286,16 @@ def checkcorrectness(graph,prevterminalnode, terminalnode,initialnode, code, exe
         errormsg += "\n"+', '.join([check_variables_in_globals(allvariablenames, node,exec_namespace)[0] for node in terminalnodes ])+ " ARE MULTIPLE TERMINAL NODES CREATED BY THE PROGRAM. THERE SHOULD BE ONLY A SINGLE TERMINAL NODE SUCH THAT ALL OTHER NODES SHOULD HAVE AT LEAST A CHILD NODE."
         status = 1
     errormsg += "\n\n MAKE SURE TO CORRECT THE ABOVE ERROR AT ALL COST"
+    
+    ######## check if there are parent node of initial node
+    if initialnode in graph["edges"]:
+        parentnodes = list(graph["edges"][initialnode].values())
+        errormsg += "\n"+', '.join([check_variables_in_globals(allvariablenames, node,exec_namespace)[0] for node in parentnodes])+" ARE NODES INCORRECTLY CONNECTED AS PARENT NODES OF INITIAL NODE. INTIAL NODE SHOULD NOT HAVE ANY PARENT NODES"
+    
+    ######## check for cycles ############
+    
+    
+    
     return status, errormsg
     
     
