@@ -1,6 +1,7 @@
 import math
 from neo.environment.bootstrapactions import primitives
 from combinatorlite import *
+from neo.config.utilities import summarize
 import pickle
 import ast
 ############ initialize program graph
@@ -187,7 +188,7 @@ def execprogram(env,prevterminalnode, code):
         tb = [x.strip() for x in tb]
         tb = tb[tb.index("exec(code,exec_namespace)")+1:]
         tb = "\n".join(tb)
-        output = "Here is the previous code: \n"+ code+ "\n\n Here is the error after running the previous code :\n"+ tb
+        output = "Here is the previous code: \n"+ code+ "\n\n Here is the error after running the previous code :\n"+ tb + "\n\n MAKE SURE TO CORRECT THE ERROR AT ALL COST"
         return 1, prevterminalnode,output
          
     ################ check FGPM correctness

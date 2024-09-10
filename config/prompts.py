@@ -261,7 +261,7 @@ AI:
 
 ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription", "terminalnode","initialnode","objective", "error"]
 
-summarizetext = """System: Summarize the following user text denoting the main objective. Do not add any prefix or suffix text.
+summarizetext = """System: Summarize the following user text in a single line denoting the main objectives and keeping all relevant information. Do not add any prefix or suffix text.
 
 User: {objective}
 
