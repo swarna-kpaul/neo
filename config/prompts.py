@@ -47,7 +47,7 @@ subtasktemplate = """System: You need to break a large complex task into multipl
 Try to break the task into atomic tasks and keep the number of subtasks as minimum as possible. 
 Do not generate unnecessary ambigous subtasks.
 Generate the subtasks in such a way so that solving all of them sequentially solves the original task.
-if a subtask needs input/help from any other subtasks then add identifiers of the dependent subtasks in the corresponding subtask.
+Do not add texts like "Subtask 1" or "step 1" etc. in the any subtask description
 
 If the task is simple and short then you dont need to break the task instead return the same task as only subtask.
 
@@ -55,8 +55,9 @@ Keep the axioms about the problem environment in consideration while breaking th
  Axioms:
  {axioms}
 
-The output should be in following format.
-{{<unique id of a subtask> : { "desc": "description of subtask", "dependencies": [<id of dependent subtasks>]} }}
+The output should be STRICTLY in following format.
+{{<unique integer id of a subtask> : {{ "desc": "description of subtask", "dependencies": [<integer id of dependent subtasks>]}} }}
+
 
 User: Generate the subtasks for the following task
  {task}
@@ -204,18 +205,18 @@ Here are the list of function names available.
 There should not be any unconnected input ports.
 Every input port of all nodes of the generated program should be connected with a parent node.
 
-Also add the the node descriptions in within the program by using the following statement.
-graph["nodes"][<node index (represented by the variable in the program during node creation)>]["desc"] = <short explanation of each node based on the function it performs and value it is expected to return>
+Also add the the node descriptions within the program for each node after connecting the node with its parents by using the following statement.
+graph["nodes"][<node index (represented by the variable in the program during node creation)>]["desc"] = <short explanation of each node based on the function it performs and value it is expected to return based on its parent node connections>
 
 
 Here is an example program for adding two constant numbers, where g1 is terminal node identifier of prior program.
 g2 = createnode(graph,'K',2);
-graph["nodes"][g2]["desc"] = "a constant node with value 2"
 g3 = createnode(graph,'K',3)
-graph["nodes"][g3]["desc"] = "a constant node with value 3"
 g4 = createnode(graph,'+')
 g2 = dedupaddlink(graph,g2,g1); ### starting node should connect to any node of the prior program 
+graph["nodes"][g2]["desc"] = "a constant node with value 2"
 g3 = dedupaddlink(graph,g3,g1); ### starting node should connect to any node of the prior program 
+graph["nodes"][g3]["desc"] = "a constant node with value 3"
 g4 = dedupaddlink(graph,g4,g3,g2); 
 graph["nodes"][g4]["desc"] = "an addition node that adds 2 with 3"
 
@@ -260,8 +261,7 @@ AI:
 
 ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription", "terminalnode","initialnode","objective", "error"]
 
-summarizetext = """System: You are an efficient summarizer of text.
-You need to summarize the User provided text within 10 words. The summary should contain all relevant information from user text.
+summarizetext = """System: Summarize the following user text denoting the main objective. Do not add any prefix or suffix text.
 
 User: {objective}
 

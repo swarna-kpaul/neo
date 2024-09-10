@@ -9,10 +9,6 @@ from openai import OpenAI
 os.environ["OPENAI_API_KEY"] = OPENAIAPIKEY
 client = OpenAI()
 
-def get_embeddings(text,model="text-embedding-3-small"):
-    response = client.embeddings.create(input = [text], model=model).data[0].embedding
-    return response
-
 llm_gpt4_turbo = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4-1106-preview",openai_api_key=OPENAIAPIKEY)
 llm_model = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-3.5-turbo-1106",openai_api_key=OPENAIAPIKEY)
 llm_gpt4o = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4o",openai_api_key=OPENAIAPIKEY)
@@ -39,6 +35,16 @@ CODEERRORPROMPT = PromptTemplate(input_variables=CODEERRORVARIABLES, template=co
 SUMMARIZEPROMPT = PromptTemplate(input_variables=SUMMARIZEVARIABLES, template=summarizetext)
 SUBTASKPROMPT = PromptTemplate(input_variables=SUBTASKVARIABLES, template=subtasktemplate)
 
+
+def get_embeddings(text,model="text-embedding-3-large"):
+    response = client.embeddings.create(input = [text], model=model).data[0].embedding
+    return response
+    
+def summarize(text):
+    messages = SUMMARIZEPROMPT.format(objective = text)
+    output = llm_gpt4o_mini.predict(messages)
+    print("summaryobjective",output)
+    return output
 
 def extractdictfromtext(text):
     dict_pattern = re.compile(r'\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}', re.MULTILINE | re.DOTALL)

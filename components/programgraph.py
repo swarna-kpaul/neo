@@ -37,8 +37,9 @@ def getallprogramdesc(graph,terminalnode, allprogramdesc = {}):
 def updateproceduremem(env,terminalnode):
     allprogramdesc = getallprogramdesc(env.graph,terminalnode,{})
     for k,v in allprogramdesc.items():
+        progsummary = summarize(v)
         if not env.LTM.fetch(k,'procedural') and env.graph["nodes"][k]["es"] ==1: ## memory not present and nodes already executed
-            env.LTM.set(v,v,k,'procedural')
+            env.LTM.set(progsummary,progsummary,k,'procedural')
             
 
 ############ fetch relevant subprograms from procedural memory #################    
@@ -73,7 +74,7 @@ def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
             args = []
             for port,parent_label in parentnodes.items():
                 args.append(str(graph["nodes"][parent_label]["dat"]))
-            envtrace.append({"action": graph["nodes"][terminalnode]["nm"]+"("+",".join(args)+")", "observation":graph["nodes"][terminalnode]["dat"]})
+            envtrace.append({"action": graph["nodes"][terminalnode]["desc"]+" with inputs ("+",".join(args)+")", "observation":graph["nodes"][terminalnode]["dat"]})
     nodestraversed.append(terminalnode)
     return envtrace,nodestraversed
  

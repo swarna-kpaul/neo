@@ -5,7 +5,7 @@ from neo.config.utilities import *
 import ast
 import traceback
 import uuid
-
+import pickle
 SOLVEDVALUE = 0.90
 MAXERRORRETRYCOUNT = 2
 
@@ -17,7 +17,7 @@ def rootsolver(env):
     print("Subtasks",subtasks)
     input()
     for id,subtask in subtasks.items():
-        env.environment["objective"] = subtask
+        env.environment["objective"] = subtask["desc"]
         solver(env)
     env.environment["objective"] = rootobjective
     if len(subtasks) > 1:
@@ -40,7 +40,8 @@ def solver(env,tries = 1000000):
     relevantextactions = ltm.get(query = env.environment["description"]+" "+env.environment["prior axioms"], memorytype ="externalactions", cutoffscore =0.2, top_k=5)
     relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
     stm.set("relevantactions",relevantextactions)
-    summarizeobjective(env)
+    objsummary = summarize(env.environment["objective"]+"\n"+env.environment["prior axioms" ])
+    env.STM.set("summaryobjective",objsummary)
     for trie in range(tries):
         #actionplan,relevantnodeid,programdesc = generateplan(env )
         #relevantnodeid, programdesc = pg.getprogramto_extend(env,objective+"\n"+axioms)
@@ -143,18 +144,13 @@ def subtaskbreaker(env):
     output = llm_gpt4o.predict(messages)
     output = extractdictfromtext(output)
     subtasks = pickle.loads(pickle.dumps(output,-1))
+    print("subtasks",subtasks)
     for id, subtask in output.items():
-        subtasks[id] ={"desc": " ".join([subtasks[i]["desc"] for i in subtask["dependencies"]])+ " "+subtask["desc"]}
+        subtasks[id] ={"desc": ". ".join([subtasks[i]["desc"] for i in subtask["dependencies"]])+ " "+subtask["desc"]}
     
     return subtasks
 
-def summarizeobjective(env):
-    objective = env.environment["objective"]
-    messages = SUMMARIZEPROMPT.format(objective = objective)
-    output = llm_gpt4o.predict(messages)
-    env.STM.set("summaryobjective",output)
-    print("summaryobjective",output)
-    return     
+
     
 def generatecode(env, codeerror=""):
     objective = env.environment["objective"]  
@@ -166,7 +162,7 @@ def generatecode(env, codeerror=""):
     env.STM.set("relevantbeliefs", learnings)
     axioms += "\n"+learnings
     
-    relevantnodeid, programdesc = pg.getprogramto_extend(env,objective+"\n"+axioms)
+    relevantnodeid, programdesc = pg.getprogramto_extend(env, env.STM.get("summaryobjective"))#summarize(objective+"\n"+axioms))
     #relevantnodeid = env.STM.get("relevantnodes")[0][0]
     #programdesc = 
     if not relevantnodeid:
