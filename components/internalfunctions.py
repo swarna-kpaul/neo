@@ -6,6 +6,7 @@ import ast
 import traceback
 import uuid
 import pickle
+from itertools import chain
 SOLVEDVALUE = 0.90
 MAXERRORRETRYCOUNT = 2
 
@@ -20,7 +21,7 @@ def rootsolver(env):
         env.environment["objective"] = subtask#["desc"]
         solver(env)
     env.environment["objective"]["task"] = rootobjective["task"]
-    env.environment["objective"]["subtasks"] =  [subtask["task"] for id,subtask in subtasks.items()]
+    env.environment["objective"]["subtasks"] =  []#[subtask["task"] for id,subtask in subtasks.items()]
     if len(subtasks) > 1:
        if solver(env,tries=3):
            print("END ROOTSOLVER")
@@ -137,7 +138,9 @@ def generateplan(env, explore = False ):
 
     return output,relevantnodeid,programdesc
 
-
+def flatten_list(list_of_lists):
+    return list(chain.from_iterable(list_of_lists))
+    
 def subtaskbreaker(env):
     objective = env.environment["objective"]["task"]
     axioms = env.environment["prior axioms" ]   
@@ -147,7 +150,7 @@ def subtaskbreaker(env):
     subtasks = pickle.loads(pickle.dumps(output,-1))
     print("subtasks",subtasks)
     for id, subtask in output.items():
-        subtasks[id] ={"task": subtask["task"], "subtasks": [subtasks[i]["task"] for i in subtask["dependencies"]]}
+        subtasks[id] ={"task": subtask["task"], "subtasks": flatten_list([subtasks[i]["subtasks"] + [subtasks[i]["task"]] for i in subtask["dependencies"]])}
     
     return subtasks
 
