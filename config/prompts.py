@@ -224,8 +224,11 @@ graph["nodes"][g4]["desc"] = "an addition node that adds 2 with 3"
 THE ABOVE PROGRAM IS JUST AN EXAMPLE. DO NOT INCLUDE THIS IN THE FINAL OUTPUT.
 
 You need to generate a program to partially or fully meet the objective provided by user. 
-Use the following rules and learnings about the task environment to generate solution program.
+Strictly Use the following axioms to generate solution program.
   {axioms}
+
+Also you may use the following learnings.
+  {learnings}
 
 The existing program already does the following. Each line represents a function carried out by a node represented by corresponding node id.
   {programdescription}
@@ -265,7 +268,7 @@ AI:
 #The terminal node of the existing program do the following.
 #  {terminalnodedescription}
 
-ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription","helpernodes", "terminalnode","initialnode","subtasks","objective", "error"]
+ACTORPROMPTINPUTVARIABLES = ["functions","axioms","learnings","programdescription","helpernodes", "terminalnode","initialnode","subtasks","objective", "error"]
 
 summarizetext = """System: Summarize the following user text in a single line denoting the main objectives and keeping all relevant information. Do not add any prefix or suffix text.
 

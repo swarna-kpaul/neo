@@ -161,7 +161,7 @@ def generatecode(env, codeerror=""):
     memory = env.LTM.get(query, memorytype = "semantic", cutoffscore = 0.1 ,top_k=5)
     learnings = "\n".join([i[1]["data"] for i in memory])
     env.STM.set("relevantbeliefs", learnings)
-    axioms += "\n"+learnings
+    #axioms += "\n"+learnings
     
     relevantnodeid, programdesc,helpernodesdesc = pg.getprogramto_extend(env, env.STM.get("summaryobjective"), objective["subtasks"])#summarize(objective+"\n"+axioms))
     #relevantnodeid = env.STM.get("relevantnodes")[0][0]
@@ -185,6 +185,7 @@ def generatecode(env, codeerror=""):
         objectiveprefix = "Now complete the following objective:\n"
         messages = ACTORPROMPT.format(functions = relevantfunctionstext, \
                     axioms = axioms, \
+                    learnings = learnings, \
                     programdescription = programdesc,\
                     helpernodes = helpernodesdesc, \
                     terminalnode = relevantnodeid, \
