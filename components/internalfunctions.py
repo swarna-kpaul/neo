@@ -19,7 +19,8 @@ def rootsolver(env):
     for id,subtask in subtasks.items():
         env.environment["objective"] = subtask#["desc"]
         solver(env)
-    env.environment["objective"] = rootobjective
+    env.environment["objective"]["task"] = rootobjective["task"]
+    env.environment["objective"]["subtasks"] =  [subtask["task"] for id,subtask in subtasks.items()]
     if len(subtasks) > 1:
        if solver(env,tries=3):
            print("END ROOTSOLVER")
@@ -40,7 +41,7 @@ def solver(env,tries = 1000000):
     relevantextactions = ltm.get(query = env.environment["description"]+" "+env.environment["prior axioms"], memorytype ="externalactions", cutoffscore =0.2, top_k=5)
     relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
     stm.set("relevantactions",relevantextactions)
-    objsummary = summarize(env.environment["objective"]["task"]+"\n"+env.environment["prior axioms" ])
+    objsummary = summarize(". ".join(env.environment["objective"]["subtasks"])+" "+env.environment["objective"]["task"]+"\n"+env.environment["prior axioms" ])
     env.STM.set("summaryobjective",objsummary)
     for trie in range(tries):
         #actionplan,relevantnodeid,programdesc = generateplan(env )
@@ -146,7 +147,7 @@ def subtaskbreaker(env):
     subtasks = pickle.loads(pickle.dumps(output,-1))
     print("subtasks",subtasks)
     for id, subtask in output.items():
-        subtasks[id] ={"task": ". ".join([subtasks[i]["task"] for i in subtask["dependencies"]])+ " "+subtask["task"], "subtasks": [subtasks[i]["task"] for i in subtask["dependencies"]]}
+        subtasks[id] ={"task": subtask["task"], "subtasks": [subtasks[i]["task"] for i in subtask["dependencies"]]}
     
     return subtasks
 
@@ -180,6 +181,8 @@ def generatecode(env, codeerror=""):
         if retrycount > MAXERRORRETRYCOUNT:
             codeerror = ""
             retrycount = 0
+        subtaskpromptprefix = "Following are the dependent subtasks already completed: \n"
+        objectiveprefix = "Now complete the following objective:\n"
         messages = ACTORPROMPT.format(functions = relevantfunctionstext, \
                     axioms = axioms, \
                     programdescription = programdesc,\
@@ -187,7 +190,8 @@ def generatecode(env, codeerror=""):
                     terminalnode = relevantnodeid, \
                     initialnode = env.initnode, \
                     #terminalnodedescription = env.graph["nodes"][relevantnodeid]["desc"], \
-                    objective = objective["task"], \
+                    objective = objectiveprefix+objective["task"], \
+                    subtasks = subtaskpromptprefix+'. '.join(objective["subtasks"]), \
                     error = codeerror)
         print("ACTORPROMPT:",messages)
         output = llm_gpt4o.predict(messages)

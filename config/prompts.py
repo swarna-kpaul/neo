@@ -249,9 +249,11 @@ Descriptions should be added for all nodes within the above program. Whereever p
 
 
 User : Write a program in FGPM to partially or fully meet the following objective by extending the existing program. You don't need to write the existing program. LIMIT THE PROGRAM LENGHTH ATMOST 10 LINES. IF THE FULL OBJECTIVE CANNOT BE MET WITHIN 10 LINES THEN PARTIALLY SOLVE THE OBJECTIVE IN THE BEST WAY POSSIBLE. FOCUS ON GENERATING CORRECT PROGRAM.
-Objective: 
- {objective}
 
+Objective: 
+  {subtasks}
+  {objective}
+ 
 {error}
 
 Lets think step by step.
@@ -263,7 +265,7 @@ AI:
 #The terminal node of the existing program do the following.
 #  {terminalnodedescription}
 
-ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription","helpernodes", "terminalnode","initialnode","objective", "error"]
+ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription","helpernodes", "terminalnode","initialnode","subtasks","objective", "error"]
 
 summarizetext = """System: Summarize the following user text in a single line denoting the main objectives and keeping all relevant information. Do not add any prefix or suffix text.
 

@@ -46,19 +46,18 @@ def updateproceduremem(env,terminalnode):
             
 
 ############ fetch relevant subprograms from procedural memory #################    
-def getrelevantnodes(env, query, top_k = 1):
-    nodeembeddings = env.LTM.get(query, memorytype = "procedural", cutoffscore = 0.1, top_k = 300)   
+def getrelevantnodes(env, query, top_k = 1,C=C,K=K,X=X):
+    nodeembeddings = env.LTM.get(query, memorytype = "procedural", cutoffscore = 0.1, top_k = 10)   
     nodevalues = {i[1]["id"] : [env.graph["nodes"][i[1]["id"]]["V"],env.graph["nodes"][i[1]["id"]]["EXPF"], i[0]] for i in nodeembeddings}
     nodevalues = [[k,X*v[0]+C*v[1]+K*v[2]]  for k,v in nodevalues.items()]
     relevantnodes = sorted(nodevalues, key=lambda item: item[1], reverse=True)[:top_k] 
     return relevantnodes
     
 def getprogramto_extend(env,query, subtasks):
-    
-    
+
     relevantnodes = getrelevantnodes(env, query )  
     if not relevantnodes:
-        return False,None
+        return False,None,None
     env.STM.set("relevantnodes", relevantnodes)
     nodeid = relevantnodes[0][0]
     programdesc,_ =  getprogramdesc(graph,nodeid, programdesc = [],nodestraversed = [])
@@ -73,7 +72,7 @@ def getprogramto_extend(env,query, subtasks):
     ######## get subtask nodes
     subtaskrelevantnodes = []
     for subtask in subtasks:
-        relevantnode = getrelevantnodes(env, subtask)
+        relevantnode = getrelevantnodes(env, subtask,top_k = 1,C=0.1,K=0.7,X=0.2)
         if relevantnode:
             if relevantnode[0][0] not in taskprogramnodeids:
                 subtaskrelevantnodes.append( graph["nodes"][relevantnode[0][0]]["desc"] +"; node id -> "+str(relevantnode[0][0]))   
@@ -100,34 +99,52 @@ def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
             envtrace.append({"action": graph["nodes"][terminalnode]["desc"]+" with inputs ("+",".join(args)+")", "observation":graph["nodes"][terminalnode]["dat"]})
     nodestraversed.append(terminalnode)
     return envtrace,nodestraversed
- 
+
 ############# Update node values #####################
 
 def updatevalue(env,terminalnode,finalnode = False):
     graph = env.graph
     #graph["nodes"][terminalnode]["R"] = reward
-    if graph["nodes"][terminalnode]["nm"] != "iW":
-           allchildnodes = [k for k,v in graph["edges"].items() if terminalnode in v.values()]
-           if allchildnodes:
-               maxchildvalue = max([ graph["nodes"][node]["V"] for node in allchildnodes])
-           else:
-               maxchildvalue = 0
-           if graph["nodes"][terminalnode]["N"] > 1:
-               rewardpenalty = math.log2(graph["nodes"][terminalnode]["N"])
-           else:
-               rewardpenalty = 1
-           graph["nodes"][terminalnode]["V"] = gamma*maxchildvalue + graph["nodes"][terminalnode]["R"] #/rewardpenalty
-           
-    if terminalnode in graph['edges']:
+    if graph["nodes"][terminalnode]["nm"] != "iW" and terminalnode in graph['edges']:
         parentnodes = graph['edges'][terminalnode]
+        ###### iterate all parents
+        parentvalues = []
         N = 0
-        for port,parent_label in parentnodes.items(): ###### iterate all parents
-            N += graph["nodes"][parent_label]["N"]
+        for port,parent_label in parentnodes.items(): 
             updatevalue(env, parent_label, False)
+            N += graph["nodes"][parent_label]["N"]
+            parentvalues.append( graph["nodes"][parent_label]["V"])
+        graph["nodes"][terminalnode]["V"] = gamma*max(parentvalues) + graph["nodes"][terminalnode]["R"] #/rewardpenalty   
+        graph["nodes"][terminalnode]["EXPF"] = math.sqrt(math.log(N)/graph["nodes"][terminalnode]["N"])
+
+
+############# Update node values #####################
+
+# def updatevalue(env,terminalnode,finalnode = False):
+    # graph = env.graph
+    # #graph["nodes"][terminalnode]["R"] = reward
+    # if graph["nodes"][terminalnode]["nm"] != "iW":
+           # allchildnodes = [k for k,v in graph["edges"].items() if terminalnode in v.values()]
+           # if allchildnodes:
+               # maxchildvalue = max([ graph["nodes"][node]["V"] for node in allchildnodes])
+           # else:
+               # maxchildvalue = 0
+           # if graph["nodes"][terminalnode]["N"] > 1:
+               # rewardpenalty = math.log2(graph["nodes"][terminalnode]["N"])
+           # else:
+               # rewardpenalty = 1
+           # graph["nodes"][terminalnode]["V"] = gamma*maxchildvalue + graph["nodes"][terminalnode]["R"] #/rewardpenalty
+           
+    # if terminalnode in graph['edges']:
+        # parentnodes = graph['edges'][terminalnode]
+        # N = 0
+        # for port,parent_label in parentnodes.items(): ###### iterate all parents
+            # N += graph["nodes"][parent_label]["N"]
+            # updatevalue(env, parent_label, False)
             
         
-        graph["nodes"][terminalnode]["EXPF"] = math.sqrt(math.log(N)/graph["nodes"][terminalnode]["N"])
-    #return 
+        # graph["nodes"][terminalnode]["EXPF"] = math.sqrt(math.log(N)/graph["nodes"][terminalnode]["N"])
+    # #return 
 
 ##################################
 def dedupaddlink(graph,childnode,*parentnodes):
