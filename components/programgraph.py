@@ -10,6 +10,7 @@ C = 0.1 ## exploration factor
 K = 0.5 ## similarity factor
 X = 0.4 ## value factor
 gamma = 0.9
+MAXPROGLENGTH = 10
 ###### update embeddings of 
 
 def getprogramdesc(graph,terminalnode, programdesc = [],nodestraversed = []):
@@ -52,16 +53,36 @@ def getrelevantnodes(env, query, top_k = 1):
     relevantnodes = sorted(nodevalues, key=lambda item: item[1], reverse=True)[:top_k] 
     return relevantnodes
     
-def getprogramto_extend(env,query):
-    relevantnodes = getrelevantnodes(env, query )
+def getprogramto_extend(env,query, subtasks):
+    
+    
+    relevantnodes = getrelevantnodes(env, query )  
     if not relevantnodes:
         return False,None
     env.STM.set("relevantnodes", relevantnodes)
     nodeid = relevantnodes[0][0]
     programdesc,_ =  getprogramdesc(graph,nodeid, programdesc = [],nodestraversed = [])
+    priorprogramdesc = ""
+    if len(programdesc) > MAXPROGLENGTH:
+        priorprogramdesc = programdesc[:len(programdesc) - MAXPROGLENGTH]
+        priorprogramdesc = summarize('\n'.join([desc for desc,idx in priorprogramdesc]))
+        programdesc = programdesc[len(programdesc) - MAXPROGLENGTH :]
+        
+    taskprogramnodeids = [idx for desc,idx in programdesc]
+    
+    ######## get subtask nodes
+    subtaskrelevantnodes = []
+    for subtask in subtasks:
+        relevantnode = getrelevantnodes(env, subtask)
+        if relevantnode:
+            if relevantnode[0][0] not in taskprogramnodeids:
+                subtaskrelevantnodes.append( graph["nodes"][relevantnode[0][0]]["desc"] +"; node id -> "+str(relevantnode[0][0]))   
+    subtaskrelevantnodes = "\n".join(subtaskrelevantnodes)
+    
     programdesc = [desc+"; node id -> "+str(idx) for desc,idx in programdesc]
     programdesc =  '\n'.join(programdesc)
-    return nodeid,programdesc
+    programdesc = priorprogramdesc+"\n"+programdesc
+    return nodeid,programdesc,subtaskrelevantnodes
 
 ############# fetch external environment trace ##################
 def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):

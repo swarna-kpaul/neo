@@ -56,7 +56,7 @@ Keep the axioms about the problem environment in consideration while breaking th
  {axioms}
 
 The output should be STRICTLY in following format.
-{{<unique integer id of a subtask> : {{ "desc": "description of subtask", "dependencies": [<integer id of dependent subtasks>]}} }}
+{{<unique integer id of a subtask> : {{ "task": "description of subtask", "dependencies": [<integer id of dependent subtasks>]}} }}
 
 
 User: Generate the subtasks for the following task
@@ -229,6 +229,10 @@ Use the following rules and learnings about the task environment to generate sol
 
 The existing program already does the following. Each line represents a function carried out by a node represented by corresponding node id.
   {programdescription}
+
+
+Here are some of the other nodes that might help with the objective.
+   {helpernodes}
   
 The generated program should be an extension of this existing program with terminal node identifier {terminalnode}.
 Always link only the starting nodes (input ports that are not connected to any other nodes) of the generated program with any of the relevant nodes of the existing program.
@@ -259,7 +263,7 @@ AI:
 #The terminal node of the existing program do the following.
 #  {terminalnodedescription}
 
-ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription", "terminalnode","initialnode","objective", "error"]
+ACTORPROMPTINPUTVARIABLES = ["functions","axioms","programdescription","helpernodes", "terminalnode","initialnode","objective", "error"]
 
 summarizetext = """System: Summarize the following user text in a single line denoting the main objectives and keeping all relevant information. Do not add any prefix or suffix text.
 

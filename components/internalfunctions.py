@@ -17,7 +17,7 @@ def rootsolver(env):
     print("Subtasks",subtasks)
     input()
     for id,subtask in subtasks.items():
-        env.environment["objective"] = subtask["desc"]
+        env.environment["objective"] = subtask#["desc"]
         solver(env)
     env.environment["objective"] = rootobjective
     if len(subtasks) > 1:
@@ -28,7 +28,7 @@ def rootsolver(env):
 def interactwithuser(role="You are a arithmetic problem solver"):
     while True:
         inputtext = input("Enter your task: ")
-        env.environment["objective"] = inputtext
+        env.environment["objective"] = {"task":inputtext,"subtasks":[]}
         env.environment["prior axioms"] = role
         rootsolver(env)
 
@@ -40,7 +40,7 @@ def solver(env,tries = 1000000):
     relevantextactions = ltm.get(query = env.environment["description"]+" "+env.environment["prior axioms"], memorytype ="externalactions", cutoffscore =0.2, top_k=5)
     relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
     stm.set("relevantactions",relevantextactions)
-    objsummary = summarize(env.environment["objective"]+"\n"+env.environment["prior axioms" ])
+    objsummary = summarize(env.environment["objective"]["task"]+"\n"+env.environment["prior axioms" ])
     env.STM.set("summaryobjective",objsummary)
     for trie in range(tries):
         #actionplan,relevantnodeid,programdesc = generateplan(env )
@@ -138,7 +138,7 @@ def generateplan(env, explore = False ):
 
 
 def subtaskbreaker(env):
-    objective = env.environment["objective"]
+    objective = env.environment["objective"]["task"]
     axioms = env.environment["prior axioms" ]   
     messages = SUBTASKPROMPT.format(axioms = axioms, task = objective)
     output = llm_gpt4o.predict(messages)
@@ -146,7 +146,7 @@ def subtaskbreaker(env):
     subtasks = pickle.loads(pickle.dumps(output,-1))
     print("subtasks",subtasks)
     for id, subtask in output.items():
-        subtasks[id] ={"desc": ". ".join([subtasks[i]["desc"] for i in subtask["dependencies"]])+ " "+subtask["desc"]}
+        subtasks[id] ={"task": ". ".join([subtasks[i]["task"] for i in subtask["dependencies"]])+ " "+subtask["task"], "subtasks": [subtasks[i]["task"] for i in subtask["dependencies"]]}
     
     return subtasks
 
@@ -156,13 +156,13 @@ def generatecode(env, codeerror=""):
     objective = env.environment["objective"]  
     axioms = env.environment["prior axioms" ]   
     ################ fetch learnings #########################################
-    query = "Objective: \n"+objective+"\n Critique recieved while solving the objective: \n"+ env.STM.get("critique")["reason"]
+    query = "Objective: \n"+objective["task"]+"\n Critique recieved while solving the objective: \n"+ env.STM.get("critique")["reason"]
     memory = env.LTM.get(query, memorytype = "semantic", cutoffscore = 0.1 ,top_k=5)
     learnings = "\n".join([i[1]["data"] for i in memory])
     env.STM.set("relevantbeliefs", learnings)
     axioms += "\n"+learnings
     
-    relevantnodeid, programdesc = pg.getprogramto_extend(env, env.STM.get("summaryobjective"))#summarize(objective+"\n"+axioms))
+    relevantnodeid, programdesc,helpernodesdesc = pg.getprogramto_extend(env, env.STM.get("summaryobjective"), objective["subtasks"])#summarize(objective+"\n"+axioms))
     #relevantnodeid = env.STM.get("relevantnodes")[0][0]
     #programdesc = 
     if not relevantnodeid:
@@ -183,10 +183,11 @@ def generatecode(env, codeerror=""):
         messages = ACTORPROMPT.format(functions = relevantfunctionstext, \
                     axioms = axioms, \
                     programdescription = programdesc,\
+                    helpernodes = helpernodesdesc, \
                     terminalnode = relevantnodeid, \
                     initialnode = env.initnode, \
                     #terminalnodedescription = env.graph["nodes"][relevantnodeid]["desc"], \
-                    objective = objective, \
+                    objective = objective["task"], \
                     error = codeerror)
         print("ACTORPROMPT:",messages)
         output = llm_gpt4o.predict(messages)
@@ -244,7 +245,7 @@ def execcode(code,env,relevantnodeid):
     
 def critique (env,terminalnode):
     currentenvironment = env.environment
-    currentenvironment_text = "objective: "+currentenvironment["objective"]+"   \n  "+"axioms: "+ currentenvironment["prior axioms"]+" \n "+env.STM.get("relevantbeliefs")
+    currentenvironment_text = "objective: "+currentenvironment["objective"]["task"]+"   \n  "+"axioms: "+ currentenvironment["prior axioms"]+" \n "+env.STM.get("relevantbeliefs")
     progdesc,_ = pg.getprogramdesc(env.graph, terminalnode, programdesc = [],nodestraversed = [])
     progdesc = [desc for desc,idx in progdesc]
     currentperception = "\n".join([str(i) for i in env.STM.get("envtrace")])
@@ -274,7 +275,7 @@ def belieflearner(env):
     EnvTrace_text = "\n".join([str(i) for i in EnvTrace])
     critique = env.STM.get("critique")["reason"]
     currentenvironment = env.environment
-    currentenvironmenttext = "  objective:"+ currentenvironment['objective']+"\n prior axioms: \n  "+ str(currentenvironment["prior axioms"])
+    currentenvironmenttext = "  objective:"+ currentenvironment['objective']["task"]+"\n prior axioms: \n  "+ str(currentenvironment["prior axioms"])
     ###################### fetch learnings ################
     memory = env.LTM.get(query = EnvTrace_text+'\n'+critique, memorytype = "semantic", cutoffscore = 0.4, top_k = 10)
     learningstext = "\n".join([ i[1]["data"] for i in memory])
