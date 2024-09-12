@@ -96,7 +96,7 @@ def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
             args = []
             for port,parent_label in parentnodes.items():
                 args.append(str(graph["nodes"][parent_label]["dat"]))
-            envtrace.append({"action": graph["nodes"][terminalnode]["desc"]+" with inputs ("+",".join(args)+")", "observation":graph["nodes"][terminalnode]["dat"]})
+            envtrace.append({"action": graph["nodes"][terminalnode]["desc"]+" with inputs ("+",".join(args)+")", "observation":graph["nodes"][terminalnode]["obs"]})
     nodestraversed.append(terminalnode)
     return envtrace,nodestraversed
 

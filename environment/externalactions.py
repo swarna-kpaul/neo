@@ -27,32 +27,33 @@ llm_model = ChatOpenAI(temperature=0.7, request_timeout = 30,model="gpt-3.5-turb
 ################## Get user text input ####################
 def textdataread(env,display_message = ""):
     text = input(display_message)
-    return text
+    return text,"The user has entered the following text : "+text
 
 ################## Show text output to user ##################
 def textshow(env,message):
     print(message)
-    return "The message "+str(message)+" has been displayed"
+    return "","The message "+str(message)+" has been displayed"
 
 ################## Ask any question to gpt #############
 def askgpt(env,question):
     output = llm_model.predict(question)
-    return output
+    return output,output
 
 ################# Ask question on specific context to gpt and return output in specfic data type
 def getanswer(env,question,text,outputdatatype):
     prompt = """System: You are an intelligent agent that can answer user questions based on the given context. Give to the point exact answer. THE OUTPUT SHOULD BE STRICTLY A PYTHON"""+outputdatatype.upper()+""" FORMAT. Incase the output is not a"""+outputdatatype.upper()+""" return NAN \n\n context:\n"""+text+"""\nAnswer the following question from the above context without considering any other prior information.\nuser: \n"""+question
     output = llm_model.predict(prompt)
     if output == "NAN":
-        return ""
+        return "","No output"
     elif outputdatatype in ["number","boolean","list","dictionary"]:
-        return ast.literal_eval(output)
+        return ast.literal_eval(output),output
     else:
-        return output
+        return output,output
 
 ################## Search a string in bing and get answer #######################
 def bingsearch(env,text):
-    return search.run(text)
+    output = search.run(text)
+    return output, "Here is the search result: "+output
 
 
 #################################### describe external function set ###############################
