@@ -7,7 +7,7 @@ import traceback
 import uuid
 import pickle
 from itertools import chain
-SOLVEDVALUE = 0.90
+SOLVEDVALUE = 0.80
 MAXERRORRETRYCOUNT = 2
 
 
@@ -269,10 +269,10 @@ def critique (env,terminalnode):
     
     env.STM.set("critique", output)
     
-    #if env.graph["nodes"][terminalnode]["R"] == 0.0000001:
-    env.graph["nodes"][terminalnode]["R"] = output["feedback"] ## set the reward
-    #else:
-    #    env.graph["nodes"][terminalnode]["R"] = (env.graph["nodes"][terminalnode]["R"]+ output["feedback"])/2
+    if env.graph["nodes"][terminalnode]["R"] == 0.0000001:
+        env.graph["nodes"][terminalnode]["R"] = output["feedback"] ## set the reward
+    else:
+        env.graph["nodes"][terminalnode]["R"] = env.graph["nodes"][terminalnode]["R"]*0.3+ output["feedback"]*0.7
     pg.updatevalue(env,terminalnode,True)
     
     return env.graph["nodes"][terminalnode]["R"]
