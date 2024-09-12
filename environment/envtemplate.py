@@ -19,7 +19,7 @@ class bootstrapenv():
              self.LTM.set(text=v,data=v,recordid=k,memorytype="externalactions")
         self.primitives = primitives
         self.graph = creategraph('programgraph')
-        init_world = worldclass(initworldbootfunctions)
+        init_world = worldclass(initworldbootfunctions,self)
         self.initnode = createnode(self.graph,'iW',init_world)
         self.graph["nodes"][self.initnode]["desc"] = "Initializes the program with initial node"
          #self.skillgraph = creategraph('bootenv') 

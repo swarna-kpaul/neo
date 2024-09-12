@@ -25,22 +25,22 @@ llm_model = ChatOpenAI(temperature=0.7, request_timeout = 30,model="gpt-3.5-turb
 
 
 ################## Get user text input ####################
-def textdataread(display_message = ""):
+def textdataread(env,display_message = ""):
     text = input(display_message)
     return text
 
 ################## Show text output to user ##################
-def textshow(message):
+def textshow(env,message):
     print(message)
-    return message
+    return ""
 
 ################## Ask any question to gpt #############
-def askgpt(question):
+def askgpt(env,question):
     output = llm_model.predict(question)
     return output
 
 ################# Ask question on specific context to gpt and return output in specfic data type
-def getanswer(question,text,outputdatatype):
+def getanswer(env,question,text,outputdatatype):
     prompt = """System: You are an intelligent agent that can answer user questions based on the given context. Give to the point exact answer. THE OUTPUT SHOULD BE STRICTLY A PYTHON"""+outputdatatype.upper()+""" FORMAT. Incase the output is not a"""+outputdatatype.upper()+""" return NAN \n\n context:\n"""+text+"""\nAnswer the following question from the above context without considering any other prior information.\nuser: \n"""+question
     output = llm_model.predict(prompt)
     if output == "NAN":
@@ -51,7 +51,7 @@ def getanswer(question,text,outputdatatype):
         return output
 
 ################## Search a string in bing and get answer #######################
-def bingsearch(text):
+def bingsearch(env,text):
     return search.run(text)
 
 
@@ -65,7 +65,7 @@ extfunctionset = {"textdataread": {"description": """A function to read and coll
                   "textshow": {"description": "A function (named textshow) to display a message to the user on standard output. It takes the message to be displayed as parameter. ",
                      "function": textshow,
                      "input": "It has one input port that takes a text message that should be displayed to the user. ",
-                     "output": "Returns input text.",
+                     "output": "Returns blank text.",
                      "type": {'fun':{'i':['any'],'o':['any']}},
                      "args": 1},
                    "askgpt":  {"description": """A function (named askgpt) to provide answer to general questions using GPT3.5 LLM. It can also provide output in code or structured format like, json yaml etc. if properly prompted to do so. """,

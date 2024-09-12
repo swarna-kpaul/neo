@@ -1,5 +1,5 @@
 import math
-from neo.environment.bootstrapactions import primitives
+from neo.environment.primitives import primitives
 from combinatorlite import *
 from neo.config.utilities import summarize
 import pickle

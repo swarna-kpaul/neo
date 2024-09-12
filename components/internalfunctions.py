@@ -1,5 +1,5 @@
 #from combinatorlite import creategraph, createnode, addlink, worldclass, runp, node_attributes_object
-from neo.environment.envtemplate import *
+#from neo.environment.envtemplate import *
 import neo.components.programgraph as pg
 from neo.config.utilities import *
 import ast
