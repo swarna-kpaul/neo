@@ -13,12 +13,13 @@ MAXERRORRETRYCOUNT = 2
 
 
 def rootsolver(env,task = ""):
-    subtasks = subtaskbreaker(env)
     env.environment["objective"] = {"task":task,"subtasks":[]}
+    subtasks = subtaskbreaker(env,task)
+    
     rootobjective = env.environment["objective"]
     print("Subtasks",subtasks)
     input()
-    for id,subtask in subtasks.items():
+    for subtask in subtasks:
         env.environment["objective"] = subtask#["desc"]
         solver(env)
     env.environment["objective"]["task"] = rootobjective["task"]
@@ -141,17 +142,16 @@ def generateplan(env, explore = False ):
 def flatten_list(list_of_lists):
     return list(chain.from_iterable(list_of_lists))
     
-def subtaskbreaker(env):
-    objective = env.environment["objective"]["task"]
+def subtaskbreaker(env,task):
     axioms = env.environment["prior axioms" ]   
-    messages = SUBTASKPROMPT.format(axioms = axioms, task = objective)
+    messages = SUBTASKPROMPT.format(axioms = axioms, task = task)
     output = llm_gpt4o.predict(messages)
     output = extractdictfromtext(output)
     subtasks = pickle.loads(pickle.dumps(output,-1))
     print("subtasks",subtasks)
     for id, subtask in output.items():
         subtasks[id] ={"task": subtask["task"], "subtasks": flatten_list([subtasks[i]["subtasks"] + [subtasks[i]["task"]] for i in subtask["dependencies"]])}
-    
+    subtasks = [ v for k,v in subtasks.items()]
     return subtasks
 
 
