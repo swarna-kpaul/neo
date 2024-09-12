@@ -1,5 +1,5 @@
-from config.keys import *
-from config.prompts import *
+from neo.config.keys import *
+from neo.config.prompts import *
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts.prompt import PromptTemplate
 import os
@@ -36,7 +36,7 @@ SUMMARIZEPROMPT = PromptTemplate(input_variables=SUMMARIZEVARIABLES, template=su
 SUBTASKPROMPT = PromptTemplate(input_variables=SUBTASKVARIABLES, template=subtasktemplate)
 
 
-def get_embeddings(text,model="text-embedding-3-large"):
+def get_embeddings(text,model="text-embedding-3-small"):
     response = client.embeddings.create(input = [text], model=model).data[0].embedding
     return response
     

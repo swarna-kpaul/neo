@@ -12,8 +12,9 @@ MAXERRORRETRYCOUNT = 2
 
 
 
-def rootsolver(env):
+def rootsolver(env,task = ""):
     subtasks = subtaskbreaker(env)
+    env.environment["objective"] = {"task":task,"subtasks":[]}
     rootobjective = env.environment["objective"]
     print("Subtasks",subtasks)
     input()
@@ -27,12 +28,11 @@ def rootsolver(env):
            print("END ROOTSOLVER")
            return
 
-def interactwithuser(role="You are a arithmetic problem solver"):
+def interactwithuser(env,role="You are a arithmetic problem solver"):
     while True:
         inputtext = input("Enter your task: ")
-        env.environment["objective"] = {"task":inputtext,"subtasks":[]}
         env.environment["prior axioms"] = role
-        rootsolver(env)
+        rootsolver(env,inputtext)
 
         
 
@@ -171,7 +171,7 @@ def generatecode(env, codeerror=""):
     #programdesc = 
     if not relevantnodeid:
         relevantnodeid = env.initnode
-        programdesc = "Initializes the program with initial node"
+        programdesc = "Initializes the program with initial node; node id -> 1"
     
     ######## fetch relevant actions
     relevantfunctions = env.STM.get("relevantactions") #env.LTM.get(objective+"\n"+axioms,"externalactions",top_k=5)
@@ -234,7 +234,7 @@ def execcode(code,env,relevantnodeid):
     #code += updatenodedescription(nodedesc)
     #try:
 # Create an empty namespace (dictionary) for the exec function
-    env.STM.set("envtrace",[]) ######## reset envtrace
+    
     return_status,terminalnode,output = env.act(code,relevantnodeid)
    # except Exception as e:
    #     output = traceback.format_exc()
@@ -269,10 +269,10 @@ def critique (env,terminalnode):
     
     env.STM.set("critique", output)
     
-    if env.graph["nodes"][terminalnode]["R"] == 0.0000001:
-        env.graph["nodes"][terminalnode]["R"] = output["feedback"] ## set the reward
-    else:
-        env.graph["nodes"][terminalnode]["R"] = (env.graph["nodes"][terminalnode]["R"]+ output["feedback"])/2
+    #if env.graph["nodes"][terminalnode]["R"] == 0.0000001:
+    env.graph["nodes"][terminalnode]["R"] = output["feedback"] ## set the reward
+    #else:
+    #    env.graph["nodes"][terminalnode]["R"] = (env.graph["nodes"][terminalnode]["R"]+ output["feedback"])/2
     pg.updatevalue(env,terminalnode,True)
     
     return env.graph["nodes"][terminalnode]["R"]
@@ -306,5 +306,5 @@ def belieflearner(env):
     for learning in learnings:
         text = "objective: "+env.STM.get("summaryobjective")+"\n learning: "+learning
         env.LTM.set(text = text, data = learning, recordid=str(uuid.uuid4()), memorytype = "semantic")
-
+    env.STM.set("envtrace",[]) ######## reset envtrace
     return output

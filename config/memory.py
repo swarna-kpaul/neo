@@ -1,7 +1,7 @@
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 import os
-from config.keys import *
+from neo.config.keys import *
 from datetime import datetime
 import string
 import random
