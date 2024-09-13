@@ -198,7 +198,7 @@ def generatecode(env, codeerror=""):
                     subtasks = subtaskpromptprefix+'. '.join(objective["subtasks"]), \
                     error = codeerror)
         print("ACTORPROMPT:",messages)
-        output = llm_gpt4o.predict(messages)
+        output = llm_gpt4o_mini.predict(messages)
         
         print(output)
         try:
@@ -298,7 +298,7 @@ def belieflearner(env):
                     critique = critique)
         #print(messages)
     print("LEARNERPROMPT:",messages)
-    output = llm_gpt4o.predict(messages)
+    output = llm_gpt4o_mini.predict(messages)
     print("LEARNERPROMPT output:",output)
     output = extractdictfromtext(output)
     learnings = output["learnings"]
