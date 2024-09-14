@@ -198,7 +198,7 @@ def generatecode(env, codeerror=""):
                     subtasks = subtaskpromptprefix+'. '.join(objective["subtasks"]), \
                     error = codeerror)
         print("ACTORPROMPT:",messages)
-        output = llm_gpt4o_mini.predict(messages)
+        output = llm_gpt4o.predict(messages)
         
         print(output)
         try:
@@ -262,7 +262,7 @@ def critique (env,terminalnode):
                     actionplan = "\n".join(progdesc), \
                     perception = currentperception)
     print("CRITIQUEPROMPT:",messages)
-    output = llm_gpt4o.predict(messages)
+    output = llm_gpt4o_mini.predict(messages)
     print("CRITIQUEPROMPT output:",output)
     #output = ast.literal_eval(output)
     output = extractdictfromtext(output)

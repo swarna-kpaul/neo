@@ -4,19 +4,25 @@ from neo.config.memory import *
 import neo.components.programgraph as pg
 node_attributes_object.updateattrib({"R":0.0000001,"V":0.0000001,"EXPF":0.58,"N":1,"desc":""}) # R -> reward, V -> value, EXPF -> exploration factor
 ############ initialize environment
-
+import pickle
 
 
 class bootstrapenv():
-    def __init__(self, objective, shortdescription = "", examples = "", prioraxioms ="", stm = stm, ltm = ltm):
+    def __init__(self, objective, ltmprocmem = "/content/drive/My Drive/neodata/proceduralmem.pickle",shortdescription = "", examples = "", prioraxioms ="", stm = stm, ltm = ltm):
         self.STM =stm
         self.LTM = ltm
         self.environment = {"description": shortdescription + objective, "objective": objective, "prior axioms": prioraxioms, "current state": self.getstate(), "examples": examples, "actionset": []}
         
          
     #def initializeenv(self,EXTACTIONS,primitives,initworldbootfunctions,ALLACTIONS ):
-        for k,v in EXTACTIONS.items():
-             self.LTM.set(text=v,data=v,recordid=k,memorytype="externalactions")
+        if ltmprocmem == None:
+            for k,v in EXTACTIONS.items():
+                self.LTM.set(text=v,data=v,recordid=k,memorytype="externalactions")
+            pickle.dump(self.LTM.memory["procedural"],ltmprocmem)
+        else:
+            ######## load ltm
+            self.LTM.memory["procedural"] = pickle.load(ltmprocmem)
+            
         self.primitives = primitives
         self.graph = creategraph('programgraph')
         init_world = worldclass(initworldbootfunctions,self)
