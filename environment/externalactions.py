@@ -12,8 +12,7 @@ import io
 import numpy as np
 from azure.cognitiveservices.speech import SpeechConfig, SpeechRecognizer, AudioDataStream, AudioConfig, SpeechSynthesisOutputFormat,ResultReason, CancellationReason
 from azure.cognitiveservices.speech.audio import PushAudioInputStream
-speech_key="853d745aa313452180a16a2c0764c82f"
-service_region="eastus"
+
 
 os.environ["BING_SUBSCRIPTION_KEY"] = BING_SUBSCRIPTION_KEY
 os.environ["BING_SEARCH_URL"] = "https://api.bing.microsoft.com/v7.0/search"
@@ -140,7 +139,7 @@ def recognize_speech(env, base64_audio):
 # Convert the byte stream into a binary stream
     audio_stream = io.BytesIO(audio_data)
 # Create a SpeechConfig instance with your subscription key and region
-    speech_config = SpeechConfig(subscription=speech_key, region=service_region)
+    speech_config = SpeechConfig(subscription=azure_speech_key, region=azure_service_region)
 # Create an AudioInputStream from the binary stream
     push_stream  = PushAudioInputStream()
 # Create an AudioConfig object using the AudioInputStream
