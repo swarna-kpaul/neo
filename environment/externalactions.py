@@ -12,7 +12,13 @@ import io
 import numpy as np
 from azure.cognitiveservices.speech import SpeechConfig, SpeechRecognizer, AudioDataStream, AudioConfig, SpeechSynthesisOutputFormat,ResultReason, CancellationReason
 from azure.cognitiveservices.speech.audio import PushAudioInputStream
+from azure.cognitiveservices.vision.computervision import ComputerVisionClient
+from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes
+from msrest.authentication import CognitiveServicesCredentials
+import face_recognition
 
+from PIL import Image
+import imageio
 
 os.environ["BING_SUBSCRIPTION_KEY"] = BING_SUBSCRIPTION_KEY
 os.environ["BING_SEARCH_URL"] = "https://api.bing.microsoft.com/v7.0/search"
@@ -165,6 +171,88 @@ def recognize_speech(env, base64_audio):
         print(message)
         return message,message
 
+
+########## capture image
+def capture_image(env,dummy):
+    # Initialize webcam (using imageio's ffmpeg plugin)
+    camera = imageio.get_reader('<video0>')
+    # Capture a frame
+    frame = camera.get_next_data()
+    # Convert the frame (which is a NumPy array) to an image using PIL
+    image = Image.fromarray(frame)
+    # Create a BytesIO object to hold the image in memory
+    buffered = io.BytesIO()
+    # Save the image to the BytesIO object in JPEG format
+    image.save(buffered, format="JPEG")
+    # Get the image bytes from the buffer
+    image_bytes = buffered.getvalue()
+    # Encode the image bytes in base64
+    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+    # Close the camera
+    camera.close()
+    
+    return base64_image,"Image captured"
+
+
+
+def describe_image(env,base64_image):
+    # Initialize the Computer Vision client
+    computervision_client = ComputerVisionClient(azure_vision_endpoint, CognitiveServicesCredentials(azure_vision_key))
+    # Decode base64 image to bytes
+    image_data = base64.b64decode(image_base64)
+    # Convert bytes to an image stream using BytesIO
+    image_stream = io.BytesIO(image_data)
+    # Analyze the image
+    description_results = computervision_client.describe_image_in_stream(image_stream)
+    # Check if the API returned descriptions
+    if len(description_results.captions) > 0:
+        # Get the top caption and confidence score
+        for caption in description_results.captions:
+            print(f"Image Description: {caption.text}, Confidence: {caption.confidence:.2f}")
+        return caption.text,caption.text
+    else:
+        print("No description detected.")
+        return "No description detected.","No description detected."
+
+
+# Add a person to the person group
+def remember_face(env, person_name, base64_image):
+    image_data = base64.b64decode(base64_image)
+    image_stream = io.BytesIO(image_data)
+    if os.path.exists(FACEGROUPDB):
+        facedb = pickle.load(FACEGROUPDB)
+    else:
+        facedb = []
+    try:
+        image_np = face_recognition.load_image_file(image_stream)
+        imageencoding = face_recognition.face_encodings(image_np)[0]
+        facedb.append((person_name,imageencoding))
+        with open(FACEGROUPDB,'wb') as file:
+            pickle.dump(facedb,file)
+    except Exception as e:
+        print(f"Error adding person to group: {e}")
+        return f"Error adding remembering face: {e}","Error remembering face"
+    return "","person face remembered"
+    
+########## recognize face
+def recognize_face(env, base64_image): 
+    image_data = base64.b64decode(base64_image)
+    image_stream = io.BytesIO(image_data)    
+    ########## recognize faces 
+    image_np = face_recognition.load_image_file(image_stream)    
+    unknown_face_encoding = face_recognition.face_encodings(image_np)[0]
+    if os.path.exists(FACEGROUPDB):
+        with open(FACEGROUPDB,'rb') as file:
+            facedb = pickle.load(file)
+    else:
+        return "","Face not recognized"
+    for name,faceencoding in facedb:
+        results = face_recognition.compare_faces([faceencoding], unknown_face_encoding)
+        if results[0]:
+            return name,"Face recognized"
+    return "","Face not recognized"
+    
+
     
 #################################### describe external function set ###############################
 extfunctionset = {"textdataread": {"description": """A function to read and collect user's or environment's responses. The response text data can be typed by the user through standard input. """,
@@ -214,5 +302,23 @@ extfunctionset = {"textdataread": {"description": """A function to read and coll
                      "input": "One input, base64 encoded audio data containing speech",
                      "output": "Returns recognized text",
                      "type": {'fun':{'i':['text'],'o':['text']}},
-                     "args":1}
+                     "args":1},
+                     "capture_image":   {"description": """A function to capture image with webcam.""",
+                     "function": capture_image,
+                     "input": "One input, can be anything",
+                     "output": "Returns captured image in base64 format",
+                     "type": {'fun':{'i':['any'],'o':['text']}},
+                     "args":1},
+                     "remember_face":   {"description": """A function to remember a face in an image. The remembered face can be used to recognize a person in future""",
+                     "function": remember_face,
+                     "input": "Two input, first is name of the person and second is base64 encoded image of the face of that person",
+                     "output": "Returns blank text",
+                     "type": {'fun':{'i':['text','text'],'o':['text']}},
+                     "args":2},
+                     "recognize_face":   {"description": """A function to recognize a face in an image from a stored database of remembered faces""",
+                     "function": recognize_face,
+                     "input": "One input, base64 encoded image of the face of a person",
+                     "output": "Returns recongnized name of the person",
+                     "type": {'fun':{'i':['text'],'o':['text']}},
+                     "args":1},
                      }

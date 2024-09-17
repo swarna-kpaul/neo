@@ -8,20 +8,21 @@ import pickle
 
 
 class bootstrapenv():
-    def __init__(self, objective, ltmprocmem = "/content/drive/My Drive/neodata/proceduralmem.pickle",shortdescription = "", examples = "", prioraxioms ="", stm = stm, ltm = ltm):
+    def __init__(self, objective, rewriteprocmem = True, ltmprocmem = "C:/neo/data/proceduralmem.pickle",shortdescription = "", examples = "", prioraxioms ="", stm = stm, ltm = ltm):
         self.STM =stm
         self.LTM = ltm
         self.environment = {"description": shortdescription + objective, "objective": objective, "prior axioms": prioraxioms, "current state": self.getstate(), "examples": examples, "actionset": []}
-        
-         
-    #def initializeenv(self,EXTACTIONS,primitives,initworldbootfunctions,ALLACTIONS ):
-        if ltmprocmem == None:
+        print("ltmprocmem",ltmprocmem)
+        if rewriteprocmem:
             for k,v in EXTACTIONS.items():
                 self.LTM.set(text=v,data=v,recordid=k,memorytype="externalactions")
-            pickle.dump(self.LTM.memory["procedural"],ltmprocmem)
+            
+            with open(ltmprocmem,'wb') as file:
+                pickle.dump(self.LTM.memory["procedural"],file)
         else:
             ######## load ltm
-            self.LTM.memory["procedural"] = pickle.load(ltmprocmem)
+            with open(ltmprocmem,'rb') as file:
+                self.LTM.memory["procedural"] = pickle.load(file)
             
         self.primitives = primitives
         self.graph = creategraph('programgraph')
@@ -57,4 +58,3 @@ class bootstrapenv():
         return
         
         
-env = bootstrapenv(objective = "You should take text input from the user. The user may ask question or provide instructions or ask to solve a task. You may need to answer questions, follow instructions and solve tasks based on users input. At the end ask for user feedback.", prioraxioms= "You can use the getanswer function to generate specific structured answer for a question on a context",shortdescription = "Carry out user commands")
