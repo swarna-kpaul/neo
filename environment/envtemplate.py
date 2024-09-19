@@ -1,5 +1,5 @@
 from combinatorlite import creategraph, createnode, addlink, worldclass, runp, node_attributes_object
-from neo.environment.bootstrapactions import ALLACTIONS, initworldbootfunctions,EXTACTIONS,primitives
+from neo.environment.bootstrapactions import ALLACTIONS, initworldbootfunctions,EXTACTIONS,primitives,getenvfeedback
 from neo.config.memory import *
 import neo.components.programgraph as pg
 node_attributes_object.updateattrib({"R":0.0000001,"V":0.0000001,"EXPF":0.58,"N":1,"desc":""}) # R -> reward, V -> value, EXPF -> exploration factor
@@ -18,12 +18,12 @@ class bootstrapenv():
                 self.LTM.set(text=v,data=v,recordid=k,memorytype="externalactions")
             
             with open(ltmprocmem,'wb') as file:
-                pickle.dump(self.LTM.memory["procedural"],file)
+                pickle.dump(self.LTM.memory["externalactions"],file)
         else:
             ######## load ltm
             with open(ltmprocmem,'rb') as file:
-                self.LTM.memory["procedural"] = pickle.load(file)
-            
+                self.LTM.memory["externalactions"] = pickle.load(file)
+        self.inprogresssubtasks = []    
         self.primitives = primitives
         self.graph = creategraph('programgraph')
         init_world = worldclass(initworldbootfunctions,self)
@@ -45,9 +45,10 @@ class bootstrapenv():
 
         return state
         
-    def getfeedback(self,terminalnode):
-        envtrace,_ = pg.fetchenvtrace(self,terminalnode)
-        return envtrace
+    def getfeedback(self):
+        #envtrace,_ = pg.fetchenvtrace(self,terminalnode)
+        return getenvfeedback(self)
+        #return envtrace
         
     def act(self,actiontext,relevantnodeid=1):
         return pg.execprogram(self,relevantnodeid, actiontext)

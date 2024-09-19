@@ -54,7 +54,7 @@ def getrelevantnodes(env, query, top_k = 1,C=C,K=K,X=X):
     return relevantnodes
     
 def getprogramto_extend(env,query, subtasks):
-
+    graph = env.graph
     relevantnodes = getrelevantnodes(env, query )  
     if not relevantnodes:
         return False,None,None
@@ -95,8 +95,15 @@ def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
     ############ for external functions only
             args = []
             for port,parent_label in parentnodes.items():
-                args.append(str(graph["nodes"][parent_label]["dat"]))
-            envtrace.append({"action": graph["nodes"][terminalnode]["desc"]+" with inputs ("+",".join(args)+")", "observation":graph["nodes"][terminalnode]["obs"]})
+                if len(str(graph["nodes"][parent_label]["dat"])) > 100:
+                    args.append(str(graph["nodes"][parent_label]["dat"])[0:100])
+                else:
+                    args.append(str(graph["nodes"][parent_label]["dat"]))
+            if len(str(graph["nodes"][terminalnode]["obs"])) > 100:
+                obs = graph["nodes"][terminalnode]["obs"][0:100]
+            else:
+                obs = graph["nodes"][terminalnode]["obs"]
+            envtrace.append({"action": graph["nodes"][terminalnode]["desc"]+" with inputs ("+",".join(args)+")", "observation":obs})
     nodestraversed.append(terminalnode)
     return envtrace,nodestraversed
 

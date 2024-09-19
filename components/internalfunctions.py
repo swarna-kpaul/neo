@@ -12,21 +12,35 @@ MAXERRORRETRYCOUNT = 2
 
 
 
-def rootsolver(env,task = ""):
+def rootsolver(env,task = "",storeenvfile="c:/neo/data/env.pickle",loadenvfile= "c:/neo/data/env.pickle"):
+    if loadenvfile != None:
+        with open(loadenvfile,'rb') as file:
+            env = pickle.load(file)
     env.environment["objective"] = {"task":task,"subtasks":[]}
-    subtasks = subtaskbreaker(env,task)
-    
+    if env.inprogresssubtasks: ### solving subtasks in progress
+        subtasks = pickle.loads(pickle.dumps(env.inprogresssubtasks,-1))
+    else:
+        subtasks = subtaskbreaker(env,task)
+        env.inprogresssubtasks = pickle.loads(pickle.dumps(subtasks,-1))
+        
     rootobjective = env.environment["objective"]
-    print("Subtasks",subtasks)
+    #print("Subtasks",subtasks)
     input()
     for subtask in subtasks:
+        x = env.inprogresssubtasks.pop(0)
         env.environment["objective"] = subtask#["desc"]
         solver(env)
+        if storeenvfile != None:
+            with open(storeenvfile,"wb") as file:
+                pickle.dump(env, file)
     env.environment["objective"]["task"] = rootobjective["task"]
     env.environment["objective"]["subtasks"] =  []#[subtask["task"] for id,subtask in subtasks.items()]
     if len(subtasks) > 1:
        if solver(env,tries=3):
            print("END ROOTSOLVER")
+           if storeenvfile != None:
+               with open(storeenvfile,"wb") as file:
+                   pickle.dump(env, file)
            return
 
 def interactwithuser(env,role="You are a arithmetic problem solver"):
@@ -40,11 +54,9 @@ def interactwithuser(env,role="You are a arithmetic problem solver"):
 def solver(env,tries = 1000000):
     stm = env.STM
     ltm = env.LTM
-    relevantextactions = ltm.get(query = env.environment["description"]+" "+env.environment["prior axioms"], memorytype ="externalactions", cutoffscore =0.2, top_k=5)
-    relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
-    stm.set("relevantactions",relevantextactions)
     objsummary = summarize(". ".join(env.environment["objective"]["subtasks"])+" "+env.environment["objective"]["task"]+"\n"+env.environment["prior axioms" ])
     env.STM.set("summaryobjective",objsummary)
+    
     for trie in range(tries):
         #actionplan,relevantnodeid,programdesc = generateplan(env )
         #relevantnodeid, programdesc = pg.getprogramto_extend(env,objective+"\n"+axioms)
@@ -65,7 +77,7 @@ def solver(env,tries = 1000000):
         # else:
         output,terminalnode = generatecode(env)
         #output,stm,return_status = execcode(action["program"],action["desc"],env,relevantnodeid) 
-        input("press a key to continue")             
+                    
         reward = critique(env,terminalnode)
         input("press a key to continue")
         output  = belieflearner(env)
@@ -143,12 +155,19 @@ def flatten_list(list_of_lists):
     return list(chain.from_iterable(list_of_lists))
     
 def subtaskbreaker(env,task):
-    axioms = env.environment["prior axioms" ]   
-    messages = SUBTASKPROMPT.format(axioms = axioms, task = task)
-    output = llm_gpt4o.predict(messages)
-    output = extractdictfromtext(output)
+    feedback = ""
+    while True:
+        axioms = env.environment["prior axioms" ]   
+        messages = SUBTASKPROMPT.format(axioms = axioms, task = task+"\n"+feedback)
+        output = llm_gpt4o.predict(messages)
+        output = extractdictfromtext(output)
+        print("subtasks",output)
+        feedback = input("Provide inputs on substasks. If everything is good then don't write anything and just press enter")
+        if feedback == "":
+            break
+    
     subtasks = pickle.loads(pickle.dumps(output,-1))
-    print("subtasks",subtasks)
+    
     for id, subtask in output.items():
         subtasks[id] ={"task": subtask["task"], "subtasks": flatten_list([subtasks[i]["subtasks"] + [subtasks[i]["task"]] for i in subtask["dependencies"]])}
     subtasks = [ v for k,v in subtasks.items()]
@@ -165,6 +184,10 @@ def generatecode(env, codeerror=""):
     learnings = "\n".join([i[1]["data"] for i in memory])
     env.STM.set("relevantbeliefs", learnings)
     #axioms += "\n"+learnings
+    relevantextactions = env.LTM.get(query = env.environment["objective"]["task"]+"\n"+summarize(env.environment["prior axioms" ]+"\n"+learnings), memorytype ="externalactions", cutoffscore =0.3, top_k=5)
+    relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
+    env.STM.set("relevantactions",relevantextactions)
+    
     
     relevantnodeid, programdesc,helpernodesdesc = pg.getprogramto_extend(env, env.STM.get("summaryobjective"), objective["subtasks"])#summarize(objective+"\n"+axioms))
     #relevantnodeid = env.STM.get("relevantnodes")[0][0]
@@ -252,11 +275,27 @@ def execcode(code,env,relevantnodeid):
 ###############################################
     
 def critique (env,terminalnode):
+    envfeedback = env.getfeedback()#input("Your feedback if any: ") 
     currentenvironment = env.environment
     currentenvironment_text = "objective: "+currentenvironment["objective"]["task"]+"   \n  "+"axioms: "+ currentenvironment["prior axioms"]+" \n "+env.STM.get("relevantbeliefs")
     progdesc,_ = pg.getprogramdesc(env.graph, terminalnode, programdesc = [],nodestraversed = [])
     progdesc = [desc for desc,idx in progdesc]
     currentperception = "\n".join([str(i) for i in env.STM.get("envtrace")])
+    
+    if env.graph["nodes"][terminalnode]["obs"] != None:
+        if len(str(env.graph["nodes"][terminalnode]["obs"])) >100:
+            currentperception += "\n"+"Final output: "+str(env.graph["nodes"][terminalnode]["obs"])[0:100]
+        else:
+            currentperception += "\n"+"Final output: "+str(env.graph["nodes"][terminalnode]["obs"])
+    else:
+        if len(str(env.graph["nodes"][terminalnode]["dat"])) >100:
+            currentperception += "\n"+"Final output: "+str(env.graph["nodes"][terminalnode]["dat"])[0:100]
+        else:
+            currentperception += "\n"+"Final output: "+str(env.graph["nodes"][terminalnode]["dat"])
+    
+    if envfeedback != "":
+        envfeedback = "User feedback: "+envfeedback
+        currentperception += "\n"+envfeedback.upper()+"\n GIVE MOST IMPORTANCE ON USER FEEDBACK. \n" 
     
     messages = CRITIQUEPROMPT.format(beliefenvironment = str(currentenvironment_text), \
                     actionplan = "\n".join(progdesc), \
@@ -298,7 +337,7 @@ def belieflearner(env):
                     critique = critique)
         #print(messages)
     print("LEARNERPROMPT:",messages)
-    output = llm_gpt4o_mini.predict(messages)
+    output = llm_gpt4o.predict(messages)
     print("LEARNERPROMPT output:",output)
     output = extractdictfromtext(output)
     learnings = output["learnings"]

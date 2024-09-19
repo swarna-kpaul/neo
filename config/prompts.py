@@ -389,6 +389,11 @@ SUMMARIZEVARIABLES = ["objective"]
  
 # Here is the algorithm based on which the code has been generated
 
+
+#Each line can ONLY be of the following forms :
+ #                           X Y Z 
+
+#where X and Z are entities, subject, object, events from action perception trace and Y is relation between X and Z. DO NOT add "_" in X, Y or Z. Rogorously capture everything in the action observation trace as memory. COMBINE MULTIPLE LINES into one if either X and Y are same or Y and Z are same.
 # """
 
  
@@ -396,14 +401,10 @@ searchertemplate = """System: You are an expert assitant. You are given ACTION O
 A CRITIQUE indicates the success of the attempt to the task.
 You need to derive a comprehensive LEARNINGS. Capture all the details in the ACTION OBSERVATION TRACE.
 Generate learnings, that will help the agent to successfully accomplish the SAME objective AGAIN, in the SAME environment.
-Keep the learning sentences short. Do not use short forms.
+Keep the learning sentences as short as possible.
 Keep fairly novel learnings about the environment and omit very common well known learnings.
-Each line can ONLY be of the following forms :
-                            X Y Z 
-
-where X and Z are entities, subject, object, events from action perception trace and Y is relation between X and Z. DO NOT add "_" in X, Y or Z. Rogorously capture everything in the action observation trace as memory. COMBINE MULTIPLE LINES into one if either X and Y are same or Y and Z are same.
-
-    
+DO NOT WRITE REDUNDANT LEARNINGS.
+   
 Update on top of the current learnings based on the action observation trace and critique. 
 Modify or remove the existing learnings only if it contradicts with  ACTION OBSERVATION TRACE. You can add your new learnings.
 
@@ -471,12 +472,14 @@ Environment:
 The following is an action plan generated for the above environment.   
 Action plan:
    {actionplan}
-You need to generate a critique for the above action plan. You should provide a positive feedback if the environment response is positive and actionplan meet the environment objective in long term and the actions does not go against the prior axioms or belief axioms (only if belief axioms are not blank). Else you should provide a negative feedback. You provide a neutral feedback if you cannot determine either case.
+You need to generate a critique for the above action plan. You should provide a positive feedback if the environment response is positive and actionplan meet the environment objective in long term and the actions does not go against the prior axioms or belief axioms (only if belief axioms are not blank). Else you should provide a negative feedback. You provide a neutral feedback if you cannot determine either case. If no environment feedback is available then make the judgement based on actionplan.
 
 The following response from the environment may contain the feedback signal about the action.
 Environment response:
    {perception}
 If the above response contains any feedback or reward signal then update your critique accordingly. Give more importance on environment response for updating the feedback value. If the environment response gives negative feedback then always update the feedback with negative value.
+
+
 
 The output should be in the following json format. In no case the output should deviate from the following prescribed format.
 {{"reason": <a detailed reason for the feedback based on action plan, environment response (should be given most importance), axioms (if available) and objective. This should not exceed 50 words> ,

@@ -11,6 +11,7 @@ import base64
 import io
 import numpy as np
 from azure.cognitiveservices.speech import SpeechConfig, SpeechRecognizer, AudioDataStream, AudioConfig, SpeechSynthesisOutputFormat,ResultReason, CancellationReason
+import azure.cognitiveservices.speech as speechsdk
 from azure.cognitiveservices.speech.audio import PushAudioInputStream
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes
@@ -37,6 +38,9 @@ llm_model = ChatOpenAI(temperature=0.7, request_timeout = 30,model="gpt-3.5-turb
         # return inner
     # return decorator
     
+#### get explicit env feedback 
+def getenvfeedback(env):
+    return input("Enter your explicit feedback if any: ")
 
 
 ################## Get user text input ####################
@@ -116,27 +120,33 @@ def record_until_silence(env,dummy):
 ############## play audio ################
 def play_base64_audio(env, base64_string):
     # Decode the base64 string to get the audio data
-    audio_data = base64.b64decode(base64_string)
+    try:
+        audio_data = base64.b64decode(base64_string)
     # Use a BytesIO buffer to read the audio data as if it were a file
-    audio_buffer = io.BytesIO(audio_data)
+        audio_buffer = io.BytesIO(audio_data)
+    except:
+        return "invalid base64 data", "invalid base64 data"
     # Open the audio buffer using the wave module
-    with wave.open(audio_buffer, 'rb') as wf:
-        # Initialize PyAudio
-        audio = pyaudio.PyAudio()
-        # Open a stream with the correct settings
-        stream = audio.open(format=audio.get_format_from_width(wf.getsampwidth()),
-                            channels=wf.getnchannels(),
-                            rate=wf.getframerate(),
-                            output=True)
-        # Read data in chunks and play the audio
-        data = wf.readframes(16000)
-        while data:
-            stream.write(data)
+    try:
+        with wave.open(audio_buffer, 'rb') as wf:
+            # Initialize PyAudio
+            audio = pyaudio.PyAudio()
+            # Open a stream with the correct settings
+            stream = audio.open(format=audio.get_format_from_width(wf.getsampwidth()),
+                                channels=wf.getnchannels(),
+                                rate=wf.getframerate(),
+                                output=True)
+            # Read data in chunks and play the audio
             data = wf.readframes(16000)
-        # Cleanup
-        stream.stop_stream()
-        stream.close()
-        audio.terminate()
+            while data:
+                stream.write(data)
+                data = wf.readframes(16000)
+            # Cleanup
+            stream.stop_stream()
+            stream.close()
+            audio.terminate()
+    except:
+        return "invalid audio data", "invalid audio data"
     return "", "audio played"
 
 ########## speech recognize 
@@ -170,6 +180,33 @@ def recognize_speech(env, base64_audio):
         message = f"Speech Recognition canceled: {cancellation_details.reason}"
         print(message)
         return message,message
+
+###### generate speech
+def text_to_speech(env,text):
+    # Create an instance of a speech config with specified API key and region
+    speech_config = speechsdk.SpeechConfig(subscription=azure_speech_key, region=azure_service_region)
+    # Set the voice for the output (optional, default is US English)
+    speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
+    #audio_config = speechsdk.audio.AudioOutputConfig()
+    # Create a speech synthesizer without specifying a default speaker
+    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config,audio_config=None)
+    # Synthesize the given text
+    result = speech_synthesizer.speak_text_async(text).get()
+        # Check if the synthesis is successful
+    if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+        audio_base64 = base64.b64encode(result.audio_data).decode('utf-8')
+        return audio_base64,"Text converted to speech"
+    elif result.reason == speechsdk.ResultReason.Canceled:
+        cancellation_details = result.cancellation_details
+        print(f"Speech synthesis canceled: {cancellation_details.reason}")
+        if cancellation_details.reason == speechsdk.CancellationReason.Error:
+            print(f"Error details: {cancellation_details.error_details}")
+            return "", "Speech generation cancelled : "+cancellation_details.error_details
+        else:
+            return "", "Speech generation cancelled : "+cancellation_details.reason
+    else:
+        return "", "Speech generation not done"
+
 
 
 ########## capture image
@@ -255,7 +292,7 @@ def recognize_face(env, base64_image):
 
     
 #################################### describe external function set ###############################
-extfunctionset = {"textdataread": {"description": """A function to read and collect user's or environment's responses. The response text data can be typed by the user through standard input. """,
+extfunctionset = {"textdataread": {"description": """A function to read and collect user's responses. The response text data can be typed by the user through standard input. """,
                      "function": textdataread,
                      "input": " It has one input port that should take a text message that needs to be displayed to the user. ",
                      "output": "Returns the text data that user has given as input.",
@@ -321,4 +358,10 @@ extfunctionset = {"textdataread": {"description": """A function to read and coll
                      "output": "Returns recongnized name of the person",
                      "type": {'fun':{'i':['text'],'o':['text']}},
                      "args":1},
+                     "text_to_speech":   {"description": """A function to convert text to speech""",
+                     "function": text_to_speech,
+                     "input": "One input, text that needs to be spoken",
+                     "output": "Returns speech audio in base64 format",
+                     "type": {'fun':{'i':['text'],'o':['text']}},
+                     "args":1}
                      }
