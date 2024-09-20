@@ -333,10 +333,10 @@ def critique (env,terminalnode):
     if env.graph["nodes"][terminalnode]["R"] == 0.0000001:
         env.graph["nodes"][terminalnode]["R"] = output["feedback"] ## set the reward
     else:
-        env.graph["nodes"][terminalnode]["R"] = env.graph["nodes"][terminalnode]["R"]*0.3+ output["feedback"]*0.7
+        env.graph["nodes"][terminalnode]["R"] = env.graph["nodes"][terminalnode]["R"]+ output["feedback"]
     pg.updatevalue(env,terminalnode,True)
     
-    return env.graph["nodes"][terminalnode]["R"]
+    return output["feedback"]
     
     
 def belieflearner(env):

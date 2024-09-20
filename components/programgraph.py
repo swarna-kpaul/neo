@@ -47,9 +47,14 @@ def updateproceduremem(env,terminalnode):
 
 ############ fetch relevant subprograms from procedural memory #################    
 def getrelevantnodes(env, query, top_k = 1,C=C,K=K,X=X):
+    listofallvalues = [node["V"] for k,node in graph["nodes"].items()]
+    minV = min(listofallvalues)
+    normV = max(listofallvalues) - min(listofallvalues)
+    if normV == 0:
+       normV = 1 
     nodeembeddings = env.LTM.get(query, memorytype = "procedural", cutoffscore = 0.1, top_k = 10)   
     nodevalues = {i[1]["id"] : [env.graph["nodes"][i[1]["id"]]["V"],env.graph["nodes"][i[1]["id"]]["EXPF"], i[0]] for i in nodeembeddings}
-    nodevalues = [[k,X*v[0]+C*v[1]+K*v[2]]  for k,v in nodevalues.items()]
+    nodevalues = [[k,X*(v[0]-minV)/normV+C*v[1]+K*v[2]]  for k,v in nodevalues.items()]
     relevantnodes = sorted(nodevalues, key=lambda item: item[1], reverse=True)[:top_k] 
     return relevantnodes
     
@@ -109,7 +114,7 @@ def fetchenvtrace(env,terminalnode,envtrace = [], nodestraversed = []):
 
 ############# Update node values #####################
 
-def updatevalue(env,terminalnode,finalnode = False):
+def _updatevalue(env,terminalnode):
     graph = env.graph
     #graph["nodes"][terminalnode]["R"] = reward
     if graph["nodes"][terminalnode]["nm"] != "iW" and terminalnode in graph['edges']:
@@ -118,7 +123,7 @@ def updatevalue(env,terminalnode,finalnode = False):
         parentvalues = []
         N = 0
         for port,parent_label in parentnodes.items(): 
-            updatevalue(env, parent_label, False)
+            _updatevalue(env, parent_label, False)
             N += graph["nodes"][parent_label]["N"]
             parentvalues.append( graph["nodes"][parent_label]["V"])
         allchildvalues = [graph["nodes"][k]["V"] for k,v in graph["edges"].items() if terminalnode in v.values()]
@@ -129,6 +134,10 @@ def updatevalue(env,terminalnode,finalnode = False):
             
         graph["nodes"][terminalnode]["V"] = gamma*avgvalue + graph["nodes"][terminalnode]["R"] #/rewardpenalty   
         graph["nodes"][terminalnode]["EXPF"] = math.sqrt(math.log(N)/graph["nodes"][terminalnode]["N"])
+
+def updatevalue(env,terminalnode):
+    for i in range(100):
+        _updatevalue(env,terminalnode)
 
 
 ############# Update node values #####################
