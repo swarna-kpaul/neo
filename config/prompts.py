@@ -42,6 +42,15 @@
 
 #The action plan should get positive feedback from the critique in long term and meet the objective in the environment. From the action plan history if there is no progress observed in meeting the objective or gets negative feedback, the plan needs to be changed. If some actions are invalid in the plan then change the actions.
 
+textsimilaritytemplate = """System: You are a text similarity checker.
+Give the output in strictly following format
+{{"result": <True or False (python boolean value).>}}
+
+User: Are the following two objective same?
+objective 1: {text1}
+objective 2: {text2}
+"""
+SIMILARITYVARIABLES = ["text1","text2"]
 
 subtasktemplate = """System: You need to break a large complex task into multiple sequential sutasks. 
 Try to break the task into atomic tasks and keep the number of subtasks as minimum as possible. 

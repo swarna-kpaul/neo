@@ -34,9 +34,9 @@ CODEERRORPROMPT = PromptTemplate(input_variables=CODEERRORVARIABLES, template=co
 #PLANEQUIVALENCEPROMPT = PromptTemplate(input_variables=PLANEQVVARIABLES, template=planequivalencetemplate)
 SUMMARIZEPROMPT = PromptTemplate(input_variables=SUMMARIZEVARIABLES, template=summarizetext)
 SUBTASKPROMPT = PromptTemplate(input_variables=SUBTASKVARIABLES, template=subtasktemplate)
+TEXTSIMILARITYPROMPT = PromptTemplate(input_variables=SIMILARITYVARIABLES, template=textsimilaritytemplate)
 
-
-def get_embeddings(text,model="text-embedding-3-small"):
+def get_embeddings(text,model="text-embedding-3-large"):
     response = client.embeddings.create(input = [text], model=model).data[0].embedding
     return response
     

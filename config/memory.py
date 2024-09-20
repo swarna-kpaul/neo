@@ -13,7 +13,7 @@ import uuid
 
 class LTM():  ######### longterm memory - 3 types of memory semantic, episodic and procedural
     def __init__ (self):
-        self.memory = {"semantic":{},"episodic": {},"procedural":{}, "externalactions":{}} #record structure --> {id : {"embedding":, "data":} }
+        self.memory = {"semantic":{},"episodic": {},"procedural":{}, "externalactions":{}, "solvedtasks":{}} #record structure --> {id : {"embedding":, "data":} }
         #self.index = pinecone.GRPCIndex(INDEX_NAME)
         #self.dbtype = dbtype
     

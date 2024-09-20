@@ -12,7 +12,7 @@ MAXERRORRETRYCOUNT = 2
 
 
 
-def rootsolver(env,task = "",storeenvfile="c:/neo/data/env.pickle",loadenvfile= "c:/neo/data/env.pickle"):
+def rootsolver(env,task = "",storeenvfile="c:/neo/data/env.pickle",loadenvfile= None):
     if loadenvfile != None:
         with open(loadenvfile,'rb') as file:
             env = pickle.load(file)
@@ -56,37 +56,59 @@ def solver(env,tries = 1000000):
     ltm = env.LTM
     objsummary = summarize(". ".join(env.environment["objective"]["subtasks"])+" "+env.environment["objective"]["task"]+"\n"+env.environment["prior axioms" ])
     env.STM.set("summaryobjective",objsummary)
+    ### get solved tasks
+    memory = env.LTM.get(objsummary, memorytype = "solvedtasks", cutoffscore = 0.80 ,top_k=1)
+    if memory:
+        ########## check for exact similarity
+        obj2 = memory[0][1]["data"]["task"]
+        messages = TEXTSIMILARITYPROMPT.format(text1 = objsummary, text2 = obj2)
+        while True:
+            try:
+                output = llm_gpt4o.predict(messages)
+                print("similarity check",output)
+                output = extractdictfromtext(output)
+                break
+            except Exception as e:
+                print("Error : ",traceback.format_exc())
+            #codeerror = str(e)
+                pass
+        if output["result"]: 
+        ############ objectives are same
+            terminalnode = memory[0][1]["data"]["terminalnode"]
+            code = "solved = True"
+            print("summaryobjective",objsummary)
+            print("Fetched from solved task", memory[0][0], memory[0][1]["data"])
+            
+            output,terminalnode,return_status = execcode(code,env,terminalnode)
+            if return_status == 0:
+                reward = critique(env,terminalnode)
+                if reward > SOLVEDVALUE:
+                    if memory[0][0] < 0.90:
+                    ######### for low similarity create new solved task
+                        env.LTM.set(text = objsummary, data = {"task": objsummary, "terminalnode": terminalnode}, recordid=str(uuid.uuid4()), memorytype = "solvedtasks")                
+                    print("SOLVED")
+                    return 1
+    
+    ############ Task not  solved            
     
     for trie in range(tries):
-        #actionplan,relevantnodeid,programdesc = generateplan(env )
-        #relevantnodeid, programdesc = pg.getprogramto_extend(env,objective+"\n"+axioms)
-        #env.STM.set("relevantprogramdesc", programdesc)
-        #env.STM.set("relevantprogramdesc", programdesc)
-        #relevantnodes = env.STM.set("relevantnodes", )
-        # relevantnodes = pg.getrelevantnodes(env, env.environment["objective"] +"\n"+ env.environment["prior axioms" ])
-        # if relevantnodes:
-            # print("node val", env.graph["nodes"][relevantnodes[0][0]]["V"])
-            # if env.graph["nodes"][relevantnodes[0][0]]["V"] > SOLVEDVALUE:
-                # terminalnode = relevantnodes[0][0]
-                # code = "terminalnode = "+str(terminalnode)
-                # execcode(code,env,terminalnode)
-                # print("SOLVED")
-                # return 1
-            # else:
-                # output,terminalnode = generatecode(env)
-        # else:
-        output,terminalnode = generatecode(env)
-        #output,stm,return_status = execcode(action["program"],action["desc"],env,relevantnodeid) 
-                    
+        output,terminalnode = generatecode(env)                 
         reward = critique(env,terminalnode)
         input("press a key to continue")
         output  = belieflearner(env)
         if reward > SOLVEDVALUE:
             print("SOLVED")
+            ##### add to solved task
+            data = {"task": objsummary, "terminalnode": terminalnode}
+            env.LTM.set(text = objsummary, data = data, recordid=str(uuid.uuid4()), memorytype = "solvedtasks")
             return 1
         #env.reset()
     return 0
         
+
+
+
+
 
 
 def generateplan(env, explore = False ):

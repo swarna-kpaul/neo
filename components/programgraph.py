@@ -121,7 +121,13 @@ def updatevalue(env,terminalnode,finalnode = False):
             updatevalue(env, parent_label, False)
             N += graph["nodes"][parent_label]["N"]
             parentvalues.append( graph["nodes"][parent_label]["V"])
-        graph["nodes"][terminalnode]["V"] = gamma*max(parentvalues) + graph["nodes"][terminalnode]["R"] #/rewardpenalty   
+        allchildvalues = [graph["nodes"][k]["V"] for k,v in graph["edges"].items() if terminalnode in v.values()]
+        if allchildvalues:
+            avgvalue = (max(allchildvalues) + max(parentvalues))/2
+        else:
+            avgvalue = max(parentvalues)
+            
+        graph["nodes"][terminalnode]["V"] = gamma*avgvalue + graph["nodes"][terminalnode]["R"] #/rewardpenalty   
         graph["nodes"][terminalnode]["EXPF"] = math.sqrt(math.log(N)/graph["nodes"][terminalnode]["N"])
 
 
