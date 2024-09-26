@@ -1,6 +1,7 @@
 from combinatorlite import creategraph, createnode, addlink, worldclass, runp, node_attributes_object
 from neo.environment.bootstrapactions import ALLACTIONS, initworldbootfunctions,EXTACTIONS,primitives,getenvfeedback
 from neo.config.memory import *
+from neo.config.utilities import summarize
 import neo.components.programgraph as pg
 node_attributes_object.updateattrib({"R":0.0000001,"V":0.0000001,"EXPF":0.58,"N":1,"desc":""}) # R -> reward, V -> value, EXPF -> exploration factor
 ############ initialize environment
@@ -15,7 +16,7 @@ class bootstrapenv():
         print("ltmprocmem",ltmprocmem)
         if rewriteprocmem:
             for k,v in EXTACTIONS.items():
-                self.LTM.set(text=v,data=v,recordid=k,memorytype="externalactions")
+                self.LTM.set(text=v[0],data=v[1],recordid=k,memorytype="externalactions")
             
             with open(ltmprocmem,'wb') as file:
                 pickle.dump(self.LTM.memory["externalactions"],file)

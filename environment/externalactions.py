@@ -1,9 +1,11 @@
 import sys
 from neo.config.keys import *
+from neo.config.utilities import chatpredict
 #from neo.environment.envtemplate import *
-from langchain.utilities import BingSearchAPIWrapper
+#from langchain.utilities import BingSearchAPIWrapper
 import os
-from langchain.chat_models import ChatOpenAI
+#from langchain.chat_models import ChatOpenAI
+import requests
 import ast
 import pyaudio
 import wave
@@ -21,10 +23,42 @@ import face_recognition
 from PIL import Image
 import imageio
 
-os.environ["BING_SUBSCRIPTION_KEY"] = BING_SUBSCRIPTION_KEY
-os.environ["BING_SEARCH_URL"] = "https://api.bing.microsoft.com/v7.0/search"
-search = BingSearchAPIWrapper(k=2)
-llm_model = ChatOpenAI(temperature=0.7, request_timeout = 30,model="gpt-3.5-turbo",openai_api_key=OPENAIAPIKEY)
+class BingSearch:
+    def __init__(self, subscription_key):
+        self.subscription_key = subscription_key
+        self.search_url = "https://api.bing.microsoft.com/v7.0/search"
+
+    def search(self, query, count=2, market="en-US"):
+        """Perform a search query on Bing."""
+        headers = {
+            "Ocp-Apim-Subscription-Key": self.subscription_key
+        }
+        
+        params = {
+            "q": query,
+            "count": count
+            #"mkt": market
+        }
+        
+        response = requests.get(self.search_url, headers=headers, params=params)
+        
+        # Raise an error if the request failed
+        response.raise_for_status()
+        
+        # Return the search results as JSON
+        return response.json()
+
+    def get_results(self, query, count=2, market="en-US"):
+        """Get formatted search results."""
+        search_results = self.search(query, count, market)
+        results = []
+        
+        for result in search_results.get("webPages", {}).get("value", []):
+            results.append(result['snippet'])
+        
+        return "\n".join(results)
+bing_search = BingSearch(BING_SUBSCRIPTION_KEY)
+#llm_model = ChatOpenAI(temperature=0.7, request_timeout = 30,model="gpt-3.5-turbo",openai_api_key=OPENAIAPIKEY)
 
 
 # ################### decorator wrapper to record environment trace ###################
@@ -55,13 +89,15 @@ def textshow(env,message):
 
 ################## Ask any question to gpt #############
 def askgpt(env,question):
-    output = llm_model.predict(question)
+    print("askgpt question: ", question)
+    output = chatpredict(question)
     return output,output
 
 ################# Ask question on specific context to gpt and return output in specfic data type
 def getanswer(env,question,text,outputdatatype):
-    prompt = """System: You are an intelligent agent that can answer user questions based on the given context. Give to the point exact answer. THE OUTPUT SHOULD BE STRICTLY A PYTHON"""+outputdatatype.upper()+""" FORMAT. Incase the output is not a"""+outputdatatype.upper()+""" return NAN \n\n context:\n"""+text+"""\nAnswer the following question from the above context without considering any other prior information.\nuser: \n"""+question
-    output = llm_model.predict(prompt)
+    systemprompt = """You are an intelligent agent that can answer user questions based on the given context. Give to the point exact answer. THE OUTPUT SHOULD BE STRICTLY A PYTHON"""+outputdatatype.upper()+""" FORMAT. Incase the output is not a"""+outputdatatype.upper()+""" return NAN \n\n context:\n"""+text+"""\nAnswer the following question from the above context without considering any other prior information."""
+    userprompt = question
+    output = chatpredict(systemprompt,userprompt)
     if output == "NAN":
         return "","No output"
     elif outputdatatype in ["number","boolean","list","dictionary"]:
@@ -71,7 +107,9 @@ def getanswer(env,question,text,outputdatatype):
 
 ################## Search a string in bing and get answer #######################
 def bingsearch(env,text):
-    output = search.run(text)
+
+    output = bing_search.get_results(text, count=2)
+    print("text bingsearched.. ")
     return output, "Here is the search result: "+output
 
 
@@ -93,7 +131,7 @@ def record_until_silence(env,dummy):
         #reduced_noise = nr.reduce_noise(y=data, sr=RATE)
         #data = reduced_noise.tobytes()
         frames.append(data)
-        print("chunk avg",np.max(np.frombuffer(data, dtype=np.int16)))
+        print("audio signal strength:",np.max(np.frombuffer(data, dtype=np.int16)))
         if np.max(np.frombuffer(data, dtype=np.int16)) < THRESHOLD: ## check silence
             silent_chunks += 1
             if silent_chunks > 3:  # If silence is detected for consecutive chunks, stop recording
@@ -169,7 +207,7 @@ def recognize_speech(env, base64_audio):
     result = speech_recognizer.recognize_once()
     # Check the result
     if result.reason == ResultReason.RecognizedSpeech:
-        print(f" Speecch Recognized: {result.text}")
+        print(" Speecch Recognized ")
         return result.text, f"Speech Recognized: {result.text}"
     elif result.reason == ResultReason.NoMatch:
         message = "No speech could be recognized"
@@ -246,7 +284,7 @@ def describe_image(env,base64_image):
         # Get the top caption and confidence score
         for caption in description_results.captions:
             print(f"Image Description: {caption.text}, Confidence: {caption.confidence:.2f}")
-        return caption.text,caption.text
+            return caption.text,caption.text
     else:
         print("No description detected.")
         return "No description detected.","No description detected."
@@ -292,15 +330,15 @@ def recognize_face(env, base64_image):
 
     
 #################################### describe external function set ###############################
-extfunctionset = {"textdataread": {"description": """A function to read and collect user's responses. The response text data can be typed by the user through standard input. """,
+extfunctionset = {"textdataread": {"description": """A function to read text data that should be typed by the user through standard input. """,
                      "function": textdataread,
                      "input": " It has one input port that should take a text message that needs to be displayed to the user. ",
-                     "output": "Returns the text data that user has given as input.",
+                     "output": "Returns the text data that user has typed.",
                      "args": 1,
                      "type": {'fun':{'i':['any'],'o':['text']}}},
-                  "textshow": {"description": "A function (named textshow) to display a message to the user on standard output. It takes the message to be displayed as parameter. ",
+                  "textshow": {"description": "A function to display a message to the user on standard output.",
                      "function": textshow,
-                     "input": "It has one input port that takes a text message that should be displayed to the user. ",
+                     "input": "One input port that takes a text message that should be displayed to the user. ",
                      "output": "Returns a text that states required message has been displayed.",
                      "type": {'fun':{'i':['any'],'o':['any']}},
                      "args": 1},
@@ -316,52 +354,52 @@ extfunctionset = {"textdataread": {"description": """A function to read and coll
                      "output": "Returns search result in plaintext.",
                      "type": {'fun':{'i':['any'],'o':['text']}},
                      "args":1},
-                   "getanswer":   {"description": """A function (named getanswer) to get precise answer to a question based on a given text. The answer is given in the expected datatype. The output datatype can be number, boolean, list, dictionary and text. For getting a structured answer for a question on a given context use this function""",
+                   "getanswer":   {"description": """Get precise answer to a question based on a given text. The answer is given in the expected datatype. The output datatype can be number, boolean, list, dictionary and text. For getting a structured answer for a question on a given context use this function""",
                      "function": getanswer,
                      "input": "It has 3 input port that takes 3 input. the original question, a text from where the original question needs to be answered and an expected output data type. ",
                      "output": "Returns the answer in the expected output datatype.",
                      "type": {'fun':{'i':['text','text','text'],'o':['text']}},
                      "args":3},
-                   "record_until_silence":   {"description": """A function to record audio from microphone until there is a silence for 3 seconds.""",
+                   "record_until_silence":   {"description": """Record audio from microphone until there is a silence for 3 seconds.""",
                      "function": record_until_silence,
-                     "input": "One input, can be anything",
-                     "output": "Returns recorded audio in base64 encoded wav format",
+                     "input": "Takes One input, can be anything.",
+                     "output": "Returns recorded audio in base64 encoded wav format.",
                      "type": {'fun':{'i':['any'],'o':['text']}},
                      "args":1},
-                    "play_base64_audio":   {"description": """A function to play audio.""",
+                    "play_base64_audio":   {"description": """plays audio.""",
                      "function": play_base64_audio,
-                     "input": "One input, base64 encoded audio data",
-                     "output": "Returns blank string",
+                     "input": "Takes 1 input, base64 encoded audio data.",
+                     "output": "Returns blank string.",
                      "type": {'fun':{'i':['text'],'o':['text']}},
                      "args":1},
-                     "recognize_speech":   {"description": """A function to convert speech to text.""",
+                     "recognize_speech":   {"description": """convert speech to text.""",
                      "function": recognize_speech,
-                     "input": "One input, base64 encoded audio data containing speech",
-                     "output": "Returns recognized text",
+                     "input": "Takes 1 input, base64 encoded audio data containing speech.",
+                     "output": "Returns recognized text.",
                      "type": {'fun':{'i':['text'],'o':['text']}},
                      "args":1},
-                     "capture_image":   {"description": """A function to capture image with webcam.""",
+                     "capture_image":   {"description": """capture image with webcam.""",
                      "function": capture_image,
-                     "input": "One input, can be anything",
-                     "output": "Returns captured image in base64 format",
+                     "input": "takes 1 input, can be anything.",
+                     "output": "Returns captured image in base64 format.",
                      "type": {'fun':{'i':['any'],'o':['text']}},
                      "args":1},
-                     "remember_face":   {"description": """A function to remember a face in an image. The remembered face can be used to recognize a person in future""",
+                     "remember_face":   {"description": """Remember a face in an image. The remembered face can be used to recognize a person in future.""",
                      "function": remember_face,
-                     "input": "Two input, first is name of the person and second is base64 encoded image of the face of that person",
-                     "output": "Returns blank text",
+                     "input": "Takes 2 input, first is name of the person and second is base64 encoded image of the face of that person.",
+                     "output": "Returns blank text.",
                      "type": {'fun':{'i':['text','text'],'o':['text']}},
                      "args":2},
-                     "recognize_face":   {"description": """A function to recognize a face in an image from a stored database of remembered faces""",
+                     "recognize_face":   {"description": """Recognize a face in an image from a stored database of remembered faces.""",
                      "function": recognize_face,
-                     "input": "One input, base64 encoded image of the face of a person",
-                     "output": "Returns recongnized name of the person",
+                     "input": "Takes 1 input, base64 encoded image of the face of a person.",
+                     "output": "Returns recongnized name of the person.",
                      "type": {'fun':{'i':['text'],'o':['text']}},
                      "args":1},
-                     "text_to_speech":   {"description": """A function to convert text to speech""",
+                     "text_to_speech":   {"description": """Convert text to speech.""",
                      "function": text_to_speech,
-                     "input": "One input, text that needs to be spoken",
-                     "output": "Returns speech audio in base64 format",
+                     "input": "Takes 1 input, text that needs to be spoken.",
+                     "output": "Returns speech audio in base64 format.",
                      "type": {'fun':{'i':['text'],'o':['text']}},
                      "args":1}
                      }

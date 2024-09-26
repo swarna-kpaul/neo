@@ -47,7 +47,7 @@ def updateproceduremem(env,terminalnode):
 
 ############ fetch relevant subprograms from procedural memory #################    
 def getrelevantnodes(env, query, top_k = 1,C=C,K=K,X=X):
-    listofallvalues = [node["V"] for k,node in graph["nodes"].items()]
+    listofallvalues = [node["V"] for k,node in env.graph["nodes"].items()]
     minV = min(listofallvalues)
     normV = max(listofallvalues) - min(listofallvalues)
     if normV == 0:
@@ -81,7 +81,7 @@ def getprogramto_extend(env,query, subtasks):
         if relevantnode:
             if relevantnode[0][0] not in taskprogramnodeids:
                 subtaskrelevantnodes.append( graph["nodes"][relevantnode[0][0]]["desc"] +"; node id -> "+str(relevantnode[0][0]))   
-    subtaskrelevantnodes = "\n".join(subtaskrelevantnodes)
+    subtaskrelevantnodes = "\n".join(list(set(subtaskrelevantnodes)))
     
     programdesc = [desc+"; node id -> "+str(idx) for desc,idx in programdesc]
     programdesc =  '\n'.join(programdesc)
@@ -123,7 +123,7 @@ def _updatevalue(env,terminalnode):
         parentvalues = []
         N = 0
         for port,parent_label in parentnodes.items(): 
-            _updatevalue(env, parent_label, False)
+            _updatevalue(env, parent_label)
             N += graph["nodes"][parent_label]["N"]
             parentvalues.append( graph["nodes"][parent_label]["V"])
         allchildvalues = [graph["nodes"][k]["V"] for k,v in graph["edges"].items() if terminalnode in v.values()]
@@ -242,7 +242,7 @@ def execprogram(env,prevterminalnode, code):
         exec_namespace = globals()
         exec_namespace["graph"] =  graph
         exec(code,exec_namespace)
-        #graph = exec_namespace.get("graph", None)
+        terminalnode = exec_namespace.get("terminalnode", None)
         #terminalnode = list(graph["terminalnodes"].keys())[0]
     except Exception as e:
         tb = traceback.format_exc().splitlines()
@@ -254,11 +254,12 @@ def execprogram(env,prevterminalnode, code):
          
     ################ check FGPM correctness
     #namespace = globals()
-    terminalnodes = list(graph["terminalnodes"].keys())
-    if terminalnodes:
-        terminalnode = terminalnodes[0]
-    else:
-        terminalnode = prevterminalnode
+    if terminalnode == None:
+        terminalnodes = list(graph["terminalnodes"].keys())
+        if terminalnodes:
+            terminalnode = terminalnodes[0]
+        else:
+            terminalnode = prevterminalnode
     
     status, errormsg = checkcorrectness(graph,prevterminalnode, terminalnode,env.initnode, code, exec_namespace)
     if status == 1:
@@ -268,23 +269,26 @@ def execprogram(env,prevterminalnode, code):
      ########## execute graph
     exec_namespace["graph"] =  env.graph
     exec(code,exec_namespace)
+    terminalnode = exec_namespace.get("terminalnode", None)
     ############ get terminalnode
-    terminalnodes = list(env.graph["terminalnodes"].keys())
     allvariablenames = extract_variable_names(code)
-    terminalnode = prevterminalnode
-    for _terminalnode in terminalnodes:
-        if check_variables_in_globals(allvariablenames, _terminalnode,exec_namespace):
-            terminalnode = _terminalnode
-            break
+    if terminalnode == None:
+        terminalnodes = list(env.graph["terminalnodes"].keys())
+        terminalnode = prevterminalnode
+        for _terminalnode in terminalnodes:
+            if check_variables_in_globals(allvariablenames, _terminalnode,exec_namespace):
+                terminalnode = _terminalnode
+                break
     #terminalnode = exec_namespace.get("terminalnode", None)
      
     ########## set data as blank for the executing subgraph
-    resetdata(env.graph,terminalnode)
+    if env.STM.get("resetdataflag"):
+        resetdata(env.graph,terminalnode)
     try:
         output = runp(terminalnode,env.graph)
         updateN(env,terminalnode)
     except combinatorruntimeerror as e:
-        print(traceback.format_exc())
+        print("Error in running the program: ",traceback.format_exc())
         errornode = e.error[0]["nodeid"]
         env.graph["nodes"][errornode]["es"] = 4 
         setfailurenode(env.graph, terminalnode)         

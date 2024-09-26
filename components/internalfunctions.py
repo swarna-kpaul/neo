@@ -12,30 +12,43 @@ MAXERRORRETRYCOUNT = 2
 
 
 
-def rootsolver(env,task = "",storeenvfile="c:/neo/data/env.pickle",loadenvfile= None):
+def rootsolver(env,task = "",storeenvfile="c:/neo/data/env.pickle",loadenvfile= "c:/neo/data/env.pickle"):
     if loadenvfile != None:
         with open(loadenvfile,'rb') as file:
             env = pickle.load(file)
+            pg.current_node_label_obj.set_node_label(max(list(env.graph["nodes"].keys()))+1)
+            for terminalnode in list(env.graph["terminalnodes"].keys()):
+                pg.resetdata(env.graph,terminalnode)
     env.environment["objective"] = {"task":task,"subtasks":[]}
+    ######
+    
     if env.inprogresssubtasks: ### solving subtasks in progress
         subtasks = pickle.loads(pickle.dumps(env.inprogresssubtasks,-1))
     else:
+        ############# check for solved tasks 
+        objsummary = summarize(". ".join(env.environment["objective"]["subtasks"])+" "+env.environment["objective"]["task"]+"\n"+env.environment["prior axioms" ])
+        terminalnode = getsolvedtasks(env,objsummary)
+        if terminalnode:
+            return 
         subtasks = subtaskbreaker(env,task)
         env.inprogresssubtasks = pickle.loads(pickle.dumps(subtasks,-1))
         
     rootobjective = env.environment["objective"]
-    #print("Subtasks",subtasks)
-    input()
     for subtask in subtasks:
         x = env.inprogresssubtasks.pop(0)
         env.environment["objective"] = subtask#["desc"]
-        solver(env)
+        env.STM.set("resetdataflag",False)
+        terminalnode = solver(env,storeenvfile)
         if storeenvfile != None:
             with open(storeenvfile,"wb") as file:
                 pickle.dump(env, file)
+    objsummary = summarize(rootobjective["task"] +"\n" +env.environment["prior axioms"])
+    env.LTM.set(text = objsummary, data = {"task": objsummary, "terminalnode": terminalnode}, recordid=str(uuid.uuid4()), memorytype = "solvedtasks")
     env.environment["objective"]["task"] = rootobjective["task"]
     env.environment["objective"]["subtasks"] =  []#[subtask["task"] for id,subtask in subtasks.items()]
     if len(subtasks) > 1:
+       print("Finally solving root task:",rootobjective["task"])
+       env.STM.set("resetdataflag",True)
        if solver(env,tries=3):
            print("END ROOTSOLVER")
            if storeenvfile != None:
@@ -49,23 +62,19 @@ def interactwithuser(env,role="You are a arithmetic problem solver"):
         env.environment["prior axioms"] = role
         rootsolver(env,inputtext)
 
-        
 
-def solver(env,tries = 1000000):
-    stm = env.STM
-    ltm = env.LTM
-    objsummary = summarize(". ".join(env.environment["objective"]["subtasks"])+" "+env.environment["objective"]["task"]+"\n"+env.environment["prior axioms" ])
-    env.STM.set("summaryobjective",objsummary)
-    ### get solved tasks
-    memory = env.LTM.get(objsummary, memorytype = "solvedtasks", cutoffscore = 0.80 ,top_k=1)
+def getsolvedtasks(env,objsummary):
+    #objsummary = env.STM.get("summaryobjective")
+    memory = env.LTM.get(objsummary, memorytype = "solvedtasks", cutoffscore = 0.90 ,top_k=1)
     if memory:
         ########## check for exact similarity
         obj2 = memory[0][1]["data"]["task"]
-        messages = TEXTSIMILARITYPROMPT.format(text1 = objsummary, text2 = obj2)
+        systemmessage = textsimilaritysystemtemplate
+        usermessage = textsimilarityusertemplate.format(text1 = objsummary, text2 = obj2)
         while True:
             try:
-                output = llm_gpt4o.predict(messages)
-                print("similarity check",output)
+                output = chatpredict(systemmessage,usermessage)
+                #print("similarity check",output)
                 output = extractdictfromtext(output)
                 break
             except Exception as e:
@@ -76,123 +85,79 @@ def solver(env,tries = 1000000):
         ############ objectives are same
             terminalnode = memory[0][1]["data"]["terminalnode"]
             code = "solved = True"
-            print("summaryobjective",objsummary)
-            print("Fetched from solved task", memory[0][0], memory[0][1]["data"])
+            print("Similar task fetched from list of already solved tasks...")
+            #print("summaryobjective",objsummary)
+            #print("Fetched from solved task", memory[0][0], memory[0][1]["data"])
             
             output,terminalnode,return_status = execcode(code,env,terminalnode)
             if return_status == 0:
                 reward = critique(env,terminalnode)
                 if reward > SOLVEDVALUE:
-                    if memory[0][0] < 0.90:
+                    if memory[0][0] < 0.95:
                     ######### for low similarity create new solved task
                         env.LTM.set(text = objsummary, data = {"task": objsummary, "terminalnode": terminalnode}, recordid=str(uuid.uuid4()), memorytype = "solvedtasks")                
-                    print("SOLVED")
-                    return 1
-    
+                    print("Task "+env.environment["objective"]["task"]+" SOLVED")
+                    return terminalnode
+                    
+    return False
+
+        
+
+def solver(env,storeenvfile=None,tries = 1000000):
+    stm = env.STM
+    ltm = env.LTM
+    env.STM.set("critique", {"feedback":0,"reason":""})
+    objsummary = summarize(". ".join(env.environment["objective"]["subtasks"])+" "+env.environment["objective"]["task"]+"\n"+env.environment["prior axioms" ])
+    env.STM.set("summaryobjective",objsummary)
+    ### get solved tasks
+    terminalnode = getsolvedtasks(env,objsummary)
+    if terminalnode:
+        return terminalnode
     ############ Task not  solved            
     
     for trie in range(tries):
-        output,terminalnode = generatecode(env)                 
+        print("Solving task:",env.environment["objective"]["task"])
+        output,terminalnode = generatecode(env)          
         reward = critique(env,terminalnode)
         input("press a key to continue")
         output  = belieflearner(env)
+        if storeenvfile != None:
+            with open(storeenvfile,"wb") as file:
+                pickle.dump(env, file)
         if reward > SOLVEDVALUE:
-            print("SOLVED")
+            print("Task "+env.environment["objective"]["task"]+" SOLVED")
             ##### add to solved task
             data = {"task": objsummary, "terminalnode": terminalnode}
             env.LTM.set(text = objsummary, data = data, recordid=str(uuid.uuid4()), memorytype = "solvedtasks")
-            return 1
+            return terminalnode
         #env.reset()
     return 0
         
 
-
-
-
-
-
-def generateplan(env, explore = False ):
-    environment = env.environment
-    
-    relatedactionlist = env.STM.get("relevantactions")
-    relatedactionlist = [ "moduleid : " +k+"; description : "+ v for k,v in relatedactionlist.items()]
-    ######## fetch relevant node
-    relevantnodeid, programdesc = pg.getprogramto_extend(env,environment["objective"]+environment["prior axioms"])
-    ######## fetch envtrace
-    if relevantnodeid:
-        envtrace = pg.fetchenvtrace(env,relevantnodeid)
-    else:
-        envtrace = ""
-        relevantnodeid = env.initnode
-    #envtrace = env.STM.get("envtrace")
-    #critique = env.STM.get("critique")
-    #additionalinstructions,preactionppath = getinstructionfromSP(STM)#STM.get("additionalinstructions")
-    query = "Objective: \n"+environment["objective"]+"\n Partial plan to meet the objective: \n"+ programdesc
-    memory = env.LTM.get(query, memorytype = "semantic", cutoffscore = 0.2 ,top_k=5)
-    
-    beliefaxioms = "\n".join([i[1]["data"] for i in memory])
-    actionplanexamples = environment["examples"]
-    #if  item == "explore":
-    #    currentenvironment["objective"] = currentenvironment["exploreobjective"]
-        #self.env.totalexplore += 1
-    environmenttext = "    objective: \n" + environment["objective"] +"\n\n"+" prior axioms: \n"+environment["prior axioms"]+"\n\n"+ "     belief axioms:\n"+beliefaxioms+"\n\n"
-    if envtrace:
-       envtrace_text = "\n".join(["action: "+i["action"]+"; observation: "+i["observation"] for i in envtrace])
-    else:
-       envtrace_text = ""
-    errorfeedback = ""#self.stm.get("errorfeedback")
-    trial = 0
-    while True:
-    ###### try until correct plan is generated
-        if errorfeedback != "":
-            errorfeedbacktext = "Here are some action plans with feedback. Make sure to generate a valid new action plan. \n "+errorfeedback
-        else:
-            errorfeedbacktext = ""
-        messages = ACTPLANPROMPT.format(beliefenvironment = environmenttext, \
-                    programdescription = programdesc, \
-                    envtrace = envtrace_text, \
-                    relatedactions = '\n'.join(relatedactionlist), \
-                    actionplanexamples = actionplanexamples,\
-                    userpromptprefix = useractionplanmeetobjective, \
-                    errorfeedback = errorfeedback)
-        print("ACTPLANPROMPT:",messages)
-        output = llm_gpt4o.predict(messages)
-        
-        print("ACTPLANPROMPT output:",output)
-        try:
-            output = ast.literal_eval(output)
-        except Exception  as e:
-            #errorfeedback = "Here is the last actionplan generated. "+ output+ "\n But this action plan has the following error. Modify the plan to remove the error.\n"+str(e)
-            print(traceback.format_exc())
-            input("Press any key to continue...")
-            continue
-        
-        input("Press any key to continue...")
-
-        break
-
-    return output,relevantnodeid,programdesc
 
 def flatten_list(list_of_lists):
     return list(chain.from_iterable(list_of_lists))
     
 def subtaskbreaker(env,task):
     feedback = ""
+    print("Breaking into Subtasks..")
     while True:
         axioms = env.environment["prior axioms" ]   
-        messages = SUBTASKPROMPT.format(axioms = axioms, task = task+"\n"+feedback)
-        output = llm_gpt4o.predict(messages)
+        systemmessage = subtasksystemtemplate.format(axioms = axioms)
+        usermessage = subtaskusertemplate.format(task = task+"\n"+feedback)
+        output = chatpredict(systemmessage,usermessage)
         output = extractdictfromtext(output)
-        print("subtasks",output)
-        feedback = input("Provide inputs on substasks. If everything is good then don't write anything and just press enter")
+        subtasks = pickle.loads(pickle.dumps(output,-1))
+        for id, subtask in output.items():
+            subtasks[id] ={"task": subtask["task"], "subtasks": flatten_list([subtasks[i]["subtasks"] + [subtasks[i]["task"]] for i in subtask["dependencies"]])}
+        subtasks = [ v for k,v in subtasks.items()]
+        
+        print("subtasks: \n","\n".join([subtask["task"] for subtask in subtasks]))
+        feedback = input("Provide inputs on substasks. If everything is good then don't write anything and just press enter. ")
         if feedback == "":
             break
     
-    subtasks = pickle.loads(pickle.dumps(output,-1))
     
-    for id, subtask in output.items():
-        subtasks[id] ={"task": subtask["task"], "subtasks": flatten_list([subtasks[i]["subtasks"] + [subtasks[i]["task"]] for i in subtask["dependencies"]])}
-    subtasks = [ v for k,v in subtasks.items()]
     return subtasks
 
 
@@ -206,7 +171,7 @@ def generatecode(env, codeerror=""):
     learnings = "\n".join([i[1]["data"] for i in memory])
     env.STM.set("relevantbeliefs", learnings)
     #axioms += "\n"+learnings
-    relevantextactions = env.LTM.get(query = env.environment["objective"]["task"]+"\n"+summarize(env.environment["prior axioms" ]+"\n"+learnings), memorytype ="externalactions", cutoffscore =0.3, top_k=5)
+    relevantextactions = env.LTM.get(query = env.environment["objective"]["task"]+"\n", memorytype ="externalactions", cutoffscore =0.1, top_k=7)
     relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
     env.STM.set("relevantactions",relevantextactions)
     
@@ -221,43 +186,48 @@ def generatecode(env, codeerror=""):
     ######## fetch relevant actions
     relevantfunctions = env.STM.get("relevantactions") #env.LTM.get(objective+"\n"+axioms,"externalactions",top_k=5)
     relevantfunctionstext = "\n".join([k+" -> "+v for k,v in relevantfunctions.items()])
-    relevantfunctionstext +=  "\n".join([k+" -> "+v for k,v in env.primitives.items()])                       
+    relevantfunctionstext +="\n"+"\n".join([k+" -> "+v for k,v in env.primitives.items()])                       
     
     retrycount = 0
     while True:
-        input("press a key to continue... ")
+        #input("press a key to continue... ")
+        print("Generating code...")
         if retrycount > MAXERRORRETRYCOUNT:
             codeerror = ""
             retrycount = 0
         subtaskpromptprefix = "Following are the dependent subtasks already completed: \n"
         objectiveprefix = "Now complete the following objective:\n"
-        messages = ACTORPROMPT.format(functions = relevantfunctionstext, \
+        systemmessage = actortsystemtemplate.format(functions = relevantfunctionstext, \
                     axioms = axioms, \
                     learnings = learnings, \
                     programdescription = programdesc,\
                     helpernodes = helpernodesdesc, \
                     terminalnode = relevantnodeid, \
-                    initialnode = env.initnode, \
+                    initialnode = env.initnode, 
                     #terminalnodedescription = env.graph["nodes"][relevantnodeid]["desc"], \
-                    objective = objectiveprefix+objective["task"], \
+                    )
+        usermessage = actorusertemplate.format(objective = objectiveprefix+objective["task"], \
                     subtasks = subtaskpromptprefix+'. '.join(objective["subtasks"]), \
                     error = codeerror)
-        print("ACTORPROMPT:",messages)
-        output = llm_gpt4o.predict(messages)
+        print("ACTORPROMPT system:",systemmessage)
+        print("ACTORPROMPT user:",usermessage)
+        output = chatpredict(systemmessage,usermessage)
         
-        print(output)
+        #print(output)
         try:
             codeerror = ""
             output = extractdictfromtext(output)
-            print("ACTOR Code:","\n".join(output["program"]))
+            print("Generated code:","\n".join(output["program"]))
             ############ validate code #######################
             
             ############ excute code ###########
             input("press a key to continue... ")
+            print("Executing code...")
             output,terminalnode,return_status = execcode("\n".join(output["program"]),env,relevantnodeid)
             if return_status != 0:
                 codeerror = output
                 print("CODERROR: ", codeerror)
+                print ("Correcting code...")
                 retrycount += 1
                 continue
             break
@@ -275,7 +245,7 @@ def execcode(code,env,relevantnodeid):
     output = None
     return_status = 0
     error = None
-    print("exec code", code)
+    #print("Executing code: ", code)
     #code += updatenodedescription(nodedesc)
     #try:
 # Create an empty namespace (dictionary) for the exec function
@@ -289,7 +259,7 @@ def execcode(code,env,relevantnodeid):
         pg.updateproceduremem(env,terminalnode)
         envtrace,_ = pg.fetchenvtrace(env,terminalnode,[],[])
         env.STM.set("envtrace",envtrace)
-        print ("ACTION EXECUTION OUTPUT", output,return_status)    
+        #print ("ACTION EXECUTION OUTPUT", output,return_status)    
     return (output,terminalnode,return_status)
  
 ###################### update failure status
@@ -319,22 +289,23 @@ def critique (env,terminalnode):
         envfeedback = "User feedback: "+envfeedback
         currentperception += "\n"+envfeedback.upper()+"\n GIVE MOST IMPORTANCE ON USER FEEDBACK. \n" 
     
-    messages = CRITIQUEPROMPT.format(beliefenvironment = str(currentenvironment_text), \
+    message = critiquesystemtemplate.format(beliefenvironment = str(currentenvironment_text), \
                     actionplan = "\n".join(progdesc), \
                     perception = currentperception)
-    print("CRITIQUEPROMPT:",messages)
-    output = llm_gpt4o_mini.predict(messages)
-    print("CRITIQUEPROMPT output:",output)
+    #print("CRITIQUEPROMPT:",messages)
+    print("Running critique...")
+    output = chatpredict(message)
+    
     #output = ast.literal_eval(output)
     output = extractdictfromtext(output)
-    
+    print("CRITIQUE output:",output)
     env.STM.set("critique", output)
     
     if env.graph["nodes"][terminalnode]["R"] == 0.0000001:
         env.graph["nodes"][terminalnode]["R"] = output["feedback"] ## set the reward
     else:
         env.graph["nodes"][terminalnode]["R"] = env.graph["nodes"][terminalnode]["R"]+ output["feedback"]
-    pg.updatevalue(env,terminalnode,True)
+    pg.updatevalue(env,terminalnode)
     
     return output["feedback"]
     
@@ -353,19 +324,22 @@ def belieflearner(env):
     for id in memoryid:
         env.LTM.delete(id,"semantic")
     ######################################################################   
-    messages = LEARNERPROMPT.format(environment = currentenvironmenttext,
-                    learnings = learningstext,
-                    EnvTrace = EnvTrace_text,
+    systemmessage = learnersystemtemplate.format(environment = currentenvironmenttext,
+                    learnings = learningstext)
+    usermessage = learnerusertemplate.format(EnvTrace = EnvTrace_text,
                     critique = critique)
         #print(messages)
-    print("LEARNERPROMPT:",messages)
-    output = llm_gpt4o.predict(messages)
-    print("LEARNERPROMPT output:",output)
+    #print("LEARNERPROMPT:",messages)
+    print("Generating Learnings..")
+    output = chatpredict(systemmessage,usermessage)
+    
     output = extractdictfromtext(output)
     learnings = output["learnings"]
+    print("Generated learnings:","\n".join(learnings))
     #currentenvironment["env"]["belief axioms"] = beliefaxioms
     for learning in learnings:
         text = "objective: "+env.STM.get("summaryobjective")+"\n learning: "+learning
         env.LTM.set(text = text, data = learning, recordid=str(uuid.uuid4()), memorytype = "semantic")
     env.STM.set("envtrace",[]) ######## reset envtrace
+    input("press any key to continue...")
     return output

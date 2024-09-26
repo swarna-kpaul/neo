@@ -1,49 +1,53 @@
 from neo.config.keys import *
 from neo.config.prompts import *
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts.prompt import PromptTemplate
+# from langchain.chat_models import ChatOpenAI
+# from langchain.prompts.prompt import PromptTemplate
 import os
 import re
 import ast
-from openai import OpenAI
+import openai
+openai.api_key = OPENAIAPIKEY
 os.environ["OPENAI_API_KEY"] = OPENAIAPIKEY
-client = OpenAI()
+client = openai.OpenAI()
 
-llm_gpt4_turbo = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4-1106-preview",openai_api_key=OPENAIAPIKEY)
-llm_model = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-3.5-turbo-1106",openai_api_key=OPENAIAPIKEY)
-llm_gpt4o = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4o",openai_api_key=OPENAIAPIKEY)
-llm_gpt4o_mini = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4o-mini",openai_api_key=OPENAIAPIKEY)
+def chatpredict(sytemmessage, usermessage = None, model = "gpt-4o", temperature = 0.5):
+    if usermessage == None:
+        messages=[
+        {"role": "system", "content": sytemmessage}
+        ]
+    else:
+        messages=[
+        {"role": "system", "content": sytemmessage},
+        {"role": "user", "content": usermessage}
+        ]      
+    response = openai.chat.completions.create(
+               model=model,  # or use "gpt-3.5-turbo"
+               temperature = temperature,
+               timeout=30,
+               messages=messages
+               )
+    return response.choices[0].message.content
 
-
-#embeddings_model = OpenAIEmbeddings(openai_api_key=OPENAIAPIKEY)
-llm_model = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-3.5-turbo-1106",openai_api_key=OPENAIAPIKEY)
-
-#llm_inst_model = OpenAI(temperature=0.7, request_timeout=50, model="gpt-3.5-turbo-instruct",openai_api_key=OPENAIAPIKEY)
-#llm_defn_model = OpenAI(temperature=0, request_timeout=50, model="gpt-3.5-turbo-instruct",openai_api_key=OPENAIAPIKEY)
-llm_0_4_model = ChatOpenAI(temperature=0.4, request_timeout=30, model="gpt-3.5-turbo",openai_api_key=OPENAIAPIKEY, verbose=True)
-llm_gpt4 = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4-0613",openai_api_key=OPENAIAPIKEY)
-llm_gpt4_turbo = ChatOpenAI(temperature=0.7, request_timeout=50, model="gpt-4-1106-preview",openai_api_key=OPENAIAPIKEY)
-llm_gpt4_turbo_hightemp = ChatOpenAI(temperature=0.8, request_timeout=50, model="gpt-4-1106-preview",openai_api_key=OPENAIAPIKEY)
-
-LEARNERPROMPT = PromptTemplate(input_variables=SEARCHERPROMPTINPUTVARIABLES, template=searchertemplate)
-ACTORPROMPT = PromptTemplate(input_variables=ACTORPROMPTINPUTVARIABLES, template=actortemplate)
-ACTPLANPROMPT = PromptTemplate(input_variables=ACTPLANPROMPTINPUTVARIABLES, template=actionplantemplate)
-CRITIQUEPROMPT = PromptTemplate(input_variables=CRITIQUEPROMPTINPUTVARIABLES, template=critiquetemplate)
-CODEEQUIVALENCEPROMPT = PromptTemplate(input_variables=CODEEQUIVALENCEVARIABLES, template=codequivalencetemplate)
-CODEERRORPROMPT = PromptTemplate(input_variables=CODEERRORVARIABLES, template=coderrortemplate)
-#PLANEQUIVALENCEPROMPT = PromptTemplate(input_variables=PLANEQVVARIABLES, template=planequivalencetemplate)
-SUMMARIZEPROMPT = PromptTemplate(input_variables=SUMMARIZEVARIABLES, template=summarizetext)
-SUBTASKPROMPT = PromptTemplate(input_variables=SUBTASKVARIABLES, template=subtasktemplate)
-TEXTSIMILARITYPROMPT = PromptTemplate(input_variables=SIMILARITYVARIABLES, template=textsimilaritytemplate)
+# LEARNERSYSTEMPROMPT = PromptTemplate(input_variables=SEARCHERPROMPTINPUTVARIABLES, template=searchertemplate)
+# ACTORPROMPT = PromptTemplate(input_variables=ACTORPROMPTINPUTVARIABLES, template=actortemplate)
+# ACTPLANPROMPT = PromptTemplate(input_variables=ACTPLANPROMPTINPUTVARIABLES, template=actionplantemplate)
+# CRITIQUEPROMPT = PromptTemplate(input_variables=CRITIQUEPROMPTINPUTVARIABLES, template=critiquetemplate)
+# CODEEQUIVALENCEPROMPT = PromptTemplate(input_variables=CODEEQUIVALENCEVARIABLES, template=codequivalencetemplate)
+# CODEERRORPROMPT = PromptTemplate(input_variables=CODEERRORVARIABLES, template=coderrortemplate)
+# #PLANEQUIVALENCEPROMPT = PromptTemplate(input_variables=PLANEQVVARIABLES, template=planequivalencetemplate)
+# SUMMARIZEPROMPT = PromptTemplate(input_variables=SUMMARIZEVARIABLES, template=summarizetext)
+# SUBTASKPROMPT = PromptTemplate(input_variables=SUBTASKVARIABLES, template=subtasktemplate)
+# TEXTSIMILARITYPROMPT = PromptTemplate(input_variables=SIMILARITYVARIABLES, template=textsimilaritytemplate)
 
 def get_embeddings(text,model="text-embedding-3-large"):
     response = client.embeddings.create(input = [text], model=model).data[0].embedding
     return response
     
 def summarize(text):
-    messages = SUMMARIZEPROMPT.format(objective = text)
-    output = llm_gpt4o_mini.predict(messages)
-    print("summaryobjective",output)
+    systemmessage = summarizesystemtext
+    usermessage = summarizeusertext.format(objective = text)
+    output = chatpredict(systemmessage,usermessage)
+    #print("Summarized text:",output)
     return output
 
 def extractdictfromtext(text):

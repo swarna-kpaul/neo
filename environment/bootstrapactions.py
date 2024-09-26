@@ -11,5 +11,6 @@ initworldbootfunctions= extfunctionset
               
 ############# Primitives to be used in prompt ########
 ALLACTIONS = pickle.loads(pickle.dumps(primitives,-1))
-EXTACTIONS = {k: v["description"]+" "+ v["input"]+" "+v["output"] for k,v in initworldbootfunctions.items()}
-ALLACTIONS.update(EXTACTIONS)
+_EXTACTIONS = {k: v["description"]+" "+ v["input"]+" "+v["output"] for k,v in initworldbootfunctions.items()}
+EXTACTIONS = {k: (v["description"],v["description"]+" "+ v["input"]+" "+v["output"]) for k,v in initworldbootfunctions.items()}
+ALLACTIONS.update(_EXTACTIONS)
