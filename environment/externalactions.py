@@ -4,6 +4,7 @@ from neo.config.utilities import chatpredict
 #from neo.environment.envtemplate import *
 #from langchain.utilities import BingSearchAPIWrapper
 import os
+import traceback
 #from langchain.chat_models import ChatOpenAI
 import requests
 import ast
@@ -19,7 +20,7 @@ from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes
 from msrest.authentication import CognitiveServicesCredentials
 import face_recognition
-
+import pickle
 from PIL import Image
 import imageio
 
@@ -266,7 +267,7 @@ def capture_image(env,dummy):
     # Close the camera
     camera.close()
     
-    return base64_image,"Image captured"
+    return image_base64,"Image captured"
 
 
 
@@ -295,7 +296,8 @@ def remember_face(env, person_name, base64_image):
     image_data = base64.b64decode(base64_image)
     image_stream = io.BytesIO(image_data)
     if os.path.exists(FACEGROUPDB):
-        facedb = pickle.load(FACEGROUPDB)
+        with open(FACEGROUPDB,'rb') as file:
+            facedb = pickle.load(file)
     else:
         facedb = []
     try:
@@ -306,7 +308,8 @@ def remember_face(env, person_name, base64_image):
             pickle.dump(facedb,file)
     except Exception as e:
         print(f"Error adding person to group: {e}")
-        return f"Error adding remembering face: {e}","Error remembering face"
+        print("Error : ",traceback.format_exc())
+        return f"Error adding remembering face: {e}","No face detected."
     return "","person face remembered"
     
 ########## recognize face

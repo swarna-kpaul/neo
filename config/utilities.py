@@ -10,7 +10,7 @@ openai.api_key = OPENAIAPIKEY
 os.environ["OPENAI_API_KEY"] = OPENAIAPIKEY
 client = openai.OpenAI()
 
-def chatpredict(sytemmessage, usermessage = None, model = "gpt-4o", temperature = 0.5):
+def chatpredict(sytemmessage, usermessage = None, model = "gpt-4.1", temperature = 0.5):
     if usermessage == None:
         messages=[
         {"role": "system", "content": sytemmessage}

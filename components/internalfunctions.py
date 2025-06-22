@@ -1,5 +1,3 @@
-#from combinatorlite import creategraph, createnode, addlink, worldclass, runp, node_attributes_object
-#from neo.environment.envtemplate import *
 import neo.components.programgraph as pg
 from neo.config.utilities import *
 import ast
@@ -12,7 +10,7 @@ MAXERRORRETRYCOUNT = 2
 
 
 
-def rootsolver(env,task = "",storeenvfile="c:/neo/data/env.pickle",loadenvfile= "c:/neo/data/env.pickle"):
+def rootsolver(env,task = "",storeenvfile=None,loadenvfile= None):
     if loadenvfile != None:
         with open(loadenvfile,'rb') as file:
             env = pickle.load(file)
@@ -29,7 +27,7 @@ def rootsolver(env,task = "",storeenvfile="c:/neo/data/env.pickle",loadenvfile= 
         objsummary = summarize(". ".join(env.environment["objective"]["subtasks"])+" "+env.environment["objective"]["task"]+"\n"+env.environment["prior axioms" ])
         terminalnode = getsolvedtasks(env,objsummary)
         if terminalnode:
-            return 
+            return terminalnode
         subtasks = subtaskbreaker(env,task)
         env.inprogresssubtasks = pickle.loads(pickle.dumps(subtasks,-1))
         
@@ -49,12 +47,13 @@ def rootsolver(env,task = "",storeenvfile="c:/neo/data/env.pickle",loadenvfile= 
     if len(subtasks) > 1:
        print("Finally solving root task:",rootobjective["task"])
        env.STM.set("resetdataflag",True)
-       if solver(env,tries=3):
+       terminalnode = solver(env,storeenvfile,tries=3)
+       if terminalnode:
            print("END ROOTSOLVER")
            if storeenvfile != None:
                with open(storeenvfile,"wb") as file:
                    pickle.dump(env, file)
-           return
+           return terminalnode
 
 def interactwithuser(env,role="You are a arithmetic problem solver"):
     while True:
@@ -74,7 +73,6 @@ def getsolvedtasks(env,objsummary):
         while True:
             try:
                 output = chatpredict(systemmessage,usermessage)
-                #print("similarity check",output)
                 output = extractdictfromtext(output)
                 break
             except Exception as e:
@@ -86,9 +84,7 @@ def getsolvedtasks(env,objsummary):
             terminalnode = memory[0][1]["data"]["terminalnode"]
             code = "solved = True"
             print("Similar task fetched from list of already solved tasks...")
-            #print("summaryobjective",objsummary)
-            #print("Fetched from solved task", memory[0][0], memory[0][1]["data"])
-            
+           
             output,terminalnode,return_status = execcode(code,env,terminalnode)
             if return_status == 0:
                 reward = critique(env,terminalnode)
@@ -141,9 +137,11 @@ def flatten_list(list_of_lists):
 def subtaskbreaker(env,task):
     feedback = ""
     print("Breaking into Subtasks..")
+    relevantextactions = env.LTM.get(query = task+"\n", memorytype ="externalactions", cutoffscore =0.1, top_k=7)
+    relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
     while True:
         axioms = env.environment["prior axioms" ]   
-        systemmessage = subtasksystemtemplate.format(axioms = axioms)
+        systemmessage = subtasksystemtemplate.format(axioms = axioms, functions = str(relevantextactions))
         usermessage = subtaskusertemplate.format(task = task+"\n"+feedback)
         output = chatpredict(systemmessage,usermessage)
         output = extractdictfromtext(output)
@@ -193,8 +191,9 @@ def generatecode(env, codeerror=""):
         #input("press a key to continue... ")
         print("Generating code...")
         if retrycount > MAXERRORRETRYCOUNT:
-            codeerror = ""
+            #codeerror = ""
             retrycount = 0
+            return "Unable to generate solution for this goal. Try redefining the goal. Here is the latest error "+codeerror, 1
         subtaskpromptprefix = "Following are the dependent subtasks already completed: \n"
         objectiveprefix = "Now complete the following objective:\n"
         systemmessage = actortsystemtemplate.format(functions = relevantfunctionstext, \
@@ -212,8 +211,8 @@ def generatecode(env, codeerror=""):
         print("ACTORPROMPT system:",systemmessage)
         print("ACTORPROMPT user:",usermessage)
         output = chatpredict(systemmessage,usermessage)
-        
-        #print(output)
+        if len(output)<50:
+            print("output",output)
         try:
             codeerror = ""
             output = extractdictfromtext(output)

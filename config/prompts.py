@@ -23,6 +23,9 @@ If the task is simple and short then you dont need to break the task instead ret
 Keep the axioms about the problem environment in consideration while breaking the task
  Axioms:
  {axioms}
+ 
+ Here are the list of available functions. Create the subtasks such that it can be solved with one or many of the available functions.
+  {functions}
 
 The output should be STRICTLY in following format.
 {{<unique integer id of a subtask> : {{ "task": "description of subtask", "dependencies": [<integer id of dependent subtasks>]}} }}
