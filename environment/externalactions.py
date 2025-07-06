@@ -372,7 +372,7 @@ extfunctionset = {"textdataread": {"description": """A function to read text dat
                      "args":1},
                    "getanswer":   {"description": """Get precise answer to a question based on a given text. The answer is given in the expected datatype. The output datatype can be number, boolean, list, dictionary and text. For getting a structured answer for a question on a given context use this function""",
                      "function": getanswer,
-                     "input": "It has 3 input port that takes 3 input. the original question, a text from where the original question needs to be answered and an expected output data type. ",
+                     "input": "It has 3 input port that takes 3 input. the original question, a text from where the original question needs to be answered and an expected output data type. output datatypes can be text,num, bool, any",
                      "output": "Returns the answer in the expected output datatype.",
                      "type": {'fun':{'i':['text','text','text'],'o':['text']}},
                      "args":3},
@@ -417,5 +417,13 @@ extfunctionset = {"textdataread": {"description": """A function to read text dat
                      "input": "Takes 1 input, text that needs to be spoken.",
                      "output": "Returns speech audio in base64 format.",
                      "type": {'fun':{'i':['text'],'o':['text']}},
+                     "args":1},
+                     "take_sci_action":   {"description": """Take an action in the scienceworld environment""",
+                     "function": take_sci_action,
+                     "input": "Takes 1 input, action text that needs to be taken.",
+                     "output": "Returns observation.",
+                     "type": {'fun':{'i':['text'],'o':['text']}},
                      "args":1}
                      }
+                     
+extfunctionset = {k:v for k,v in extfunctionset.items() if k in ["take_sci_action","getanswer"]}
