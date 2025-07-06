@@ -11,11 +11,12 @@ class world_exception(Exception):
 
 class scienv():
     def __init__(self):
-        self.env = ScienceWorldEnv(task)
+        #self.env = ScienceWorldEnv(task)
         return
     
-    def update_task(self,task = "1-1"):
+    def update_task(self,task = "1-1",objective=None):
         self.task = task
+        self.env = ScienceWorldEnv(task)
         self.totalexplore = 9
         self.MINREWARD = -100
         self.MAXREWARD = 100

@@ -1,5 +1,5 @@
 from combinatorlite import creategraph, createnode, addlink, worldclass, runp, node_attributes_object
-from neo.environment.bootstrapactions import ALLACTIONS, initworldbootfunctions,EXTACTIONS,primitives,getenvfeedback
+from neo.environment.bootstrapactions import *#ALLACTIONS, initworldbootfunctions,EXTACTIONS,primitives,getenvfeedback,
 from neo.config.memory import *
 from neo.config.utilities import summarize
 import neo.components.programgraph as pg
@@ -42,9 +42,10 @@ class bootstrapenv():
         
     def getstate(self):
         ############### derive current state from stm and ltm delta
-        state = stm.get("state")#stm.get("currentenv")['env']["belief axioms"] +"\n"+stm.get("envtrace")
+        return getenvstate(self)
+        #state = stm.get("state")#stm.get("currentenv")['env']["belief axioms"] +"\n"+stm.get("envtrace")
 
-        return state
+        #return state
         
     def getfeedback(self):
         #envtrace,_ = pg.fetchenvtrace(self,terminalnode)

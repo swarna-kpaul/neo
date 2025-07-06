@@ -173,6 +173,8 @@ def subtaskbreaker(env,task):
 def generatecode(env, codeerror=""):
     objective = env.environment["objective"]  
     axioms = env.environment["prior axioms" ]   
+    state = env.getstate()
+    axioms = f"{axioms}/nState: {state}"
     ################ fetch learnings #########################################
     query = "Objective: \n"+objective["task"]+"\n Critique recieved while solving the objective: \n"+ env.STM.get("critique")["reason"]
     memory = env.LTM.get(query, memorytype = "semantic", cutoffscore = 0.1 ,top_k=5)
