@@ -1,7 +1,7 @@
 from scienceworld import ScienceWorldEnv
 #from models.buildenvmodel import *
 from neo.environment.external_prompts import *
-from neo.config.utilities import chatpredict
+from neo.config.utilities import chatpredict, extractdictfromtext
 class world_exception(Exception):
     def __init__(self, message={}):            
         # Call the base class constructor with the parameters it needs
@@ -96,9 +96,9 @@ class scienv():
         return observation
     
     def act(self,actiontext):
-        systemmessage = actionsimilaritysystemtemp.format(action_texts = str(self.env.getPossibleActions()))
+        systemmessage = actionsimilaritysystemtemp.format(action_texts = str(self.env.getPossibleActions())+" /n where OBJ can be any from the following list/n "+ str(self.env.getPossibleObjects()))
         usermessage = actionsimilarityusertemp.format(action_text = actiontext) 
-        output = chatpredict(systemmessage,usermessage)
+        output = extractdictfromtext(chatpredict(systemmessage,usermessage))
         actiontext = output["result"]
         
         self.actiontrace.append(actiontext)
