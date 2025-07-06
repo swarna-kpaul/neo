@@ -64,10 +64,11 @@ def interactwithuser(env,role="You are a arithmetic problem solver"):
 
 def getsolvedtasks(env,objsummary):
     #objsummary = env.STM.get("summaryobjective")
-    memory = env.LTM.get(objsummary, memorytype = "solvedtasks", cutoffscore = 0.90 ,top_k=1)
+    memory = env.LTM.get(objsummary, memorytype = "solvedtasks", cutoffscore = 0.7 ,top_k=1)
     if memory:
         ########## check for exact similarity
         obj2 = memory[0][1]["data"]["task"]
+        existingrecordid = memory[0][1]["id"]
         systemmessage = textsimilaritysystemtemplate
         usermessage = textsimilarityusertemplate.format(text1 = objsummary, text2 = obj2)
         while True:
@@ -89,12 +90,21 @@ def getsolvedtasks(env,objsummary):
             if return_status == 0:
                 reward = critique(env,terminalnode)
                 if reward > SOLVEDVALUE:
-                    if memory[0][0] < 0.95:
+                    if memory[0][0] < 0.8:
                     ######### for low similarity create new solved task
                         env.LTM.set(text = objsummary, data = {"task": objsummary, "terminalnode": terminalnode}, recordid=str(uuid.uuid4()), memorytype = "solvedtasks")                
                     print("Task "+env.environment["objective"]["task"]+" SOLVED")
                     return terminalnode
-                    
+                else:
+                    ############################ udate summary as it was unable to solve this task
+                    systemmessage = updatesolvedtaskdescriptiontemplate.format(description = obj2, \
+                                      feedback = env.STM.get("critique")["reason"] 
+                                    )
+                    usermessage ="AI:"
+                    print("ACTORPROMPT system:",systemmessage)
+                    print("ACTORPROMPT user:",usermessage)
+                    output = chatpredict(systemmessage,usermessage)
+                    env.LTM.set(text = output, data = {"task": output, "terminalnode": terminalnode}, recordid=existingrecordid, memorytype = "solvedtasks")
     return False
 
         

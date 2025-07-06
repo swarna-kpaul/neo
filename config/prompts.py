@@ -141,12 +141,22 @@ Environment:
 The following is an action plan generated for the above environment.   
 Action plan:
    {actionplan}
-You need to generate a critique for the above action plan. You should provide a positive feedback if the environment response is positive and actionplan meet the environment objective in long term and the actions does not go against the prior axioms or belief axioms (only if belief axioms are not blank). Else you should provide a negative feedback. You provide a neutral feedback if you cannot determine either case. If no environment feedback is available then make the judgement based on actionplan.
+   
+You need to generate a critique for the above action plan. Obey the following rules in sequence to generate the feedback.
+   - If the environment explicity provides reward signal.
+       - then use the same as feedback normalized within -1 to 1
+   - else if the agent has followed the correct action plan and still the objective is not met due to some challenges in the environment condition itself and there is nothing that can be done from the agent perspective to meet the goal
+       - then provide a postive feedback. 
+   - else if the environment response is positive and actionplan meet the environment objective in long term and the actions does not go against the prior axioms or belief axioms (only if belief axioms are not blank)
+       - then provide a positive feedback 
+   - else if you cannot determine if positive or negative feedback needs to be given 
+       - then provide a neutral feedback
+   - else if none of the above conditions are true
+       - provide negative feedback
 
 The following response from the environment may contain the feedback signal about the action.
 Environment response:
    {perception}
-If the above response contains any feedback or reward signal then update your critique accordingly. Give more importance on environment response for updating the feedback value. If the environment response gives negative feedback then always update the feedback with negative value.
 
 The output should be in the following json format. In no case the output should deviate from the following prescribed format.
 {{"reason": <a detailed reason for the feedback based on action plan, environment response (should be given most importance), axioms (if available) and objective. This should not exceed 50 words> ,
@@ -198,3 +208,18 @@ learnerusertemplate = """Here is the action observation trace and critique. Prov
 
 LEARNERPROMPTSYSTEMVARIABLES = ["environment","learnings","EnvTrace","critique"] #, "critique"
 LEARNERPROMPTUSERVARIABLES = ["environment","learnings"]
+
+
+updatesolvedtaskdescriptiontemplate = """Update the following description of the goal that is solved by an agent based on the user feedback given. 
+Update only if there are contradictions in the description with respect to the feedback.
+Do not remove any functionality from the description about which nothing is written in the feedback
+Do not modify any functionality from the description about which somethinf is written in the feedback but it does not negatively contradicts
+output only the updated description
+
+description: 
+   {description}
+   
+feedback:
+   {feedback}
+
+"""

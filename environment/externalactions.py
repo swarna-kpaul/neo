@@ -1,6 +1,8 @@
 import sys
 from neo.config.keys import *
 from neo.config.utilities import chatpredict
+from neo.environment.sciworld import scienv_obj
+
 #from neo.environment.envtemplate import *
 #from langchain.utilities import BingSearchAPIWrapper
 import os
@@ -75,7 +77,8 @@ bing_search = BingSearch(BING_SUBSCRIPTION_KEY)
     
 #### get explicit env feedback 
 def getenvfeedback(env):
-    return input("Enter your explicit feedback if any: ")
+    return scienv_obj.getfeedback()
+    #return input("Enter your explicit feedback if any: ")
 
 
 ################## Get user text input ####################
@@ -309,7 +312,7 @@ def remember_face(env, person_name, base64_image):
     except Exception as e:
         print(f"Error adding person to group: {e}")
         print("Error : ",traceback.format_exc())
-        return f"Error adding remembering face: {e}","No face detected."
+        return "Error adding remembering face: No face detected","No face detected. May be there is no face available infront of the camera or there is not enough lighting"
     return "","person face remembered"
     
 ########## recognize face
@@ -317,8 +320,13 @@ def recognize_face(env, base64_image):
     image_data = base64.b64decode(base64_image)
     image_stream = io.BytesIO(image_data)    
     ########## recognize faces 
-    image_np = face_recognition.load_image_file(image_stream)    
-    unknown_face_encoding = face_recognition.face_encodings(image_np)[0]
+    image_np = face_recognition.load_image_file(image_stream)   
+    try:    
+        unknown_face_encoding = face_recognition.face_encodings(image_np)[0]
+    except Exception as e:
+        print(f"Error adding person to group: {e}")
+        print("Error : ",traceback.format_exc())
+        return "No face detected.","No face detected. May be there is no face available infront of the camera or there is not enough lighting"
     if os.path.exists(FACEGROUPDB):
         with open(FACEGROUPDB,'rb') as file:
             facedb = pickle.load(file)
@@ -331,6 +339,11 @@ def recognize_face(env, base64_image):
     return "","Face not recognized"
     
 
+def take_sci_action(env,action_text):
+    obs,reward = scienv_obj.act(action_text)
+    message = f"Observation: {obs} \n Reward:{str(reward)}"
+    return obs,message
+
     
 #################################### describe external function set ###############################
 extfunctionset = {"textdataread": {"description": """A function to read text data that should be typed by the user through standard input. """,
@@ -339,7 +352,7 @@ extfunctionset = {"textdataread": {"description": """A function to read text dat
                      "output": "Returns the text data that user has typed.",
                      "args": 1,
                      "type": {'fun':{'i':['any'],'o':['text']}}},
-                  "textshow": {"description": "A function to display a message to the user on standard output.",
+                  "textshow": {"description": "A function to display or print a message to the user on standard output.",
                      "function": textshow,
                      "input": "One input port that takes a text message that should be displayed to the user. ",
                      "output": "Returns a text that states required message has been displayed.",
