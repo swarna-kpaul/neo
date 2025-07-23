@@ -39,6 +39,36 @@ SUBTASKSYSTEMVARIABLES = ["axioms"]
 SUBTASKUSERVARIABLES = ["task"]
 
 
+findsubtasksystemtemplate = """You need to find the next subtask for solving a large complex task, given a set of subtasks have already been solved.
+Do not generate unnecessary, trivial and ambigous subtasks.
+Generate the subtask in such a way so that solving it makes some progress in solving the overall task.
+Do not add texts like "Subtask 1" or "step 1" etc. in the any subtask description
+
+If the task is simple and short then you dont need to break the task instead return the same task as only subtask.
+
+Keep the axioms about the problem environment in consideration while breaking the task
+ Axioms:
+ {axioms}
+ 
+ Here are the list of available functions. Create the subtasks such that it can be solved with one or many of the available functions.
+  {functions}
+
+The output should be STRICTLY in following format.
+{{<unique integer id of the subtask> : {{ "task": "description of subtask", "dependencies": [<integer id of dependent(already solved) subtasks>. This should be strictly taken from the list of already solved subtasks]}} }}
+
+"""
+findsubtaskusertemplate = """ Generate the next subtasks for the following task. DO NOT generate multiple subtasks
+ {task}
+ 
+ Here are subtasks already solved for solving this task.
+ {subtasks}
+ """
+
+
+FINDSUBTASKSYSTEMVARIABLES = ["axioms"]
+FINDSUBTASKUSERVARIABLES = ["task","subtask"]
+
+
 actortsystemtemplate = """You are a programmer in a new programming model FGPM
 
 Here are the details of programming model:
@@ -112,9 +142,11 @@ Descriptions should be added for all nodes within the above program. Whereever p
 
 actorusertemplate = """Write a program in FGPM to partially or fully meet the following objective by extending the existing program. You don't need to write the existing program. LIMIT THE PROGRAM LENGHTH ATMOST 10 LINES. IF THE FULL OBJECTIVE CANNOT BE MET WITHIN 10 LINES THEN PARTIALLY SOLVE THE OBJECTIVE IN THE BEST WAY POSSIBLE. FOCUS ON GENERATING CORRECT PROGRAM.
 
-Objective: 
-  {subtasks}
-  {objective}
+Objective: Solve the following subtask of the task. 
+  Subtask : {subtask}
+  Task: {task}
+  
+  {solvedsubtasks}
  
 {error}
 
@@ -170,6 +202,19 @@ critiqueusertemplate = """
 """
 CRITIQUEPROMPTUSERVARIABLES = []
 CRITIQUEPROMPTSYSTEMVARIABLES = ["beliefenvironment", "actionplan", "perception"]
+
+
+istasksolvedtemplate = """You determine if the complete task is solved or not based on the following subtasks
+Task : {task}
+
+Subtasks solved: {subtasks}
+You should output in the following format
+
+{{"reason": <True/False>}}
+
+"""
+
+
 
 
 learnersystemtemplate = """You are an expert assitant. You are given ACTION OBSERVATION TRACE, a sequence of actions that an agent made in a environment to accomplish a task and the perceptions it got.

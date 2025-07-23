@@ -42,10 +42,10 @@ class bootstrapenv():
         
     def getstate(self):
         ############### derive current state from stm and ltm delta
-        return getenvstate(self)
-        #state = stm.get("state")#stm.get("currentenv")['env']["belief axioms"] +"\n"+stm.get("envtrace")
+        #return getenvstate(self)
+        state = stm.get("state")#stm.get("currentenv")['env']["belief axioms"] +"\n"+stm.get("envtrace")
 
-        #return state
+        return state
         
     def getfeedback(self):
         #envtrace,_ = pg.fetchenvtrace(self,terminalnode)

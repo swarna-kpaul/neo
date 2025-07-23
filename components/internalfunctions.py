@@ -17,33 +17,44 @@ def rootsolver(env,task = "",storeenvfile=None,loadenvfile= None):
             pg.current_node_label_obj.set_node_label(max(list(env.graph["nodes"].keys()))+1)
             for terminalnode in list(env.graph["terminalnodes"].keys()):
                 pg.resetdata(env.graph,terminalnode)
-    env.environment["objective"] = {"task":task,"subtasks":[]}
+    env.environment["objective"] = {"task":task,"solvedsubtasks":{},"currentsubtask":{}}
     ######
     
-    if env.inprogresssubtasks: ### solving subtasks in progress
-        subtasks = pickle.loads(pickle.dumps(env.inprogresssubtasks,-1))
-    else:
+    # if env.solvedsubtasks: ### solving subtasks in progress
+        # solvedsubtasks = pickle.loads(pickle.dumps(env.solvedsubtasks,-1))
+        # env.environment["objective"]["solvedsubtasks"] = solvedsubtasks
+    # else:
+    if 1==1:
         ############# check for solved tasks 
-        objsummary = summarize(". ".join(env.environment["objective"]["subtasks"])+" "+env.environment["objective"]["task"]+"\n"+env.environment["prior axioms" ])
+        objsummary = summarize(". ".join(env.environment["objective"]["task"]+"\n"+env.environment["prior axioms" ]))
         terminalnode = getsolvedtasks(env,objsummary)
         if terminalnode:
             return terminalnode
-        subtasks = subtaskbreaker(env,task)
-        env.inprogresssubtasks = pickle.loads(pickle.dumps(subtasks,-1))
+        #subtasks = subtaskbreaker(env,task)
+        subtasks = findsubtask(env,task)
+        #solvedsubtasks ={}
+        #env.inprogresssubtasks = pickle.loads(pickle.dumps(subtasks,-1))
         
     rootobjective = env.environment["objective"]
-    for subtask in subtasks:
-        x = env.inprogresssubtasks.pop(0)
-        env.environment["objective"] = subtask#["desc"]
-        env.STM.set("resetdataflag",False)
-        terminalnode = solver(env,storeenvfile)
-        if storeenvfile != None:
-            with open(storeenvfile,"wb") as file:
-                pickle.dump(env, file)
+    tasksolved = False
+    while not tasksolved:
+        for k,subtask in subtasks.items():
+            #x = env.inprogresssubtasks.pop(0)
+            #objective = """current subtask """
+            env.environment["objective"]["currentsubtask"] = subtask#["desc"]
+            env.STM.set("resetdataflag",False)
+            terminalnode = solver(env,storeenvfile)
+            if storeenvfile != None:
+                with open(storeenvfile,"wb") as file:
+                    pickle.dump(env, file)
+        env.environment["objective"]["solvedsubtasks"].update(subtasks)
+        if istaskcomplete(env):
+            break
+        subtasks = findsubtask(env,env.environment["objective"]["task"],env.environment["objective"]["solvedsubtasks"])
     objsummary = summarize(rootobjective["task"] +"\n" +env.environment["prior axioms"])
     env.LTM.set(text = objsummary, data = {"task": objsummary, "terminalnode": terminalnode}, recordid=str(uuid.uuid4()), memorytype = "solvedtasks")
-    env.environment["objective"]["task"] = rootobjective["task"]
-    env.environment["objective"]["subtasks"] =  []#[subtask["task"] for id,subtask in subtasks.items()]
+    #env.environment["objective"]["task"] = rootobjective["task"]
+    env.environment["objective"]["currentsubtask"] = rootobjective["task"] #[subtask["task"] for id,subtask in subtasks.items()]
     if len(subtasks) > 1:
        print("Finally solving root task:",rootobjective["task"])
        env.STM.set("resetdataflag",True)
@@ -113,7 +124,7 @@ def solver(env,storeenvfile=None,tries = 1000000):
     stm = env.STM
     ltm = env.LTM
     env.STM.set("critique", {"feedback":0,"reason":""})
-    objsummary = summarize(". ".join(env.environment["objective"]["subtasks"])+" "+env.environment["objective"]["task"]+"\n"+env.environment["prior axioms" ])
+    objsummary = summarize(". ".join(env.environment["objective"]["task"]+"\n"+env.environment["prior axioms" ]))
     env.STM.set("summaryobjective",objsummary)
     ### get solved tasks
     terminalnode = getsolvedtasks(env,objsummary)
@@ -122,8 +133,10 @@ def solver(env,storeenvfile=None,tries = 1000000):
     ############ Task not  solved            
     
     for trie in range(tries):
-        print("Solving task:",env.environment["objective"]["task"])
-        output,terminalnode = generatecode(env)          
+        print("Solving task:",env.environment["objective"]["task"], env.environment["objective"]["currentsubtask"])
+        output,terminalnode = generatecode(env)  
+        if terminalnode ==1:
+             continue        
         reward = critique(env,terminalnode)
         input("press a key to continue")
         output  = belieflearner(env)
@@ -167,7 +180,32 @@ def subtaskbreaker(env,task):
     
     
     return subtasks
-
+    
+    
+def findsubtask(env,task):
+    feedback = ""
+    print("Breaking into Subtasks..")
+    relevantextactions = env.LTM.get(query = task+"\n", memorytype ="externalactions", cutoffscore =0.1, top_k=7)
+    relevantextactions = {i[1]["id"]: i[1]["data"] for i in relevantextactions}
+    solvedsubtasks = "\n".join([v["task"] for k,v in env.environment["objective"]["solvedsubtasks"].items()])
+    while True:
+        axioms = env.environment["prior axioms" ]   
+        systemmessage = findsubtasksystemtemplate.format(axioms = axioms, functions = str(relevantextactions))
+        usermessage = findsubtaskusertemplate.format(task = task+"\n"+feedback, subtasks=solvedsubtasks)
+        output = chatpredict(systemmessage,usermessage)
+        output = extractdictfromtext(output)
+        subtasks = pickle.loads(pickle.dumps(output,-1))
+        for id, subtask in output.items():
+            subtasks[id] ={"task": subtask["task"], "subtasks": flatten_list([solvedsubtasks[i]["subtasks"] + [solvedsubtasks[i]["task"]] for i in subtask["dependencies"]])}
+        #subtasks = [ v for k,v in subtasks.items()]
+        
+        print("subtasks: \n","\n",subtasks)
+        feedback = input("Provide inputs on substasks. If everything is good then don't write anything and just press enter. ")
+        if feedback == "":
+            break
+    
+    
+    return subtasks
 
     
 def generatecode(env, codeerror=""):
@@ -176,7 +214,9 @@ def generatecode(env, codeerror=""):
     state = env.getstate()
     axioms = f"{axioms}/nState: {state}"
     ################ fetch learnings #########################################
-    query = "Objective: \n"+objective["task"]+"\n Critique recieved while solving the objective: \n"+ env.STM.get("critique")["reason"]
+    #query = "Objective: \n"+objective["task"]+"\n Critique recieved while solving the objective: \n"+ env.STM.get("critique")["reason"]
+    
+    query = "Objective: Solve the following subtask of the given task. \n subtask:"+objective["currentsubtask"]["task"]+"\n task:"+objective["task"]+"\n Critique recieved while solving the objective: \n"+ env.STM.get("critique")["reason"]
     memory = env.LTM.get(query, memorytype = "semantic", cutoffscore = 0.1 ,top_k=5)
     learnings = "\n".join([i[1]["data"] for i in memory])
     env.STM.set("relevantbeliefs", learnings)
@@ -186,7 +226,7 @@ def generatecode(env, codeerror=""):
     env.STM.set("relevantactions",relevantextactions)
     
     
-    relevantnodeid, programdesc,helpernodesdesc = pg.getprogramto_extend(env, env.STM.get("summaryobjective"), objective["subtasks"])#summarize(objective+"\n"+axioms))
+    relevantnodeid, programdesc,helpernodesdesc = pg.getprogramto_extend(env, env.STM.get("summaryobjective"), objective["currentsubtask"]["subtasks"])#summarize(objective+"\n"+axioms))
     #relevantnodeid = env.STM.get("relevantnodes")[0][0]
     #programdesc = 
     if not relevantnodeid:
@@ -206,8 +246,8 @@ def generatecode(env, codeerror=""):
             #codeerror = ""
             retrycount = 0
             return "Unable to generate solution for this goal. Try redefining the goal. Here is the latest error "+codeerror, 1
-        subtaskpromptprefix = "Following are the dependent subtasks already completed: \n"
-        objectiveprefix = "Now complete the following objective:\n"
+        solvedsubtaskpromptprefix = "Following are the subtasks already completed: \n"
+        #objectiveprefix = "Now complete the following objective:\n"
         systemmessage = actortsystemtemplate.format(functions = relevantfunctionstext, \
                     axioms = axioms, \
                     learnings = learnings, \
@@ -217,8 +257,9 @@ def generatecode(env, codeerror=""):
                     initialnode = env.initnode, 
                     #terminalnodedescription = env.graph["nodes"][relevantnodeid]["desc"], \
                     )
-        usermessage = actorusertemplate.format(objective = objectiveprefix+objective["task"], \
-                    subtasks = subtaskpromptprefix+'. '.join(objective["subtasks"]), \
+        usermessage = actorusertemplate.format(task = objective["task"], \
+                    subtask = objective["currentsubtask"]["task"], \
+                    solvedsubtasks = solvedsubtaskpromptprefix+'\n '.join([v["task"] for k, v in objective["solvedsubtasks"].items()]), \
                     error = codeerror)
         print("ACTORPROMPT system:",systemmessage)
         print("ACTORPROMPT user:",usermessage)
@@ -320,7 +361,19 @@ def critique (env,terminalnode):
     
     return output["feedback"]
     
+def istaskcomplete(env):
+    solvedsubtasks = "\n".join([v["task"] for k,v in env.environment["objective"]["solvedsubtasks"].items()])
     
+    message = istasksolvedtemplate.format(task = str(env.environment["objective"]["task"]), \
+                    subtasks = solvedsubtasks)
+    print("Running critique...")
+    output = chatpredict(message)
+    
+    #output = ast.literal_eval(output)
+    output = extractdictfromtext(output)
+    print("CRITIQUE output:",output)
+    return output["reason"]
+   
 def belieflearner(env):
     EnvTrace = env.STM.get("envtrace")
     EnvTrace_text = "\n".join([str(i) for i in EnvTrace])
